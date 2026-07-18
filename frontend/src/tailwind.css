@@ -11,17 +11,18 @@
 
 /* OLD TAILWIND STYLES */
 @theme {
-  --color-primary: #c9b974;
-  --color-logo: #cfb755;
-  --color-base: #0d0f11;
-  --color-base-secondary: #24272e;
-  --color-danger: #e76a5e;
-  --color-success: #a5e75e;
-  --color-basic: #9099ac;
-  --color-tertiary: #454545;
-  --color-tertiary-light: #b7bdc2;
-  --color-content: #ecedee;
-  --color-content-2: #f9fbfe;
+  /* 安全风信子 HOS-Forge 主题色 */
+  --color-primary: #8C6E9F;
+  --color-logo: #B49BC4;
+  --color-base: #1E1F1D;
+  --color-base-secondary: #272822;
+  --color-danger: #B33F4E;
+  --color-success: #6CCB4C;
+  --color-basic: #8C6E9F;
+  --color-tertiary: #2C2D2F;
+  --color-tertiary-light: #3B3D38;
+  --color-content: #B49BC4;
+  --color-content-2: #E8D8F0;
 }
 
 .button-base {
