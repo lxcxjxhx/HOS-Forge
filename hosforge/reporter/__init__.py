@@ -10,13 +10,11 @@ HOS-Forge Reporter — 安全报告生成器。
 所有报告采用"安全风信子"风格，支持打印导出。
 """
 
-from hosforge.reporter.html_reporter import SecurityHtmlReporter, ReportSection, ReportConfig
+from hosforge.reporter.html_reporter import SecurityHtmlReporter
 from hosforge.reporter.models import ReportData, VulnerabilityEntry, ReportMetadata
 
 __all__ = [
     'SecurityHtmlReporter',
-    'ReportSection',
-    'ReportConfig',
     'ReportData',
     'VulnerabilityEntry',
     'ReportMetadata',
