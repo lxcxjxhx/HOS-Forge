@@ -2,13 +2,13 @@
 <div align="center">
   <h1>🔐 HOS-Forge</h1>
   <p align="center">
-    <strong>AI Native Cyber Security IDE</strong>
+    <strong>AI Native Information Security IDE</strong>
   </p>
   <p align="center">
-    基于 <a href="https://github.com/OpenHands/OpenHands">OpenHands</a> 二次开发的 AI 原生网络安全 IDE
+    基于 <a href="https://github.com/OpenHands/OpenHands">OpenHands</a> 二次开发的 AI 原生信息安全 IDE
   </p>
   <p align="center">
-    <em>让 AI 成为安全工程师的协作伙伴</em>
+    <em>覆盖 Web安全 · 数据安全 · 终端安全 · 密码学 · 云安全 · 应用安全 · 移动安全</em>
   </p>
 </div>
 
@@ -76,11 +76,17 @@ HOS-Forge IDE
 ### 🔍 Security Code Review Agent
 代码提交前自动分析 CWE/CVE/OWASP Top 10 安全风险。
 
-### 🛡️ 安全知识大脑 (RAG)
-基于向量数据库的安全知识库，让 Agent 理解漏洞原理。
+### 🛡️ 安全知识大脑 (RAG + CVE/CWE)
+基于 SQLite + 向量检索的安全知识库，支持 CVE/CWE 查询、ExploitDB PoC、KEV 检测。
 
-### 🔧 MCP 安全工具生态
-集成 Nmap、Semgrep、Nuclei 等安全工具的 MCP Server。
+### 🔧 MCP 安全工具生态 (MCP Server)
+集成 Nmap、Semgrep、Nuclei、Burp Suite 的 MCP 服务，任何 AI Agent 均可通过 MCP 协议调用。
+
+### 🧠 本地模型微调 (Model Optimizer)
+QLoRA/LoRA 微调 + RAG 打标强化，8GB VRAM 可用，支持离线安全模型定制与企业知识注入。
+
+### 📊 安全报告引擎 (HTML Reporter)
+固定格式 HTML 报告生成，安全风信子设计风格，支持打印/PDF 导出，便于复盘转发。
 
 ---
 
@@ -105,8 +111,10 @@ python -m openhands.server.main
 | 版本 | 目标 |
 |------|------|
 | **v0.1** | OpenHands + HOS 品牌，基础安全分析 |
-| **v0.5** | CVE RAG、CWE 分析、自动修复、MCP 工具 |
-| **v1.0** | 完整 AI 安全 IDE (自动开发/审计/修复/测试/报告) |
+| **v0.3** | Attack Agent + MCP工具 + CVE/CWE RAG + HTML报告 |
+| **v0.5** | Model Optimizer本地微调 + RAG打标 + Dashboard可视化 |
+| **v0.7** | HOS MCP Server + 三方MCP桥接 (Burp/SecurityHub) |
+| **v1.0** | 完整 AI 信息安全 IDE (全领域覆盖) |
 
 ---
 
