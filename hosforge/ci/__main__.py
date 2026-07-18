@@ -22,13 +22,19 @@ from hosforge.ci.check import (
 
 def main() -> None:
     """CLI 入口"""
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 2 or '--help' in sys.argv or '-h' in sys.argv:
+        print('HOS-Forge CI Security Tools')
+        print('')
         print('用法:')
-        print('  python -m hosforge.ci check-reality [files...]')
-        print('  python -m hosforge.ci check-sast [path]')
-        print('  python -m hosforge.ci install-hook')
-        print('  python -m hosforge.ci ci-scan')
-        sys.exit(1)
+        print('  hos-ci check-reality [files...]   检查代码 Reality Score')
+        print('  hos-ci check-sast [path]          执行 SAST 代码扫描')
+        print('  hos-ci install-hook [path]         安装 pre-commit hook')
+        print('  hos-ci ci-scan                     执行完整 CI 扫描')
+        print('')
+        print('示例:')
+        print('  hos-ci ci-scan')
+        print('  hos-ci check-reality src/')
+        sys.exit(0)
 
     command = sys.argv[1]
     args = sys.argv[2:]

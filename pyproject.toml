@@ -118,6 +118,13 @@ dependencies = [
 urls.Homepage = "https://github.com/lxcxjxhx/HOS-Forge"
 urls.Repository = "https://github.com/lxcxjxhx/HOS-Forge"
 
+[project.scripts]
+# HOS-Forge CLI 入口
+hos-mcp = "hosforge.mcp_server.server:main"
+hos-ci = "hosforge.ci.__main__:main"
+hos-report = "hosforge.reporter.cli:main"
+hos-dashboard = "hosforge.dashboard.cli:main"
+
 [dependency-groups]
 dev = [
   "build",
@@ -163,6 +170,8 @@ packages = [
 include = [
   "skills/**/*",
   "hosforge/rules/*.yaml",
+  "hosforge/reporter/templates/*.html",
+  ".agents/skills/**/*.md",
 ]
 
 [tool.poetry.dependencies]
