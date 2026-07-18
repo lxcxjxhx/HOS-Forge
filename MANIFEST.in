@@ -3,3 +3,8 @@ global-exclude *.pyc
 
 # Exclude Python cache directories
 global-exclude __pycache__
+
+# HOS-Forge data files
+include hosforge/rules/*.yaml
+include hosforge/reporter/templates/*.html
+include .agents/skills/hos-silly-mock/SKILL.md
