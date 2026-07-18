@@ -16,6 +16,7 @@ from hosforge.dashboard.dashboard import (
     VulnStatWidget,
     RiskScoreWidget,
     PentestResultWidget,
+    MCPTopologyWidget,
     RecentFindingsWidget,
 )
 
@@ -25,5 +26,6 @@ __all__ = [
     'VulnStatWidget',
     'RiskScoreWidget',
     'PentestResultWidget',
+    'MCPTopologyWidget',
     'RecentFindingsWidget',
 ]

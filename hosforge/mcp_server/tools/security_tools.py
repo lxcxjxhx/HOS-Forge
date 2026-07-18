@@ -327,25 +327,6 @@ def _register_report_tools(app: FastMCP) -> None:
         reporter = SecurityHtmlReporter()
         return reporter.generate(data)
 
-    @app.tool(description='🔍 Reality Score 检测 — 检查代码中的 Mock 数据/Regex 滥用/沉默失败')
-    async def hos_reality_check(
-        code: str,
-        filename: str = 'anonymous',
-    ) -> dict[str, Any]:
-        """
-        对代码执行 HOS-Silly-Mock 现实检测。
-
-        检查:
-            - MOCK 数据泄漏
-            - Regex 用于结构化解析
-            - 变量缺少 source→sink 链路
-            - 沉默失败 (空 catch / 无错误处理)
-        """
-        from hosforge.reality_enforcement import enforce_text
-
-        lines = code.split('\n')
-        result = enforce_text(lines, filename=filename)
-        return result.to_dict()
 
 
 
