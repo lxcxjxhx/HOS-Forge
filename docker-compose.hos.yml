@@ -1,0 +1,58 @@
+# ===========================================================================
+# HOS-Forge Docker Compose
+# 基于 OpenHands 部署模式，专注信息安全 IDE
+# ===========================================================================
+services:
+  hos-forge-mcp:
+    build:
+      context: ./
+      dockerfile: ./containers/app/Dockerfile.hos
+    image: hos-forge:latest
+    container_name: hos-forge-mcp-${DATE:-}
+    environment:
+      - HOS_MCP_PORT=${HOS_MCP_PORT:-8321}
+      - HOS_LOG_LEVEL=${HOS_LOG_LEVEL:-info}
+    ports:
+      - "${HOS_MCP_PORT:-8321}:8321"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - hos-forge-data:/.hosforge
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8321/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # 可选: HOS-Forge + OpenHands 组合
+  hos-forge-full:
+    build:
+      context: ./
+      dockerfile: ./containers/app/Dockerfile.hos
+    image: hos-forge:latest
+    container_name: hos-forge-full-${DATE:-}
+    environment:
+      - HOS_MCP_PORT=${HOS_MCP_PORT:-8321}
+      - OPENHANDS_BACKEND_PORT=${OPENHANDS_BACKEND_PORT:-3000}
+      - WORKSPACE_MOUNT_PATH=${WORKSPACE_BASE:-$PWD/workspace}
+    ports:
+      - "${HOS_MCP_PORT:-8321}:8321"
+      - "${OPENHANDS_BACKEND_PORT:-3000}:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.hosforge:/.hosforge
+      - ${WORKSPACE_BASE:-$PWD/workspace}:/opt/workspace_base
+      - hos-forge-data:/.hosforge
+    stdin_open: true
+    tty: true
+    command: ["sh", "-c", "python -m openhands.server.listen:app --host 0.0.0.0 --port 3000 & python -m hosforge mcp"]
+    restart: unless-stopped
+
+volumes:
+  hos-forge-data:

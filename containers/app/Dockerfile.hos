@@ -1,0 +1,36 @@
+# ===========================================================================
+# HOS-Forge Docker Image
+# 基于 OpenHands 安全增强，专注信息安全 IDE 能力
+# ===========================================================================
+ARG HOS_BUILD_VERSION=v0.1.0
+FROM python:3.13.7-slim-trixie AS base
+
+FROM base AS hos-forge
+WORKDIR /app
+ENV PYTHONPATH='/app'
+
+# 系统依赖
+RUN apt-get update -y \
+    && apt-get install -y --no-install-recommends \
+        curl git build-essential jq gettext \
+        nmap \
+        netcat-openbsd \
+        dnsutils \
+    && rm -rf /var/lib/apt/lists/*
+
+# 复制项目文件
+COPY . .
+
+# 安装 HOS-Forge
+RUN pip install --no-cache-dir -e . && \
+    pip install --no-cache-dir httpx uvicorn fastapi
+
+# 默认端口: MCP Server
+EXPOSE 8321
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8321/health')" || exit 1
+
+# 默认启动 MCP Server
+CMD ["python", "-m", "hosforge", "mcp"]

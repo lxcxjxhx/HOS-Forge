@@ -377,6 +377,57 @@ help:
 	@echo "  $(GREEN)docker-run$(RESET)          - Run the OpenHands application, starting both backend and frontend servers in Docker."
 	@echo "  $(GREEN)help$(RESET)                - Display this help message, providing information on available targets."
 
+# ===========================================================================
+# HOS-Forge Targets
+# ===========================================================================
+
+# Start HOS-Forge MCP Server
+hos-mcp:
+	@echo "$(GREEN)Starting HOS-Forge MCP Server...$(RESET)"
+	@python -m hosforge mcp
+
+# Start HOS-Forge Dashboard API
+hos-dashboard:
+	@echo "$(GREEN)Starting HOS-Forge Dashboard...$(RESET)"
+	@python -m hosforge dashboard
+
+# Build HOS-Forge Docker image
+hos-docker-build:
+	@echo "$(GREEN)Building HOS-Forge Docker image...$(RESET)"
+	@docker compose -f docker-compose.hos.yml build
+
+# Run HOS-Forge in Docker (MCP mode)
+hos-docker-run:
+	@echo "$(GREEN)Running HOS-Forge in Docker (MCP)...$(RESET)"
+	@docker compose -f docker-compose.hos.yml up hos-forge-mcp
+
+# Run HOS-Forge full stack in Docker
+hos-docker-full:
+	@echo "$(GREEN)Running HOS-Forge full stack in Docker...$(RESET)"
+	@docker compose -f docker-compose.hos.yml up hos-forge-full
+
+# HOS CI/CD security scan
+hos-ci:
+	@echo "$(GREEN)Running HOS-Forge CI security scan...$(RESET)"
+	@python -m hosforge ci ci-scan
+
+# HOS-Forge help
+hos-help:
+	@echo "$(BLUE)HOS-Forge Targets:$(RESET)"
+	@echo "  $(GREEN)hos-mcp$(RESET)            - Start MCP Server (:8321)"
+	@echo "  $(GREEN)hos-dashboard$(RESET)      - Start Dashboard API"
+	@echo "  $(GREEN)hos-docker-build$(RESET)   - Build Docker image"
+	@echo "  $(GREEN)hos-docker-run$(RESET)     - Run MCP in Docker"
+	@echo "  $(GREEN)hos-docker-full$(RESET)    - Run full stack in Docker"
+	@echo "  $(GREEN)hos-ci$(RESET)             - Run CI security scan"
+	@echo "  $(GREEN)hos-report$(RESET)         - Generate security report"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make hos-mcp"
+	@echo "  make hos-docker-build"
+	@echo "  WORKSPACE_BASE=./project make hos-docker-run"
+
 # Phony targets
 .PHONY: build check-dependencies check-system check-python check-npm check-nodejs check-docker check-poetry install-python-dependencies install-frontend-dependencies install-pre-commit-hooks lint-backend lint-frontend lint test-frontend test build-frontend start-backend start-frontend _run_setup run run-wsl setup-config setup-config-prompts setup-config-basic openhands-cloud-run docker-dev docker-run clean help
 .PHONY: kind
+.PHONY: hos-mcp hos-dashboard hos-docker-build hos-docker-run hos-docker-full hos-ci hos-help
