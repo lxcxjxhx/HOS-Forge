@@ -151,6 +151,66 @@ class PentestResultWidget(DashboardWidget):
 
 
 @dataclass
+class MCPTopologyWidget(DashboardWidget):
+    """MCP 服务拓扑组件 — 可视化展示所有已连接的 MCP 安全服务"""
+    services: list[dict[str, Any]] = field(default_factory=list)
+
+    def render_html(self) -> str:
+        if not self.services:
+            return '''
+            <div class="hos-widget" style="margin-bottom:16px;">
+                <h3 style="font-size:16px;font-weight:600;color:#B49BC4;margin:0 0 12px 0;">
+                    🔌 MCP 服务拓扑</h3>
+                <div style="text-align:center;padding:24px;color:#6B6F72;font-size:13px;">
+                    未发现 MCP 安全服务
+                </div>
+            </div>'''
+
+        cards = ''
+        for svc in self.services:
+            name = svc.get('name', 'unknown')
+            desc = svc.get('description', '')[:60]
+            status = svc.get('status', 'discovered')
+            tools = svc.get('tools_count', 0)
+            source = svc.get('source', '')
+
+            status_color = {'connected': '#6CCB4C', 'discovered': '#8C6E9F',
+                           'failed': '#B33F4E'}.get(status, '#6B6F72')
+            source_icon = {'process': '⚙️', 'docker': '🐳', 'config': '📋',
+                          'env': '🌐', 'port': '🔌'}.get(source, '🔗')
+
+            cards += f'''
+            <div style="padding:14px;border-radius:10px;background:#272822;
+                border:1px solid #3C3E42;display:flex;align-items:center;gap:12px;">
+                <span style="font-size:20px;">{source_icon}</span>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:14px;font-weight:500;color:#B49BC4;">{name}</div>
+                    <div style="font-size:11px;color:#6B6F72;margin-top:2px;">{desc}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+                        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;
+                            background:{status_color};box-shadow:0 0 6px {status_color};"></span>
+                        <span style="font-size:11px;color:{status_color};font-weight:500;">
+                            {status.upper()}</span>
+                    </div>
+                    <div style="font-size:10px;color:#6B6F72;margin-top:2px;">
+                        {tools} tools · {source}</div>
+                </div>
+            </div>'''
+
+        return f'''
+        <div class="hos-widget" style="margin-bottom:16px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <h3 style="font-size:16px;font-weight:600;color:#B49BC4;margin:0;">
+                    🔌 MCP 服务拓扑</h3>
+                <span style="font-size:12px;color:#6B6F72;">{len(self.services)} 个服务</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;">{cards}</div>
+        </div>'''
+
+
+@dataclass
 class RecentFindingsWidget(DashboardWidget):
     """最近发现组件"""
     items: list[dict[str, Any]] = field(default_factory=list)

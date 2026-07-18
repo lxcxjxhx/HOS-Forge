@@ -1,0 +1,37 @@
+# ============================================================================
+# HOS-Forge Pre-Commit Hooks — 提交前自动安全检查
+# ============================================================================
+# 安装: pip install pre-commit && pre-commit install
+# 手动运行: pre-commit run --all-files
+# ============================================================================
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+
+  # HOS-Forge 安全检查
+  - repo: local
+    hooks:
+      - id: hos-reality-check
+        name: HOS Reality Score Check
+        description: '检查代码中的 Mock 数据/Regex 滥用 (需要 HOS-Silly-Mock)'
+        entry: python -m hosforge.ci check-reality
+        language: python
+        files: \.(py|js|ts|tsx|jsx)$
+        pass_filenames: true
+        verbose: true
+
+      - id: hos-sast-scan
+        name: HOS SAST Quick Scan
+        description: '快速 SAST 代码安全扫描 (需要 Semgrep)'
+        entry: python -m hosforge.ci check-sast
+        language: python
+        files: \.(py|js|ts|tsx|jsx)$
+        pass_filenames: false
+        verbose: true
