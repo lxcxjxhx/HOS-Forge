@@ -31,9 +31,9 @@ from typing import Any
 
 from fastmcp import FastMCP
 
-from hosforge.mcp_server.tools.security_tools import (
-    register_tools,
-)
+from hosforge.mcp_server.tools.security_tools import register_tools
+from hosforge.mcp_server.bridge.discovery import MCPDiscoveryEngine
+from hosforge.mcp_server.orchestrator import MCPOrchestrator
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +64,23 @@ async def capabilities() -> dict[str, list[dict[str, str]]]:
             for t in app._tool_manager.list_tools()
         ],
     }
+
+
+@app.get('/bridge/discover', description='发现外部 MCP 安全服务')
+async def bridge_discover() -> dict[str, list[dict]]:
+    """自动发现系统中可用的外部安全 MCP 服务"""
+    engine = MCPDiscoveryEngine()
+    services = await engine.discover_all()
+    return {
+        'services': [s.to_dict() for s in services],
+        'count': len(services),
+    }
+
+
+@app.get('/workflows', description='列出可用工作流模板')
+async def list_workflows() -> dict[str, dict]:
+    """列出所有预定义的安全工作流"""
+    return MCPOrchestrator.list_templates()
 
 
 def serve(host: str = '0.0.0.0', port: int = 8321) -> None:
