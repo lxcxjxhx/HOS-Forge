@@ -1,0 +1,298 @@
+/* ==========================================================================
+   HOS-Forge: Safe Hyacinth Design System
+   安全风信子 (Safe Hyacinth) 美术风格 — "金属釉面植物" Neo-Glazed 设计语言
+   ========================================================================== */
+
+/* ── 安全风信子 Design Tokens ─────────────────────────────────────── */
+:root {
+  /* 紫调基底 — 花瓣主体暗部 */
+  --hyacinth-deep:           #2D1A36;
+  --hyacinth-deeper:         #1E0F26;
+  --hyacinth-base:           #392A40;
+
+  /* 紫外高光 — 花瓣受光面、UI 边框 */
+  --hyacinth-light:          #8C6E9F;
+  --hyacinth-lighter:        #B49BC4;
+  --hyacinth-glow:           #C9B0DB;
+
+  /* 猩红点缀 — 花心、重点装饰色 */
+  --hyacinth-crimson:        #862C3B;
+  --hyacinth-crimson-light:  #B33F4E;
+  --hyacinth-crimson-glow:   rgba(134, 44, 59, 0.4);
+
+  /* 暗夜金属 — 花瓣背光面、环境阴影 */
+  --hyacinth-metal:          #2C2D2F;
+  --hyacinth-metal-dark:     #1A1A1C;
+  --hyacinth-metal-shadow:   rgba(26, 26, 28, 0.8);
+
+  /* 荧光芽绿 — 花茎、CTA 按钮、高亮状态 */
+  --hyacinth-stem:           #6CCB4C;
+  --hyacinth-stem-dark:      #3B7A28;
+  --hyacinth-stem-glow:      rgba(108, 203, 76, 0.3);
+
+  /* 背景陨石灰 */
+  --hyacinth-bg-dark:        #1E1F1D;
+  --hyacinth-bg-mid:         #3B3D38;
+  --hyacinth-bg-surface:     #272822;
+
+  /* 高光 */
+  --hyacinth-highlight:      rgba(255, 255, 255, 0.6);
+  --hyacinth-highlight-soft: rgba(255, 255, 255, 0.15);
+
+  /* ── 语义色映射 ───────────────────────────────────────────── */
+  --hos-bg-primary:          var(--hyacinth-bg-dark);
+  --hos-bg-secondary:        var(--hyacinth-bg-surface);
+  --hos-bg-tertiary:         var(--hyacinth-metal);
+  --hos-bg-elevated:         var(--hyacinth-base);
+
+  --hos-text-primary:        var(--hyacinth-lighter);
+  --hos-text-secondary:      var(--hyacinth-light);
+  --hos-text-muted:          #6B6F72;
+  --hos-text-inverse:        var(--hyacinth-bg-dark);
+
+  --hos-accent-primary:      var(--hyacinth-light);
+  --hos-accent-secondary:    var(--hyacinth-crimson);
+  --hos-accent-success:      var(--hyacinth-stem);
+  --hos-accent-danger:       var(--hyacinth-crimson-light);
+  --hos-accent-warning:      #D4A040;
+
+  --hos-border-color:        var(--hyacinth-metal);
+  --hos-border-light:        #3C3E42;
+  --hos-border-focus:        var(--hyacinth-light);
+
+  --hos-shadow-sm:           0 1px 3px var(--hyacinth-metal-shadow);
+  --hos-shadow-md:           0 4px 12px var(--hyacinth-metal-shadow);
+  --hos-shadow-lg:           0 8px 30px var(--hyacinth-metal-shadow);
+  --hos-shadow-glow-accent:  0 0 20px var(--hyacinth-crimson-glow);
+  --hos-shadow-glow-success: 0 0 15px var(--hyacinth-stem-glow);
+
+  /* 字体栈 */
+  --hos-font-sans:           'Outfit', -apple-system, 'SF Pro', 'Segoe UI', sans-serif;
+  --hos-font-mono:           'IBM Plex Mono', 'Fira Code', 'JetBrains Mono', monospace;
+
+  /* 圆角 */
+  --hos-radius-sm:           6px;
+  --hos-radius-md:           10px;
+  --hos-radius-lg:           16px;
+  --hos-radius-xl:           24px;
+  --hos-radius-full:         9999px;
+
+  /* 过渡 */
+  --hos-transition-fast:     150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --hos-transition-normal:   250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --hos-transition-slow:     400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── 花苞材质模拟 (CSS 3D Glaze Effect) ─────────────────────────── */
+.hos-petal {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 65% 35%, var(--hyacinth-highlight) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, var(--hyacinth-light) 0%, var(--hyacinth-crimson) 40%, var(--hyacinth-deep) 80%, #111 100%);
+  box-shadow:
+    inset 0 -10px 20px rgba(0, 0, 0, 0.8),
+    0 20px 40px var(--hyacinth-crimson-glow);
+  filter: contrast(1.2) brightness(1.1);
+}
+
+/* ── 茎部动态阴影 ─────────────────────────────────────────────── */
+.hos-stem {
+  background: linear-gradient(90deg, var(--hyacinth-stem-dark), var(--hyacinth-stem), var(--hyacinth-stem-dark));
+  filter: drop-shadow(0 5px 10px var(--hyacinth-stem-glow));
+}
+
+/* ── 釉面玻璃效果 ─────────────────────────────────────────────── */
+.hos-glaze {
+  position: relative;
+  overflow: hidden;
+}
+.hos-glaze::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.05) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* ── 霓虹发光边框 ────────────────────────────────────────────── */
+.hos-glow-border {
+  border: 1px solid var(--hyacinth-light);
+  box-shadow:
+    0 0 5px rgba(140, 110, 159, 0.3),
+    inset 0 0 5px rgba(140, 110, 159, 0.1);
+}
+
+/* ── 背景散景效果 ────────────────────────────────────────────── */
+.hos-bokeh {
+  position: relative;
+}
+.hos-bokeh::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(140, 110, 159, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(108, 203, 76, 0.05) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 80%, rgba(134, 44, 59, 0.06) 0%, transparent 45%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── 按钮风格 ────────────────────────────────────────────────── */
+.hos-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--hos-radius-md);
+  font-family: var(--hos-font-sans);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--hos-transition-normal);
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+
+.hos-btn-primary {
+  background: linear-gradient(135deg, var(--hyacinth-crimson), var(--hyacinth-deep));
+  color: var(--hyacinth-lighter);
+  border-color: var(--hyacinth-light);
+  box-shadow: var(--hos-shadow-glow-accent);
+}
+.hos-btn-primary:hover {
+  background: linear-gradient(135deg, var(--hyacinth-crimson-light), var(--hyacinth-base));
+  box-shadow: 0 0 25px var(--hyacinth-crimson-glow);
+  transform: translateY(-1px);
+}
+
+.hos-btn-success {
+  background: linear-gradient(135deg, var(--hyacinth-stem-dark), var(--hyacinth-deep));
+  color: var(--hyacinth-stem);
+  border-color: var(--hyacinth-stem);
+  box-shadow: var(--hos-shadow-glow-success);
+}
+.hos-btn-success:hover {
+  box-shadow: 0 0 20px var(--hyacinth-stem-glow);
+  transform: translateY(-1px);
+}
+
+.hos-btn-ghost {
+  background: transparent;
+  color: var(--hos-text-secondary);
+  border-color: var(--hos-border-color);
+}
+.hos-btn-ghost:hover {
+  background: var(--hyacinth-highlight-soft);
+  color: var(--hos-text-primary);
+  border-color: var(--hos-border-focus);
+}
+
+/* ── 面板/卡片风格 ───────────────────────────────────────────── */
+.hos-card {
+  background: linear-gradient(180deg, var(--hyacinth-bg-surface), var(--hyacinth-bg-dark));
+  border: 1px solid var(--hos-border-color);
+  border-radius: var(--hos-radius-lg);
+  padding: 20px;
+  box-shadow: var(--hos-shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+.hos-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--hyacinth-light), transparent);
+  opacity: 0.3;
+}
+
+/* ── 输入框风格 ──────────────────────────────────────────────── */
+.hos-input {
+  background: var(--hyacinth-metal-dark);
+  border: 1px solid var(--hos-border-color);
+  border-radius: var(--hos-radius-sm);
+  color: var(--hos-text-primary);
+  padding: 10px 14px;
+  font-family: var(--hos-font-sans);
+  font-size: 0.9rem;
+  transition: border-color var(--hos-transition-fast), box-shadow var(--hos-transition-fast);
+  outline: none;
+  width: 100%;
+}
+.hos-input:focus {
+  border-color: var(--hyacinth-light);
+  box-shadow: 0 0 0 2px rgba(140, 110, 159, 0.2);
+}
+.hos-input::placeholder {
+  color: var(--hos-text-muted);
+}
+
+/* ── 安全状态指示器 ──────────────────────────────────────────── */
+.hos-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.hos-status-dot.critical { background: var(--hyacinth-crimson-light); box-shadow: 0 0 8px var(--hyacinth-crimson-glow); }
+.hos-status-dot.high    { background: #D4A040; box-shadow: 0 0 8px rgba(212, 160, 64, 0.4); }
+.hos-status-dot.medium  { background: var(--hyacinth-light); box-shadow: 0 0 8px rgba(140, 110, 159, 0.4); }
+.hos-status-dot.low     { background: var(--hyacinth-stem); box-shadow: 0 0 8px var(--hyacinth-stem-glow); }
+
+/* ── 滚动条 ──────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--hyacinth-metal-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--hyacinth-metal);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--hyacinth-light);
+}
+
+/* ── 选中文本 ────────────────────────────────────────────────── */
+::selection {
+  background: rgba(140, 110, 159, 0.3);
+  color: var(--hyacinth-lighter);
+}
+
+/* ── 动画 ──────────────────────────────────────────────────────── */
+@keyframes hyacinth-glow {
+  0%, 100% { box-shadow: 0 0 5px var(--hyacinth-crimson-glow); }
+  50%      { box-shadow: 0 0 20px rgba(140, 110, 159, 0.5); }
+}
+@keyframes hyacinth-breathe {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+@keyframes hyacinth-spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.hos-animate-glow {
+  animation: hyacinth-glow 3s ease-in-out infinite;
+}
+.hos-animate-breathe {
+  animation: hyacinth-breathe 4s ease-in-out infinite;
+}
+.hos-animate-spin-slow {
+  animation: hyacinth-spin-slow 20s linear infinite;
+}

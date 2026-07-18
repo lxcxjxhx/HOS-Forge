@@ -18,6 +18,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <Meta />
         <Links />
       </head>
@@ -33,8 +34,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export const meta: MetaFunction = () => [
-  { title: "OpenHands" },
-  { name: "description", content: "Let's Start Building!" },
+  { title: "HOS-Forge — AI Native Cyber Security IDE" },
+  { name: "description", content: "HOS-Forge: AI Native Cyber Security IDE — 让 AI 成为安全工程师的协作伙伴" },
+  { name: "theme-color", content: "#2D1A36" },
 ];
 
 export default function App() {
