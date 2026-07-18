@@ -10,8 +10,16 @@ HOS-Forge Security Tools — 安全工具集成层。
 """
 
 from hosforge.security_tools.base import BaseSecurityTool, SecurityToolResult
+from hosforge.security_tools.nmap_tool import NmapTool
+from hosforge.security_tools.semgrep_tool import SemgrepTool
+from hosforge.security_tools.nuclei_tool import NucleiTool
+from hosforge.security_tools.burp_tool import BurpTool
 
 __all__ = [
     'BaseSecurityTool',
     'SecurityToolResult',
+    'NmapTool',
+    'SemgrepTool',
+    'NucleiTool',
+    'BurpTool',
 ]

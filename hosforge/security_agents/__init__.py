@@ -18,6 +18,15 @@ from hosforge.security_agents.base import (
 from hosforge.security_agents.supervisor import SecuritySupervisorAgent
 from hosforge.security_agents.audit import AuditAgent
 from hosforge.security_agents.defense import DefenseAgent
+from hosforge.security_agents.attack import (
+    AttackAgent,
+    PentestReport,
+    PentestTarget,
+    PentestPhase,
+    PhaseResult,
+    ReconResult,
+    ScanResult,
+)
 
 __all__ = [
     'BaseSecurityAgent',
@@ -28,4 +37,11 @@ __all__ = [
     'SecuritySupervisorAgent',
     'AuditAgent',
     'DefenseAgent',
+    'AttackAgent',
+    'PentestReport',
+    'PentestTarget',
+    'PentestPhase',
+    'PhaseResult',
+    'ReconResult',
+    'ScanResult',
 ]
