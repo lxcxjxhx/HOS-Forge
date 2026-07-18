@@ -3,16 +3,14 @@ frontend/node_modules
 
 # Configuration (except pyproject.toml)
 *.ini
-*.toml
-!pyproject.toml
-*.yml
 
 # Documentation (except README.md)
 *.md
 !README.md
 
-# Hidden files and directories
+# Hidden files and directories (except .agents/)
 .*
+!.agents/
 **/.venv
 __pycache__
 
