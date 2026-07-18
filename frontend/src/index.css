@@ -1,19 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Outfit:wght@100..900&display=swap');
 
+/* 安全风信子 HOS-Forge Design System */
+@import './styles/hos-forge-theme.css';
+
 :root {
-  --bg-dark: #0c0e10;
-  --bg-light: #292929;
-  --bg-input: #393939;
-  --bg-workspace: #1f2228;
-  --border: #3c3c4a;
-  --text-editor-base: #9099ac;
-  --text-editor-active: #c4cbda;
-  --bg-editor-sidebar: #24272e;
-  --bg-editor-active: #31343d;
-  --border-editor-sidebar: #3c3c4a;
-  background-color: var(--base) !important;
-  --bg-neutral-muted: #afb8c133;
+  /* 覆盖 OpenHands 默认变量为安全风信子风格 */
+  --bg-dark: var(--hyacinth-bg-dark);
+  --bg-light: var(--hyacinth-bg-surface);
+  --bg-input: var(--hyacinth-metal-dark);
+  --bg-workspace: var(--hyacinth-bg-surface);
+  --border: var(--hos-border-color);
+  --text-editor-base: var(--hos-text-secondary);
+  --text-editor-active: var(--hos-text-primary);
+  --bg-editor-sidebar: var(--hyacinth-bg-dark);
+  --bg-editor-active: var(--hyacinth-base);
+  --border-editor-sidebar: var(--hos-border-color);
+  background-color: var(--bg-dark) !important;
+  --bg-neutral-muted: var(--hyacinth-highlight-soft);
 }
 
 body {
