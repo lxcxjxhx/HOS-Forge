@@ -5,16 +5,23 @@ build-backend = "poetry.core.masonry.api"
 requires = [ "poetry-core" ]
 
 [project]
-name = "openhands-ai"
-description = "OpenHands: Code Less, Make More"
+name = "hos-forge"
+description = "HOS-Forge: AI Native Cyber Security IDE — 基于 OpenHands 的 AI 原生网络安全 IDE"
 readme = "README.md"
 license = "MIT"
-authors = [ { name = "OpenHands", email = "contact@all-hands.dev" } ]
+authors = [
+  { name = "HOS-Forge Team" },
+  { name = "OpenHands", email = "contact@all-hands.dev" },
+]
 requires-python = ">=3.12,<3.14"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Topic :: Security",
+  "Topic :: Software Development :: IDE",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
 ]
 # Version is managed dynamically by poetry-dynamic-versioning
 dynamic = [ "version" ]
@@ -108,8 +115,8 @@ dependencies = [
   "zope-interface==7.2",
 ]
 
-urls.Homepage = "https://github.com/OpenHands/OpenHands"
-urls.Repository = "https://github.com/OpenHands/OpenHands"
+urls.Homepage = "https://github.com/lxcxjxhx/HOS-Forge"
+urls.Repository = "https://github.com/lxcxjxhx/HOS-Forge"
 
 [dependency-groups]
 dev = [
@@ -140,20 +147,22 @@ runtime = [
 ]
 
 [tool.poetry]
-name = "openhands-ai"
-version = "1.11.0"
-description = "OpenHands: Code Less, Make More"
-authors = [ "OpenHands" ]
+name = "hos-forge"
+version = "0.1.0"
+description = "HOS-Forge: AI Native Cyber Security IDE — 基于 OpenHands 的 AI 原生网络安全 IDE"
+authors = [ "HOS-Forge Team" ]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/OpenHands/OpenHands"
+repository = "https://github.com/lxcxjxhx/HOS-Forge"
 packages = [
   { include = "openhands/**/*" },
+  { include = "hosforge/**/*" },
   { include = "pyproject.toml", to = "openhands" },
   { include = "poetry.lock", to = "openhands" },
 ]
 include = [
   "skills/**/*",
+  "hosforge/rules/*.yaml",
 ]
 
 [tool.poetry.dependencies]

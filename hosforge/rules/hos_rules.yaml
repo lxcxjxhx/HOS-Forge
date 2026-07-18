@@ -1,0 +1,226 @@
+# ============================================================================
+# HOS-Forge Security Rules — 安全分析规则集
+# 版本: 0.1.0
+# ============================================================================
+
+# ── 元数据 ──────────────────────────────────────────────────────────────
+meta:
+  name: HOS-Forge Default Rules
+  version: 0.1.0
+  description: HOS-Forge 基础安全规则集，覆盖 OWASP Top 10 常见漏洞
+  author: HOS-Forge Security Team
+
+# ── 全局配置 ────────────────────────────────────────────────────────────
+config:
+  min_severity: low          # 最小报告级别
+  max_findings_per_run: 100  # 每次运行最大发现数
+  enable_ai_analysis: true   # 是否启用AI辅助分析
+
+# ── 规则定义 ─────────────────────────────────────────────────────────────
+rules:
+
+  # ── 注入类 ──
+  - id: HOS-001
+    name: SQL Injection Detection
+    description: 检测未使用参数化查询的SQL语句拼接
+    cwe: CWE-89
+    severity: critical
+    category: injection
+    patterns:
+      - pattern: 'execute\(.*\+.*\)'
+        message: '检测到SQL语句字符串拼接，存在SQL注入风险'
+      - pattern: 'cursor\.execute\(.*f['\"]'
+        message: '检测到f-string拼接SQL查询'
+      - pattern: 'raw_input.*(?i)select|insert|update|delete'
+        message: '用户输入直接参与SQL操作'
+    remediation: |
+      使用参数化查询代替字符串拼接:
+      cursor.execute("SELECT * FROM users WHERE id = ?", (user_input,))
+
+  - id: HOS-002
+    name: Command Injection Detection
+    description: 检测OS命令注入风险
+    cwe: CWE-78
+    severity: critical
+    category: injection
+    patterns:
+      - pattern: 'os\.system\(.*\+'
+        message: '检测到命令字符串拼接'
+      - pattern: 'subprocess\.(call|popen|run)\(.*\+'
+        message: '检测到subprocess命令注入'
+      - pattern: 'eval\(.*request'
+        message: '用户输入传入eval()'
+    remediation: |
+      使用subprocess带参数列表形式:
+      subprocess.run(["ls", "-l"], shell=False)
+
+  - id: HOS-003
+    name: NoSQL Injection Detection
+    description: 检测NoSQL注入风险
+    cwe: CWE-943
+    severity: high
+    category: injection
+    patterns:
+      - pattern: 'find\(\{.*\+'
+        message: '检测到MongoDB查询拼接'
+
+  # ── 认证与授权 ──
+  - id: HOS-010
+    name: Hardcoded Credentials
+    description: 检测代码中硬编码的密码、API密钥、Token
+    cwe: CWE-798
+    severity: critical
+    category: credentials
+    patterns:
+      - pattern: '(?i)password\s*[:=]\s*['\"][^'\"]{3,}['\"]'
+        message: '检测到疑似硬编码密码'
+      - pattern: '(?i)(api_key|apikey|secret|token)\s*[:=]\s*['\"][^'\"]{8,}['\"]'
+        message: '检测到硬编码API密钥或Token'
+      - pattern: '(?i)aws_access_key_id|aws_secret_access_key'
+        message: '检测到硬编码AWS凭证'
+    remediation: |
+      使用环境变量或密钥管理服务:
+      PASSWORD = os.environ.get("DB_PASSWORD")
+
+  - id: HOS-011
+    name: Weak Authentication
+    description: 检测弱认证实现
+    cwe: CWE-287
+    severity: high
+    category: authentication
+    patterns:
+      - pattern: 'if\s+.*password\s*==\s*["\'].*["\']'
+        message: '检测到硬编码密码比对'
+      - pattern: '(?i)jwt.*secret\s*=\s*["\'][^"\']{1,8}["\']'
+        message: 'JWT密钥过短'
+
+  # ── XSS ──
+  - id: HOS-020
+    name: Cross-Site Scripting
+    description: 检测反射型/存储型XSS
+    cwe: CWE-79
+    severity: high
+    category: xss
+    patterns:
+      - pattern: 'innerHTML\s*='
+        message: '使用innerHTML可能导致XSS'
+      - pattern: '(?i)mark_safe\('
+        message: 'Django mark_safe()使用需谨慎'
+      - pattern: 'v-html\s*='
+        message: 'Vue v-html可能导致XSS'
+      - pattern: 'dangerouslySetInnerHTML'
+        message: 'React dangerouslySetInnerHTML可能导致XSS'
+    remediation: |
+      使用安全的输出编码方式:
+      - Python: html.escape() / markupsafe.escape()
+      - React: 避免dangerouslySetInnerHTML
+      - Vue: 使用{{ }}插值而非v-html
+
+  # ── 路径与文件 ──
+  - id: HOS-030
+    name: Path Traversal
+    description: 检测路径遍历漏洞
+    cwe: CWE-22
+    severity: high
+    category: file
+    patterns:
+      - pattern: 'open\(.*\.\.\/'
+        message: '检测到可能的路径遍历'
+      - pattern: 'os\.path\.join\(.*request'
+        message: '用户输入参与路径拼接'
+    remediation: |
+      规范化路径并校验:
+      path = os.path.normpath(path)
+      if not path.startswith(ALLOWED_DIR): raise ValueError
+
+  # ── 配置 ──
+  - id: HOS-040
+    name: Debug Mode Enabled
+    description: 生产环境开启Debug模式
+    cwe: CWE-489
+    severity: medium
+    category: misconfiguration
+    patterns:
+      - pattern: 'DEBUG\s*=\s*True'
+        message: '生产环境不应开启Debug模式'
+      - pattern: '(?i)app\.run\(.*debug=True'
+        message: 'Flask debug模式开启'
+
+  - id: HOS-041
+    name: Insecure CORS Policy
+    description: CORS配置过于宽松
+    cwe: CWE-942
+    severity: medium
+    category: misconfiguration
+    patterns:
+      - pattern: 'Access-Control-Allow-Origin:\s*\*'
+        message: 'CORS允许所有来源'
+      - pattern: 'allow_origins=["\*"]'
+        message: 'CORS允许所有来源'
+
+  # ── SSRF ──
+  - id: HOS-050
+    name: Server-Side Request Forgery
+    description: 检测SSRF风险
+    cwe: CWE-918
+    severity: high
+    category: ssrf
+    patterns:
+      - pattern: 'requests\.get\(.*request\.get\('
+        message: '用户输入直接传入requests.get'
+      - pattern: 'urlopen\(.*request\.'
+        message: '用户输入传入urlopen'
+    remediation: |
+      对URL进行白名单校验:
+      from urllib.parse import urlparse
+      parsed = urlparse(user_url)
+      if parsed.hostname not in ALLOWED_HOSTS: raise ValueError
+
+  # ── 加密 ──
+  - id: HOS-060
+    name: Weak Cryptography
+    description: 使用弱加密算法
+    cwe: CWE-327
+    severity: high
+    category: crypto
+    patterns:
+      - pattern: '(?i)md5\(|hashlib\.md5'
+        message: 'MD5已不再安全'
+      - pattern: '(?i)sha1\(|hashlib\.sha1'
+        message: 'SHA-1已不再安全'
+      - pattern: '(?i)DES\(|DES3\('
+        message: 'DES/3DES已不再安全'
+    remediation: |
+      使用现代加密算法:
+      - 哈希: SHA-256/SHA-3
+      - 加密: AES-256-GCM
+
+  # ── 反序列化 ──
+  - id: HOS-070
+    name: Insecure Deserialization
+    description: 检测不安全的反序列化
+    cwe: CWE-502
+    severity: high
+    category: deserialization
+    patterns:
+      - pattern: 'pickle\.loads\('
+        message: 'pickle反序列化可导致RCE'
+      - pattern: 'yaml\.load\(.*Loader'
+        message: '不安全的YAML加载'
+    remediation: |
+      使用安全替代方案:
+      - pickle → json
+      - yaml.load → yaml.safe_load
+
+  # ── 信息泄露 ──
+  - id: HOS-080
+    name: Sensitive Information Exposure
+    description: 检测敏感信息泄露
+    cwe: CWE-200
+    severity: medium
+    category: information
+    patterns:
+      - pattern: '(?i)print\(.*password'
+        message: '日志中不应包含密码'
+      - pattern: 'traceback\.print_exc'
+        message: '生产环境不应显示详细错误'
