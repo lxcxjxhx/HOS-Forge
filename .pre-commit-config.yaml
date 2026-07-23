@@ -15,6 +15,16 @@ repos:
       - id: check-json
       - id: check-added-large-files
 
+  # Commit message 规范检查
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+      - id: gitlint
+        name: commit-msg lint
+        description: '检查 commit message 是否符合 Conventional Commits 格式'
+        stages: [commit-msg]
+        args: [--msg-filename]
+
   # HOS-Forge 安全检查
   - repo: local
     hooks:
