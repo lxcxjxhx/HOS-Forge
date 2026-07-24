@@ -199,7 +199,9 @@ class DbSessionInjector(BaseModel, Injector[AsyncSession]):
                     database=self.name,
                 )
             else:
-                url = f'sqlite+aiosqlite:///{str(self.persistence_dir)}/openhands.db'
+                # Windows compatibility: Path uses backslashes, but SQLite URL requires forward slashes
+                persistence_path = str(self.persistence_dir).replace('\\', '/')
+                url = f'sqlite+aiosqlite:///{persistence_path}/openhands.db'
 
             if self.host:
                 async_engine = create_async_engine(
@@ -246,16 +248,26 @@ class DbSessionInjector(BaseModel, Injector[AsyncSession]):
                     database=self.name,
                 )
             else:
-                url = f'sqlite:///{self.persistence_dir}/openhands.db'
-            engine = create_engine(
-                url,
-                connect_args=build_pg8000_connect_args(self.ssl_mode),
-                pool_size=self.pool_size,
-                max_overflow=self.max_overflow,
-                pool_recycle=self.pool_recycle,
-                pool_pre_ping=True,
-                pool_use_lifo=self.pool_use_lifo,
-            )
+                # Windows compatibility: Path uses backslashes, but SQLite URL requires forward slashes
+                persistence_path = str(self.persistence_dir).replace('\\', '/')
+                url = f'sqlite:///{persistence_path}/openhands.db'
+
+            if self.host:
+                engine = create_engine(
+                    url,
+                    connect_args=build_pg8000_connect_args(self.ssl_mode),
+                    pool_size=self.pool_size,
+                    max_overflow=self.max_overflow,
+                    pool_recycle=self.pool_recycle,
+                    pool_pre_ping=True,
+                    pool_use_lifo=self.pool_use_lifo,
+                )
+            else:
+                engine = create_engine(
+                    url,
+                    poolclass=NullPool,
+                    pool_pre_ping=True,
+                )
         assert engine is not None  # Always assigned in either branch above
         self._engine = engine
         return engine
