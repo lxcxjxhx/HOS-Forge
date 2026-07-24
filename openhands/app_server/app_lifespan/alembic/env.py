@@ -79,7 +79,11 @@ def run_migrations_offline() -> None:
         )
         url = f'postgresql://{db_session.user}:{password_value}@{db_session.host}:{db_session.port}/{db_session.name}'
     else:
-        url = f'sqlite:///{db_session.persistence_dir}/openhands.db'
+        # Windows compatibility: Path uses backslashes, but SQLite URL requires forward slashes
+        persistence_path = str(db_session.persistence_dir).replace('\\', '/')
+        url = f'sqlite:///{persistence_path}/openhands.db'
+        # Ensure persistence directory exists for SQLite
+        db_session.persistence_dir.mkdir(parents=True, exist_ok=True)
 
     context.configure(
         url=url,
