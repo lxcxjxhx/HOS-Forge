@@ -12,13 +12,18 @@ from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
 import pytest
-from pydantic import SecretStr
-
 from openhands.agent_server.models import (
     SendMessageRequest,
     StartConversationRequest,
     TextContent,
 )
+from openhands.sdk import Agent, AgentContext, Event
+from openhands.sdk.llm import LLM
+from openhands.sdk.secret import LookupSecret, StaticSecret
+from openhands.sdk.settings import ConversationSettings, OpenHandsAgentSettings
+from openhands.sdk.workspace.remote.async_remote_workspace import AsyncRemoteWorkspace
+from pydantic import SecretStr
+
 from openhands.app_server.app_conversation.app_conversation_models import (
     AgentType,
     AppConversationInfo,
@@ -54,11 +59,6 @@ from openhands.app_server.settings.settings_models import (
 )
 from openhands.app_server.user.user_context import UserContext
 from openhands.app_server.utils.redis_lock import RedisLockUnavailable
-from openhands.sdk import Agent, AgentContext, Event
-from openhands.sdk.llm import LLM
-from openhands.sdk.secret import LookupSecret, StaticSecret
-from openhands.sdk.settings import ConversationSettings, OpenHandsAgentSettings
-from openhands.sdk.workspace.remote.async_remote_workspace import AsyncRemoteWorkspace
 
 
 def _async_iter(items):
@@ -3311,6 +3311,7 @@ class TestPluginHandling:
     def test_construct_initial_message_with_plugin_params_no_params(self):
         """Test _construct_initial_message_with_plugin_params with plugins but no parameters."""
         from openhands.agent_server.models import SendMessageRequest, TextContent
+
         from openhands.app_server.app_conversation.app_conversation_models import (
             PluginSpec,
         )
@@ -3334,6 +3335,7 @@ class TestPluginHandling:
     def test_construct_initial_message_with_plugin_params_creates_new_message(self):
         """Test _construct_initial_message_with_plugin_params creates message when no initial message."""
         from openhands.agent_server.models import TextContent
+
         from openhands.app_server.app_conversation.app_conversation_models import (
             PluginSpec,
         )
@@ -3360,6 +3362,7 @@ class TestPluginHandling:
     def test_construct_initial_message_with_plugin_params_appends_to_message(self):
         """Test _construct_initial_message_with_plugin_params appends to existing message."""
         from openhands.agent_server.models import SendMessageRequest, TextContent
+
         from openhands.app_server.app_conversation.app_conversation_models import (
             PluginSpec,
         )
@@ -3392,6 +3395,7 @@ class TestPluginHandling:
     def test_construct_initial_message_with_plugin_params_preserves_role(self):
         """Test _construct_initial_message_with_plugin_params preserves message role."""
         from openhands.agent_server.models import SendMessageRequest, TextContent
+
         from openhands.app_server.app_conversation.app_conversation_models import (
             PluginSpec,
         )
@@ -3412,6 +3416,7 @@ class TestPluginHandling:
     def test_construct_initial_message_with_plugin_params_empty_content(self):
         """Test _construct_initial_message_with_plugin_params handles empty content list."""
         from openhands.agent_server.models import SendMessageRequest, TextContent
+
         from openhands.app_server.app_conversation.app_conversation_models import (
             PluginSpec,
         )
@@ -3431,6 +3436,7 @@ class TestPluginHandling:
     def test_construct_initial_message_with_multiple_plugins(self):
         """Test _construct_initial_message_with_plugin_params handles multiple plugins."""
         from openhands.agent_server.models import TextContent
+
         from openhands.app_server.app_conversation.app_conversation_models import (
             PluginSpec,
         )
