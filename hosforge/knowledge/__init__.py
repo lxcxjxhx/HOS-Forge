@@ -1,4 +1,4 @@
-﻿"""
+"""
 HOS-Forge Knowledge - Security Knowledge Base (Enhanced).
 
 Based on SQLite/vector database security knowledge management:

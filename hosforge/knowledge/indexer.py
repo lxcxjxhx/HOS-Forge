@@ -17,9 +17,23 @@ from hosforge.logging_config import get_logger
 logger = get_logger(__name__)
 
 SUPPORTED_EXTENSIONS = {
-    ".md", ".txt", ".py", ".js", ".ts", ".yaml", ".yml",
-    ".json", ".html", ".css", ".sh", ".bash", ".toml",
-    ".cfg", ".ini", ".xml", ".rst",
+    ".md",
+    ".txt",
+    ".py",
+    ".js",
+    ".ts",
+    ".yaml",
+    ".yml",
+    ".json",
+    ".html",
+    ".css",
+    ".sh",
+    ".bash",
+    ".toml",
+    ".cfg",
+    ".ini",
+    ".xml",
+    ".rst",
 }
 
 

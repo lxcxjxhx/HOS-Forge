@@ -142,11 +142,13 @@ class VectorStore:
             doc = self._documents[idx]
             doc_id = self._get_id_by_idx(idx)
 
-            results.append({
-                "document": doc,
-                "score": float(score),
-                "id": doc_id,
-            })
+            results.append(
+                {
+                    "document": doc,
+                    "score": float(score),
+                    "id": doc_id,
+                }
+            )
 
         return results
 
@@ -173,10 +175,15 @@ class VectorStore:
 
         docs_path = path / "documents.json"
         with open(docs_path, "w", encoding="utf-8") as f:
-            json.dump({
-                "documents": self._documents,
-                "id_to_idx": self._id_to_idx,
-            }, f, ensure_ascii=False, indent=2)
+            json.dump(
+                {
+                    "documents": self._documents,
+                    "id_to_idx": self._id_to_idx,
+                },
+                f,
+                ensure_ascii=False,
+                indent=2,
+            )
         logger.info(f"Saved documents to {docs_path}")
 
     def load(self, path: str | Path) -> None:

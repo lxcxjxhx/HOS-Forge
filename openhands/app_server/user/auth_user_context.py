@@ -6,7 +6,6 @@ from typing import Any, AsyncGenerator, cast
 from uuid import UUID
 
 from fastapi import Request
-from openhands.sdk.secret import SecretSource, StaticSecret
 from pydantic import PrivateAttr, SecretStr
 
 from openhands.app_server.errors import AuthError
@@ -21,6 +20,7 @@ from openhands.app_server.user.specifiy_user_context import USER_CONTEXT_ATTR
 from openhands.app_server.user.user_context import UserContext, UserContextInjector
 from openhands.app_server.user.user_models import UserInfo
 from openhands.app_server.user_auth.user_auth import UserAuth, get_user_auth
+from openhands.sdk.secret import SecretSource, StaticSecret
 
 USER_AUTH_ATTR = 'user_auth'
 _logger = logging.getLogger(__name__)

@@ -91,7 +91,7 @@ class AuditAgent(BaseSecurityAgent):
                 logger.error("Rule evaluation failed: %s", e)
 
         finding.summary = (
-            f"AuditAgent 发现 {len(finding.vulnerabilities)} 个潜在安全问题 " f"(模式: {mode})"
+            f"AuditAgent 发现 {len(finding.vulnerabilities)} 个潜在安全问题 (模式: {mode})"
         )
         finding.scan_duration_ms = 0  # 实际应记录耗时
 

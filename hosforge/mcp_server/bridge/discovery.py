@@ -211,7 +211,7 @@ class MCPDiscoveryEngine:
                         name=f"config-{name}",
                         description=f"MCP service from config: {name}",
                         protocol=transport,
-                        transport=f'{command} {" ".join(args)}',
+                        transport=f"{command} {' '.join(args)}",
                         source="config",
                         config=server_config,
                     )
@@ -255,7 +255,7 @@ class MCPDiscoveryEngine:
                     name=known_dict["name"],
                     description=known_dict["description"],
                     protocol=known_dict["protocol"],
-                    transport=f'{command} {" ".join(known_dict["args"])}',
+                    transport=f"{command} {' '.join(known_dict['args'])}",
                     source="process",
                 )
                 services.append(svc)

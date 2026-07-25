@@ -119,7 +119,9 @@ def _apply_env_overrides(config: dict[str, Any]) -> None:
             env_value = os.getenv(env_var)
             if env_value:
                 service_config["name"] = env_value
-                logger.debug("Service %s overridden by env var %s=%s", service_key, env_var, env_value)
+                logger.debug(
+                    "Service %s overridden by env var %s=%s", service_key, env_var, env_value
+                )
 
 
 # 全局配置实例

@@ -163,8 +163,7 @@ class MetricLoader:
         except ImportError:
             self._evaluate_module = None
             logger.warning(
-                "evaluate 库未安装，BLEU/ROUGE 等指标将使用内置实现。"
-                "安装命令: pip install evaluate"
+                "evaluate 库未安装，BLEU/ROUGE 等指标将使用内置实现。安装命令: pip install evaluate"
             )
 
     def compute(
@@ -205,7 +204,7 @@ class MetricLoader:
             return self._compute_f1(predictions, references)
         else:
             raise MetricComputeError(
-                f"不支持的指标: {metric_name}，" f"支持的指标: {', '.join(self.SUPPORTED_METRICS)}"
+                f"不支持的指标: {metric_name}，支持的指标: {', '.join(self.SUPPORTED_METRICS)}"
             )
 
     def _compute_perplexity(

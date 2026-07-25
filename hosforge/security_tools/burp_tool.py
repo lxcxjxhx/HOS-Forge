@@ -159,7 +159,7 @@ class BurpTool(BaseSecurityTool):
             return SecurityToolResult(
                 tool_name=self.name,
                 success=True,
-                output=f'Scan created: {data.get("scan_id", "")}',
+                output=f"Scan created: {data.get('scan_id', '')}",
                 raw_data={"scan_id": data.get("scan_id", ""), "status": "created"},
             )
         else:

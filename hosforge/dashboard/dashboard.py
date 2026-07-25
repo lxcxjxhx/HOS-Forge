@@ -72,7 +72,7 @@ class VulnStatWidget(DashboardWidget):
             <div style="display:flex;align-items:center;justify-content:space-between;
                 margin-bottom:12px;">
                 <h3 style="font-size:16px;font-weight:600;color:#B49BC4;margin:0;">
-                    {self.title or '漏洞统计'}</h3>
+                    {self.title or "漏洞统计"}</h3>
                 <span style="font-size:12px;color:#6B6F72;">总计: {self.total}</span>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">{cards}</div>
@@ -153,7 +153,7 @@ class PentestResultWidget(DashboardWidget):
                 <span>{icon}</span>
                 <span style="flex:1;color:#B49BC4;font-weight:500;">{name}</span>
                 <span style="color:{sc};font-size:11px;font-weight:600;">
-                    {p.get('status', '').upper()}</span>
+                    {p.get("status", "").upper()}</span>
             </div>"""
 
         return f"""
@@ -261,17 +261,17 @@ class RecentFindingsWidget(DashboardWidget):
                 <span style="display:inline-block;width:8px;height:8px;
                     border-radius:50%;background:{color};flex-shrink:0;
                     box-shadow:0 0 6px {color};"></span>
-                <span style="flex:1;color:#B49BC4;">{item.get('name', '')}</span>
+                <span style="flex:1;color:#B49BC4;">{item.get("name", "")}</span>
                 <span style="color:{color};font-size:11px;font-weight:600;">
                     {sev.upper()}</span>
                 <span style="color:#6B6F72;font-size:11px;">
-                    {item.get('time', '')}</span>
+                    {item.get("time", "")}</span>
             </div>"""
 
         return f"""
         <div class="hos-widget" style="margin-bottom:16px;">
             <h3 style="font-size:16px;font-weight:600;color:#B49BC4;margin:0 0 8px 0;">
-                {self.title or '最近发现'}</h3>
+                {self.title or "最近发现"}</h3>
             {rows}
         </div>"""
 

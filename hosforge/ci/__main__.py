@@ -41,14 +41,14 @@ def main() -> None:
 
     if command == "check-reality":
         result = asyncio.run(run_reality_check(args if args else None))
-        print(f'Reality Check: {"✅ PASS" if result["passed"] else "❌ FAIL"}')
-        print(f'Files scanned: {result["files_scanned"]}')
+        print(f"Reality Check: {'✅ PASS' if result['passed'] else '❌ FAIL'}")
+        print(f"Files scanned: {result['files_scanned']}")
 
     elif command == "check-sast":
         path = args[0] if args else "."
         result = asyncio.run(run_sast_scan(path))
-        print(f'SAST Scan: {"✅ PASS" if result["passed"] else "❌ FAIL"}')
-        print(f'Findings: {result["findings"]}')
+        print(f"SAST Scan: {'✅ PASS' if result['passed'] else '❌ FAIL'}")
+        print(f"Findings: {result['findings']}")
 
     elif command == "install-hook":
         path = args[0] if args else ".git/hooks/pre-commit"
@@ -59,8 +59,8 @@ def main() -> None:
         print("=== HOS-Forge CI Security Scan ===")
         reality = asyncio.run(run_reality_check())
         sast = asyncio.run(run_sast_scan())
-        print(f'\nReality Score: {"✅" if reality["passed"] else "❌"} ')
-        print(f'SAST Scan: {"✅" if sast["passed"] else "❌"} ({sast["findings"]} findings)')
+        print(f"\nReality Score: {'✅' if reality['passed'] else '❌'} ")
+        print(f"SAST Scan: {'✅' if sast['passed'] else '❌'} ({sast['findings']} findings)")
         sys.exit(0 if (reality["passed"] and sast["passed"]) else 1)
 
     else:

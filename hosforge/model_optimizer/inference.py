@@ -609,7 +609,7 @@ class VLLMBackend(InferenceBackend):
         try:
             from vllm import LLM
         except ImportError as e:
-            raise ImportError("vLLM 未安装，请运行：\n" "  pip install vllm") from e
+            raise ImportError("vLLM 未安装，请运行：\n  pip install vllm") from e
 
         import torch
 
@@ -832,7 +832,7 @@ class SGLangBackend(InferenceBackend):
         try:
             import sglang as sgl
         except ImportError as e:
-            raise ImportError("SGLang 未安装，请运行：\n" "  pip install sglang") from e
+            raise ImportError("SGLang 未安装，请运行：\n  pip install sglang") from e
 
         logger.info(f"加载 SGLang 引擎: {self.model_path}")
         logger.info(f"  静态显存比例: {self.mem_fraction_static}")

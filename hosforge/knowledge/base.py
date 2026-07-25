@@ -208,15 +208,15 @@ class SecurityKnowledgeBase(abc.ABC):
                     f"## {cve.cve_id}\n\n"
                     f"- **严重程度**: {cve.severity} (CVSS: {cve.cvss_score})\n"
                     f"- **描述**: {cve.description}\n"
-                    f'- **CWE**: {", ".join(cve.cwe_ids) if cve.cwe_ids else "N/A"}\n'
-                    f'- **可利用**: {"是" if cve.exploit_available else "否"}\n'
-                    f'- **KEV**: {"是" if cve.kev else "否"}\n'
+                    f"- **CWE**: {', '.join(cve.cwe_ids) if cve.cwe_ids else 'N/A'}\n"
+                    f"- **可利用**: {'是' if cve.exploit_available else '否'}\n"
+                    f"- **KEV**: {'是' if cve.kev else '否'}\n"
                 )
 
         if cwe_id:
             cwe = await self.get_cwe(cwe_id)
             if cwe:
-                parts.append(f"## {cwe.cwe_id}: {cwe.name}\n\n" f"{cwe.description}\n\n")
+                parts.append(f"## {cwe.cwe_id}: {cwe.name}\n\n{cwe.description}\n\n")
                 if cwe.mitigations:
                     parts.append("### 缓解措施\n")
                     for m in cwe.mitigations:
@@ -563,7 +563,7 @@ class LocalKnowledgeBase(SecurityKnowledgeBase):
             results.append(
                 KnowledgeEntry(
                     id=row["cwe_id"],
-                    title=f'CWE: {row["cwe_id"]} - {row["name"]}',
+                    title=f"CWE: {row['cwe_id']} - {row['name']}",
                     content=row["description"] or "",
                     source="cwe",
                     tags=["weakness"],
@@ -580,7 +580,7 @@ class LocalKnowledgeBase(SecurityKnowledgeBase):
             (cve_id.upper(),),
         ).fetchone()
         if row and row["code"]:
-            return f'# PoC for {cve_id}\n\n{row["code"]}'
+            return f"# PoC for {cve_id}\n\n{row['code']}"
         return ""
 
     async def check_kev(self, cve_id: str) -> bool:

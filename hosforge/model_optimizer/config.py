@@ -713,8 +713,7 @@ class ConfigManager:
                     v2 = self._get_nested(config, key_pair[1])
                     if v1 is True and v2 is True:
                         issues.append(
-                            f"[冲突] {rule['description']}: "
-                            f"{key_pair[0]}={v1}, {key_pair[1]}={v2}"
+                            f"[冲突] {rule['description']}: {key_pair[0]}={v1}, {key_pair[1]}={v2}"
                         )
 
             elif condition == "format_gguf_with_dtype":
@@ -722,7 +721,7 @@ class ConfigManager:
                 dtype = self._get_nested(config, "model.dtype")
                 if fmt == "gguf" and dtype is not None:
                     issues.append(
-                        f"[冲突] {rule['description']}: " f"format=gguf 时不应设置 dtype={dtype}"
+                        f"[冲突] {rule['description']}: format=gguf 时不应设置 dtype={dtype}"
                     )
 
             elif condition == "value_gt":
@@ -765,7 +764,7 @@ class ConfigManager:
         gpu_util = self._get_nested(config, "inference.gpu_memory_utilization")
         if gpu_util is not None and (gpu_util < 0.5 or gpu_util > 0.95):
             issues.append(
-                f"[范围] inference.gpu_memory_utilization={gpu_util} " f"超出安全范围 [0.5, 0.95]"
+                f"[范围] inference.gpu_memory_utilization={gpu_util} 超出安全范围 [0.5, 0.95]"
             )
 
         # learning_rate 合理性检查
