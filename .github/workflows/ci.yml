@@ -1,0 +1,228 @@
+# ============================================================================
+# HOS-Forge CI — 持续集成质量门禁
+#
+# 适配自 OpenHands CI 配置，针对 HOS-Forge 目录结构和安全需求优化。
+#
+# Jobs:
+#   1. lint-python      — Python 代码 lint (pre-commit + ruff + mypy)
+#   2. lint-frontend     — 前端代码 lint (ESLint + TypeScript)
+#   3. test-hosforge     — hosforge 包单元测试 + 覆盖率
+#   4. test-frontend     — 前端单元测试 + 覆盖率
+#   5. test-enterprise   — enterprise 单元测试
+#   6. build-frontend    — 前端构建验证
+#   7. coverage-comment  — PR 覆盖率评论
+#
+# 触发条件:
+#   - push to main/develop
+#   - PR to main
+# ============================================================================
+
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+
+# Cancel in-progress runs for the same PR/branch
+concurrency:
+  group: ${{ github.workflow }}-${{ (github.head_ref && github.ref) || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Job 1: Python Lint ─────────────────────────────────────────
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit hooks (root)
+        run: pre-commit run --all-files --show-diff-on-failure
+
+  # ── Job 2: Frontend Lint ───────────────────────────────────────
+  lint-frontend:
+    name: Lint Frontend
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Lint, TypeScript, and translation checks
+        working-directory: ./frontend
+        run: |
+          npm run lint
+          npm run make-i18n && npx tsc
+          npm run check-translation-completeness
+
+  # ── Job 3: HOS-Forge Unit Tests ────────────────────────────────
+  test-hosforge:
+    name: HOS-Forge Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install poetry via pipx
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "poetry"
+
+      - name: Install Python dependencies
+        working-directory: ./hosforge
+        run: poetry install --with dev
+
+      - name: Run hosforge unit tests
+        working-directory: ./hosforge
+        run: |
+          poetry run pytest --cov=hosforge --cov-branch --cov-report=term-missing -v
+        env:
+          COVERAGE_FILE: ".coverage.hosforge.py${{ matrix.python-version }}"
+
+      - name: Store coverage file
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-hosforge-py${{ matrix.python-version }}
+          path: "hosforge/.coverage.hosforge.py${{ matrix.python-version }}"
+          include-hidden-files: true
+
+  # ── Job 4: Frontend Unit Tests ─────────────────────────────────
+  test-frontend:
+    name: Frontend Unit Tests
+    runs-on: ubuntu-24.04
+    if: >-
+      github.event_name == 'push' ||
+      contains(github.event.pull_request.changed_files.*.filename, 'frontend/')
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run tests with coverage
+        working-directory: ./frontend
+        run: npm run test:coverage
+
+  # ── Job 5: Enterprise Unit Tests ───────────────────────────────
+  test-enterprise:
+    name: Enterprise Python Tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install poetry via pipx
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "poetry"
+
+      - name: Install Python dependencies
+        working-directory: ./enterprise
+        run: poetry install --with dev,test
+
+      - name: Run enterprise unit tests
+        run: >
+          PYTHONPATH=".:$PYTHONPATH"
+          poetry run --project=enterprise
+          pytest --forked -n auto -s
+          -p no:ddtrace -p no:ddtrace.pytest_bdd -p no:ddtrace.pytest_benchmark
+          ./enterprise/tests/unit
+          --cov=enterprise --cov-branch
+        env:
+          COVERAGE_FILE: ".coverage.enterprise.3.12"
+
+      - name: Store coverage file
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-enterprise
+          path: ".coverage.enterprise.3.12"
+          include-hidden-files: true
+
+  # ── Job 6: Frontend Build Verification ─────────────────────────
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-24.04
+    needs: [lint-frontend]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build for production
+        working-directory: ./frontend
+        run: npm run build
+
+  # ── Job 7: Coverage Comment on PR ──────────────────────────────
+  coverage-comment:
+    name: Coverage Comment
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    needs: [test-hosforge, test-enterprise]
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+
+      - name: Coverage comment
+        uses: py-cov-action/python-coverage-comment-action@53ff7553078bad69030786e486677315346c2dd2 # v3
+        with:
+          GITHUB_TOKEN: ${{ github.token }}
+          MERGE_COVERAGE_FILES: true
