@@ -6,13 +6,14 @@ from abc import ABC, abstractmethod
 from functools import cache
 
 from openhands.agent_server import env_parser
+from openhands.sdk.utils.models import DiscriminatedUnionMixin
+
 from openhands.app_server.errors import SandboxError
 from openhands.app_server.sandbox.sandbox_spec_models import (
     SandboxSpecInfo,
     SandboxSpecInfoPage,
 )
 from openhands.app_server.services.injector import Injector
-from openhands.sdk.utils.models import DiscriminatedUnionMixin
 
 _DEFAULT_REPOSITORY = 'ghcr.io/openhands/agent-server'
 

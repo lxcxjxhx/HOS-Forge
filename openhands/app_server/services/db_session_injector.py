@@ -202,6 +202,8 @@ class DbSessionInjector(BaseModel, Injector[AsyncSession]):
                 # Windows compatibility: Path uses backslashes, but SQLite URL requires forward slashes
                 persistence_path = str(self.persistence_dir).replace('\\', '/')
                 url = f'sqlite+aiosqlite:///{persistence_path}/openhands.db'
+                # Ensure persistence directory exists for SQLite
+                self.persistence_dir.mkdir(parents=True, exist_ok=True)
 
             if self.host:
                 async_engine = create_async_engine(
@@ -248,6 +250,8 @@ class DbSessionInjector(BaseModel, Injector[AsyncSession]):
                     database=self.name,
                 )
             else:
+                # Ensure persistence directory exists for SQLite (must be before URL construction)
+                self.persistence_dir.mkdir(parents=True, exist_ok=True)
                 # Windows compatibility: Path uses backslashes, but SQLite URL requires forward slashes
                 persistence_path = str(self.persistence_dir).replace('\\', '/')
                 url = f'sqlite:///{persistence_path}/openhands.db'

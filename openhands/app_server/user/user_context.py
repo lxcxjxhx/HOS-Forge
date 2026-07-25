@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
 
+from openhands.sdk.secret import SecretSource
+from openhands.sdk.utils.models import DiscriminatedUnionMixin
+
 from openhands.app_server.integrations.provider import (
     PROVIDER_TOKEN_TYPE,
     ProviderHandler,
@@ -10,8 +13,6 @@ from openhands.app_server.services.injector import Injector
 from openhands.app_server.user.user_models import (
     UserInfo,
 )
-from openhands.sdk.secret import SecretSource
-from openhands.sdk.utils.models import DiscriminatedUnionMixin
 
 
 class UserContext(ABC):

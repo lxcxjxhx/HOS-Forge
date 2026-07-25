@@ -8,6 +8,9 @@ from typing import AsyncGenerator
 from uuid import UUID
 
 from openhands.agent_server.models import EventPage, EventSortOrder
+from openhands.sdk import Event
+from openhands.sdk.utils.paging import page_iterator
+
 from openhands.app_server.app_conversation.app_conversation_info_service import (
     AppConversationInfoService,
 )
@@ -17,8 +20,6 @@ from openhands.app_server.app_conversation.app_conversation_models import (
 from openhands.app_server.conversation_paths import V1_CONVERSATIONS_DIR
 from openhands.app_server.event.event_service import EventService
 from openhands.app_server.event_callback.event_callback_models import EventKind
-from openhands.sdk import Event
-from openhands.sdk.utils.paging import page_iterator
 
 
 def _event_load_concurrency() -> int:

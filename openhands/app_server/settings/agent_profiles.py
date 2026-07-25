@@ -29,6 +29,12 @@ from contextlib import contextmanager
 from typing import Any, Final, TypeAlias
 from uuid import UUID
 
+from openhands.sdk.profiles import (
+    ACPAgentProfile,
+    OpenHandsAgentProfile,
+    ProfileLimitExceeded,
+    validate_agent_profile,
+)
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -40,12 +46,6 @@ from pydantic import (
 )
 
 from openhands.app_server.utils.logger import openhands_logger as logger
-from openhands.sdk.profiles import (
-    ACPAgentProfile,
-    OpenHandsAgentProfile,
-    ProfileLimitExceeded,
-    validate_agent_profile,
-)
 
 # Mirrors ``MAX_AGENT_PROFILES`` in the local agent-server router
 # (openhands-agent-server/.../agent_profiles_router.py) so both backends share
