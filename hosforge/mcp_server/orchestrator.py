@@ -18,16 +18,136 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Any
+
+import yaml
 
 from hosforge.mcp_server.bridge.connectors.burp import BurpConnector
 from hosforge.mcp_server.bridge.connectors.security_hub import SecurityHubConnector
 from hosforge.mcp_server.bridge.discovery import DiscoveredService, MCPDiscoveryEngine
 
 logger = logging.getLogger(__name__)
+
+
+def load_mcp_config() -> dict[str, Any]:
+    """
+    加载 MCP Server 配置。
+
+    优先级：
+    1. 环境变量 HOSFORGE_MCP_CONFIG 指定的配置文件路径
+    2. 默认配置文件 hosforge/mcp_server/config.yaml
+    3. 内置默认配置（向后兼容）
+
+    Returns:
+        dict[str, Any]: 配置字典
+    """
+    # 内置默认配置
+    default_config = {
+        "services": {
+            "security_hub": {
+                "name": "security-hub",
+                "env_var": "HOSFORGE_SERVICE_SECURITY_HUB",
+                "description": "安全中心服务 - 集成 nmap, nuclei, sqlmap 等工具",
+            },
+            "burp": {
+                "name": "burp",
+                "env_var": "HOSFORGE_SERVICE_BURP",
+                "description": "Burp Suite 服务 - Web 应用安全测试",
+            },
+            "hos_forge": {
+                "name": "hos-forge",
+                "env_var": "HOSFORGE_SERVICE_HOS_FORGE",
+                "description": "HOS-Forge 原生服务 - 代码审计和报告生成",
+                "aliases": ["hos", "native"],
+            },
+        },
+        "workflows": {
+            "default_timeout": 120,
+            "max_retries": 3,
+        },
+        "connectors": {
+            "auto_discover": True,
+            "connection_timeout": 30,
+        },
+    }
+
+    # 尝试加载配置文件
+    config_path = os.getenv("HOSFORGE_MCP_CONFIG")
+    if not config_path:
+        # 使用默认路径
+        config_path = Path(__file__).parent / "config.yaml"
+    else:
+        config_path = Path(config_path)
+
+    if config_path.exists():
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                loaded_config = yaml.safe_load(f)
+                if loaded_config:
+                    # 合并配置（loaded_config 覆盖 default_config）
+                    _merge_config(default_config, loaded_config)
+                    logger.info("Loaded MCP config from: %s", config_path)
+        except Exception as e:
+            logger.warning("Failed to load MCP config from %s: %s", config_path, e)
+
+    # 应用环境变量覆盖
+    _apply_env_overrides(default_config)
+
+    return default_config
+
+
+def _merge_config(base: dict[str, Any], override: dict[str, Any]) -> None:
+    """递归合并配置字典（override 覆盖 base）"""
+    for key, value in override.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            _merge_config(base[key], value)
+        else:
+            base[key] = value
+
+
+def _apply_env_overrides(config: dict[str, Any]) -> None:
+    """应用环境变量覆盖服务名称"""
+    services = config.get("services", {})
+    for service_key, service_config in services.items():
+        env_var = service_config.get("env_var")
+        if env_var:
+            env_value = os.getenv(env_var)
+            if env_value:
+                service_config["name"] = env_value
+                logger.debug("Service %s overridden by env var %s=%s", service_key, env_var, env_value)
+
+
+# 全局配置实例
+_MCP_CONFIG: dict[str, Any] | None = None
+
+
+def get_mcp_config() -> dict[str, Any]:
+    """获取 MCP 配置（懒加载）"""
+    global _MCP_CONFIG
+    if _MCP_CONFIG is None:
+        _MCP_CONFIG = load_mcp_config()
+    return _MCP_CONFIG
+
+
+def get_service_name(service_key: str) -> str:
+    """
+    获取服务名称（支持配置和环境变量覆盖）。
+
+    Args:
+        service_key: 服务键名（如 'security_hub', 'burp', 'hos_forge'）
+
+    Returns:
+        str: 实际服务名称
+    """
+    config = get_mcp_config()
+    services = config.get("services", {})
+    service_config = services.get(service_key, {})
+    return service_config.get("name", service_key.replace("_", "-"))
 
 
 @dataclass
@@ -82,6 +202,7 @@ class WorkflowResult:
 
 
 # ── 预定义工作流模板 ──────────────────────────────────────────
+# 服务名称使用配置键 (security_hub / burp / hos_forge)，运行时通过 get_service_name() 解析
 WORKFLOW_TEMPLATES: dict[str, dict[str, Any]] = {
     "web_audit": {
         "name": "Web 安全审计",
@@ -89,27 +210,27 @@ WORKFLOW_TEMPLATES: dict[str, dict[str, Any]] = {
         "steps": [
             {
                 "name": "端口扫描",
-                "service": "security-hub",
+                "service": "security_hub",
                 "tool": "nmap",
                 "timeout": 300,
                 "args": {"ports": "1-1024"},
             },
             {
                 "name": "目录枚举",
-                "service": "security-hub",
+                "service": "security_hub",
                 "tool": "gobuster_dir",
                 "depends_on": [0],
             },
             {
                 "name": "漏洞扫描",
-                "service": "security-hub",
+                "service": "security_hub",
                 "tool": "nuclei_scan",
                 "depends_on": [0],
             },
             {"name": "Burp 分析", "service": "burp", "tool": "proxy_history", "depends_on": [0]},
             {
                 "name": "SQL 注入检测",
-                "service": "security-hub",
+                "service": "security_hub",
                 "tool": "sqlmap_scan",
                 "depends_on": [0],
             },
@@ -121,13 +242,13 @@ WORKFLOW_TEMPLATES: dict[str, dict[str, Any]] = {
         "steps": [
             {
                 "name": "端口扫描",
-                "service": "security-hub",
+                "service": "security_hub",
                 "tool": "nmap",
                 "timeout": 120,
                 "args": {"ports": "80,443,22,3389,3306,6379"},
             },
-            {"name": "子域名枚举", "service": "security-hub", "tool": "subfinder"},
-            {"name": "WHOIS 查询", "service": "security-hub", "tool": "whois_lookup"},
+            {"name": "子域名枚举", "service": "security_hub", "tool": "subfinder"},
+            {"name": "WHOIS 查询", "service": "security_hub", "tool": "whois_lookup"},
         ],
     },
     "full_pentest": {
@@ -136,27 +257,27 @@ WORKFLOW_TEMPLATES: dict[str, dict[str, Any]] = {
         "steps": [
             {
                 "name": "信息收集",
-                "service": "security-hub",
+                "service": "security_hub",
                 "tool": "nmap",
                 "timeout": 600,
                 "args": {"ports": "1-65535"},
             },
             {
                 "name": "漏洞扫描",
-                "service": "security-hub",
+                "service": "security_hub",
                 "tool": "nuclei_scan",
                 "depends_on": [0],
             },
             {"name": "Web 扫描", "service": "burp", "tool": "start_scan", "depends_on": [0]},
             {
                 "name": "代码审计",
-                "service": "hos-forge",
+                "service": "hos_forge",
                 "tool": "semgrep_scan",
                 "args": {"rules": ["p/security-audit"]},
             },
             {
                 "name": "报告生成",
-                "service": "hos-forge",
+                "service": "hos_forge",
                 "tool": "report_generate",
                 "depends_on": [1, 2, 3],
             },
@@ -183,12 +304,26 @@ class MCPOrchestrator:
         """发现所有可用的 MCP 服务"""
         services = await self._discovery.discover_all()
 
-        # 自动初始化标准连接器
-        for svc in services:
-            if "burp" in svc.name.lower() and "burp" not in self._connectors:
-                self._connectors["burp"] = BurpConnector()
-            if "security-hub" in svc.name.lower() and "security-hub" not in self._connectors:
-                self._connectors["security-hub"] = SecurityHubConnector()
+        config = get_mcp_config()
+        svc_configs = config.get("services", {})
+
+        # 自动初始化标准连接器（基于配置的服务名称和别名）
+        connector_classes: dict[str, Any] = {
+            "burp": BurpConnector,
+            "security_hub": SecurityHubConnector,
+        }
+        for svc_key, cls in connector_classes.items():
+            svc_cfg = svc_configs.get(svc_key, {})
+            configured_name = svc_cfg.get("name", svc_key.replace("_", "-"))
+            aliases = svc_cfg.get("aliases", [])
+            match_names = [configured_name.lower()] + [a.lower() for a in aliases]
+
+            for svc in services:
+                svc_lower = svc.name.lower()
+                if any(m in svc_lower for m in match_names):
+                    if svc_key not in self._connectors:
+                        self._connectors[svc_key] = cls()
+                    break
 
         return services
 
@@ -369,23 +504,55 @@ class MCPOrchestrator:
 
         step.completed_at = datetime.utcnow().isoformat()
 
+    def _resolve_service_key(self, service: str) -> str:
+        """
+        将服务名称（可能是配置键、配置名称或别名）规范化为配置键。
+
+        解析顺序：
+        1. 直接匹配配置键（如 'security_hub'）
+        2. 匹配配置中的 name 字段（如 'security-hub' -> 'security_hub'）
+        3. 匹配配置中的 aliases（如 'hos', 'native' -> 'hos_forge'）
+        4. 原样返回（兼容未配置的自定义服务）
+        """
+        service_lower = service.lower()
+        config = get_mcp_config()
+        services_cfg = config.get("services", {})
+
+        # 1. 直接匹配配置键
+        if service_lower in services_cfg:
+            return service_lower
+
+        # 2. 匹配配置中的 name 字段
+        for key, svc_cfg in services_cfg.items():
+            if svc_cfg.get("name", "").lower() == service_lower:
+                return key
+
+        # 3. 匹配别名
+        for key, svc_cfg in services_cfg.items():
+            aliases = [a.lower() for a in svc_cfg.get("aliases", [])]
+            if service_lower in aliases:
+                return key
+
+        # 4. 未匹配，原样返回
+        return service_lower
+
     async def _execute_tool_call(
         self,
         service: str,
         tool: str,
         args: dict[str, Any],
     ) -> Any:
-        """路由到正确的 MCP 服务执行工具调用"""
-        service = service.lower()
+        """路由到正确的 MCP 服务执行工具调用（基于配置驱动的服务名称）"""
+        service_key = self._resolve_service_key(service)
 
         # HOS-Forge 原生工具
-        if service in ("hos-forge", "hos", "native"):
+        if service_key == "hos_forge":
             from hosforge.mcp_server.tools.security_tools import _call_native_tool
 
             return await _call_native_tool(tool, args)
 
         # Burp MCP
-        if service == "burp" and "burp" in self._connectors:
+        if service_key == "burp" and "burp" in self._connectors:
             burp: BurpConnector = self._connectors["burp"]
             tool_map = {
                 "proxy_history": burp.get_proxy_history,
@@ -399,8 +566,8 @@ class MCPOrchestrator:
             return await burp._adapter.call_tool(tool, args)
 
         # mcp-security-hub
-        if service == "security-hub" and "security-hub" in self._connectors:
-            hub: SecurityHubConnector = self._connectors["security-hub"]
+        if service_key == "security_hub" and "security_hub" in self._connectors:
+            hub: SecurityHubConnector = self._connectors["security_hub"]
             tool_map = {
                 "nmap": hub.nmap_scan,
                 "nuclei_scan": hub.nuclei_scan,
@@ -417,7 +584,7 @@ class MCPOrchestrator:
                 return await handler(**args)
             return await hub._call(tool, args)
 
-        raise ValueError(f"Unknown service: {service}")
+        raise ValueError(f"Unknown service: {service} (resolved key: {service_key})")
 
     # ── 工作流模板管理 ─────────────────────────────────────────
 
