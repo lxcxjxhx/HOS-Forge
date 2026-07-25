@@ -49,6 +49,11 @@ dependencies = [
   "peft>=0.7.0",
   "datasets>=2.16.0",
   "huggingface-hub>=0.20.0",
+  
+  # 向量搜索和嵌入
+  "faiss-cpu>=1.7.4",
+  "sentence-transformers>=2.2.0",
+  "numpy>=1.24.0",
 ]
 
 [project.optional-dependencies]

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import shutil
 from typing import Any
 
@@ -60,11 +61,13 @@ class NmapTool(BaseSecurityTool):
             target: 目标 IP/域名
             **kwargs:
                 ports: 端口范围 (默认 "1-1024")
-                scan_type: 扫描类型 (tcp_syn/tcp_connect/udp)
+                scan_type: 扫描类型 (tcp_syn/tcp_connect/udp/ping/comprehensive)
                 scripts: NSE 脚本列表
                 os_detection: 是否检测操作系统
                 service_detection: 是否检测服务版本
+                timing: 时序模板 (T0-T5)
                 extra_args: 额外 nmap 参数
+                timeout: 超时秒数 (默认 300)
 
         Returns:
             SecurityToolResult: 扫描结果
@@ -81,7 +84,9 @@ class NmapTool(BaseSecurityTool):
         scripts = kwargs.get("scripts", [])
         os_detection = kwargs.get("os_detection", False)
         service_detection = kwargs.get("service_detection", True)
+        timing = kwargs.get("timing", "")
         extra_args = kwargs.get("extra_args", [])
+        timeout = kwargs.get("timeout", 300)
 
         # 构建命令
         cmd = [self._nmap_path]
@@ -97,22 +102,27 @@ class NmapTool(BaseSecurityTool):
         cmd.extend(scan_flags.get(scan_type, ["-sS"]))
 
         # 端口
-        cmd.extend(["-p", str(ports)])
+        if ports and scan_type != "ping":
+            cmd.extend(["-p", str(ports)])
 
         # 服务版本检测
-        if service_detection:
+        if service_detection and scan_type != "comprehensive":
             cmd.append("-sV")
 
         # 操作系统检测
-        if os_detection:
+        if os_detection and scan_type != "comprehensive":
             cmd.append("-O")
+
+        # 时序模板
+        if timing and re.match(r"^T[0-5]$", timing):
+            cmd.append(f"-{timing}")
 
         # NSE 脚本
         if scripts:
             cmd.extend(["--script", ",".join(scripts)])
 
-        # 输出格式
-        cmd.extend(["-oX", "-"])  # XML to stdout
+        # 输出格式 - XML 到 stdout
+        cmd.extend(["-oX", "-"])
 
         # 额外参数
         if extra_args:
@@ -120,9 +130,6 @@ class NmapTool(BaseSecurityTool):
 
         # 目标
         cmd.append(target)
-
-        # 超时
-        timeout = kwargs.get("timeout", 300)
 
         logger.info("Nmap command: %s", " ".join(cmd))
 
@@ -190,6 +197,7 @@ class NmapTool(BaseSecurityTool):
             "banners": {},
             "os_guess": "",
             "host_status": "unknown",
+            "scan_info": {},
         }
 
         # 基础 XML 解析
@@ -199,12 +207,11 @@ class NmapTool(BaseSecurityTool):
                 result["host_status"] = "up"
 
             # 提取端口信息
-            import re
-
             port_matches = re.findall(
                 r'<port protocol="(\w+)" portid="(\d+)">.*?<state state="(\w+)".*?'
                 r'(?:<service name="([^"]*)"|)',
                 xml_output,
+                re.DOTALL,
             )
             for _protocol, port, state, service in port_matches:
                 if state == "open":
@@ -212,5 +219,21 @@ class NmapTool(BaseSecurityTool):
                     result["open_ports"].append(port_num)
                     if service:
                         result["services"][port_num] = service
+
+            # 提取操作系统信息
+            os_matches = re.findall(
+                r'<osmatch name="([^"]*)" accuracy="(\d+)"',
+                xml_output,
+            )
+            if os_matches:
+                result["os_guess"] = os_matches[0][0]
+
+            # 提取扫描信息
+            scan_matches = re.findall(
+                r'<scaninfo type="(\w+)"',
+                xml_output,
+            )
+            if scan_matches:
+                result["scan_info"]["type"] = scan_matches[0]
 
         return result
