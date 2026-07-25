@@ -1,0 +1,33 @@
+# MCP Server Configuration
+# 服务名称映射和默认配置
+
+services:
+  # 服务名称映射 - 支持通过环境变量覆盖
+  # 环境变量格式：HOSFORGE_SERVICE_<UPPERCASE_NAME>
+  security_hub:
+    name: "security-hub"
+    env_var: "HOSFORGE_SERVICE_SECURITY_HUB"
+    description: "安全中心服务 - 集成 nmap, nuclei, sqlmap 等工具"
+    
+  burp:
+    name: "burp"
+    env_var: "HOSFORGE_SERVICE_BURP"
+    description: "Burp Suite 服务 - Web 应用安全测试"
+    
+  hos_forge:
+    name: "hos-forge"
+    env_var: "HOSFORGE_SERVICE_HOS_FORGE"
+    description: "HOS-Forge 原生服务 - 代码审计和报告生成"
+    aliases:
+      - "hos"
+      - "native"
+
+# 工作流默认配置
+workflows:
+  default_timeout: 120
+  max_retries: 3
+  
+# 连接器配置
+connectors:
+  auto_discover: true
+  connection_timeout: 30
