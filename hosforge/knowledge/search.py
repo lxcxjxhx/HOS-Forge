@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+from hosforge.exceptions import KnowledgeQueryError
 from hosforge.knowledge.embeddings import EmbeddingGenerator
 from hosforge.knowledge.vector_store import VectorStore
+from hosforge.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass

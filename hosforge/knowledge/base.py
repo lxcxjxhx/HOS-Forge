@@ -9,13 +9,19 @@ from __future__ import annotations
 
 import abc
 import json
-import logging
 import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from hosforge.exceptions import (
+    KnowledgeBaseConnectionError,
+    KnowledgeBaseError,
+    DataImportError,
+)
+from hosforge.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -108,7 +114,7 @@ class SecurityKnowledgeBase(abc.ABC):
     def __init__(self, db_path: str = ""):
         self._db_path = db_path
         self._db: sqlite3.Connection | None = None
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
 
     @abc.abstractmethod
     async def query(self, question: str, top_k: int = 5) -> list[KnowledgeEntry]:

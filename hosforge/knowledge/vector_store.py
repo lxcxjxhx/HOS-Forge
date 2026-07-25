@@ -3,14 +3,16 @@
 from __future__ import annotations
 
 import json
-import logging
 from pathlib import Path
 from typing import Any
 
 import faiss
 import numpy as np
 
-logger = logging.getLogger(__name__)
+from hosforge.exceptions import KnowledgeBaseConnectionError, KnowledgeBaseError
+from hosforge.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class VectorStore:
@@ -55,7 +57,7 @@ class VectorStore:
             self._index = faiss.IndexIVFFlat(quantizer, self.embedding_dim, nlist)
             logger.info(f"Created IVFFlat index with dim={self.embedding_dim}, nlist={nlist}")
         else:
-            raise ValueError(f"Unsupported index type: {self.index_type}")
+            raise KnowledgeBaseError(f"Unsupported index type: {self.index_type}")
 
         if self.use_gpu:
             try:
@@ -79,10 +81,10 @@ class VectorStore:
             ids: optional list of document IDs
         """
         if self._index is None:
-            raise RuntimeError("Index not initialized")
+            raise KnowledgeBaseConnectionError("Index not initialized")
 
         if len(vectors) != len(documents):
-            raise ValueError("vectors and documents must have same length")
+            raise KnowledgeBaseError("vectors and documents must have same length")
 
         if ids is None:
             ids = [str(i) for i in range(len(self._documents), len(self._documents) + len(vectors))]
@@ -117,7 +119,7 @@ class VectorStore:
             list of dicts with 'document', 'score', 'id' keys
         """
         if self._index is None:
-            raise RuntimeError("Index not initialized")
+            raise KnowledgeBaseConnectionError("Index not initialized")
 
         if len(self._documents) == 0:
             return []

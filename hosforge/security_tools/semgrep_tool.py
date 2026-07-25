@@ -8,13 +8,14 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
 import shutil
 from typing import Any
 
+from hosforge.exceptions import ToolExecutionError, ToolNotFoundError, ToolTimeoutError
+from hosforge.logging_config import get_logger
 from hosforge.security_tools.base import BaseSecurityTool, SecurityToolResult
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class SemgrepTool(BaseSecurityTool):
@@ -143,12 +144,19 @@ class SemgrepTool(BaseSecurityTool):
                     process.communicate(),
                     timeout=timeout,
                 )
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as e:
                 process.kill()
+                error = ToolTimeoutError(
+                    f"Semgrep scan timed out after {timeout}s",
+                    timeout_seconds=timeout,
+                    tool_name=self.name,
+                    cause=e,
+                )
+                logger.error(str(error))
                 return SecurityToolResult(
                     tool_name=self.name,
                     success=False,
-                    error=f"Semgrep scan timed out after {timeout}s",
+                    error=str(error),
                 )
 
             output = stdout.decode()
@@ -183,18 +191,29 @@ class SemgrepTool(BaseSecurityTool):
                 },
             )
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            error = ToolNotFoundError(
+                f"Semgrep not found at: {self._semgrep_path}",
+                tool_name=self.name,
+                cause=e,
+            )
+            logger.error(str(error))
             return SecurityToolResult(
                 tool_name=self.name,
                 success=False,
-                error=f"Semgrep not found at: {self._semgrep_path}",
+                error=str(error),
             )
         except Exception as e:
-            logger.exception("Semgrep execution failed")
+            error = ToolExecutionError(
+                "Semgrep execution failed",
+                tool_name=self.name,
+                cause=e,
+            )
+            logger.exception(str(error))
             return SecurityToolResult(
                 tool_name=self.name,
                 success=False,
-                error=str(e),
+                error=str(error),
             )
 
     def _parse_semgrep_results(self, data: dict[str, Any]) -> list[dict[str, Any]]:

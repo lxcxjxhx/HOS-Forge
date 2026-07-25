@@ -4,16 +4,17 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
 import os
 from pathlib import Path
 from typing import Any
 
+from hosforge.exceptions import KnowledgeBaseError
 from hosforge.knowledge.embeddings import EmbeddingGenerator
 from hosforge.knowledge.search import SemanticSearcher
 from hosforge.knowledge.vector_store import VectorStore
+from hosforge.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 SUPPORTED_EXTENSIONS = {
     ".md", ".txt", ".py", ".js", ".ts", ".yaml", ".yml",
@@ -59,7 +60,7 @@ class KnowledgeIndexer:
     ) -> int:
         directory = Path(directory)
         if not directory.exists():
-            raise FileNotFoundError(f"Directory not found: {directory}")
+            raise KnowledgeBaseError(f"Directory not found: {directory}")
         exts = extensions or SUPPORTED_EXTENSIONS
         files: list[Path] = []
         if recursive:
