@@ -1,12 +1,13 @@
 """上传模型到 HuggingFace Hub 的工具模块"""
+
 import os
+
 os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "0"
 
 import logging
-import sys
 from pathlib import Path
 
-from huggingface_hub import HfApi, CommitOperationAdd
+from huggingface_hub import HfApi
 from huggingface_hub.utils import HfHubHTTPError
 from tqdm import tqdm
 
@@ -40,9 +41,7 @@ def upload_to_huggingface(
         whoami = api.whoami()
         logger.info("已登录 HuggingFace: %s", whoami.get("name", "unknown"))
     except Exception as exc:
-        raise RuntimeError(
-            "未登录 HuggingFace，请先执行 huggingface-cli login"
-        ) from exc
+        raise RuntimeError("未登录 HuggingFace，请先执行 huggingface-cli login") from exc
 
     # 创建仓库
     try:
@@ -54,7 +53,8 @@ def upload_to_huggingface(
 
     # 收集所有文件（排除缓存和临时文件）
     files = sorted(
-        f for f in model_path.rglob("*")
+        f
+        for f in model_path.rglob("*")
         if f.is_file() and "__pycache__" not in str(f) and not f.name.startswith(".")
     )
     total = len(files)
@@ -70,10 +70,10 @@ def upload_to_huggingface(
     for idx, file_path in enumerate(tqdm(files, desc="上传进度", unit="file"), 1):
         rel_path = file_path.relative_to(model_path)
         file_size_mb = file_path.stat().st_size / (1024 * 1024)
-        
+
         # 显示当前文件信息
         print(f"[{idx}/{total}] 上传: {rel_path} ({file_size_mb:.2f} MB)...", flush=True)
-        
+
         try:
             api.upload_file(
                 path_or_fileobj=str(file_path),

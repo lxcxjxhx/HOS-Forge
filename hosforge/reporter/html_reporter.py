@@ -10,10 +10,8 @@ HOS-Forge Security HTML Reporter — React 安全报告生成器。
 from __future__ import annotations
 
 import json
-import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from hosforge.reporter.models import ReportData, ReportMetadata, VulnerabilityEntry
 
@@ -32,7 +30,7 @@ class SecurityHtmlReporter:
         # 双击 report.html 即可在浏览器中查看
     """
 
-    def __init__(self, template_path: str = ''):
+    def __init__(self, template_path: str = ""):
         self._template = self._load_template(template_path)
 
     def generate(self, data: ReportData) -> str:
@@ -47,8 +45,8 @@ class SecurityHtmlReporter:
         """
         report_json = self._build_report_json(data)
         html = self._template.replace(
-            '/* __HOS_REPORT_DATA_INJECT__ */',
-            f'window.__HOS_REPORT_DATA__ = {report_json};',
+            "/* __HOS_REPORT_DATA_INJECT__ */",
+            f"window.__HOS_REPORT_DATA__ = {report_json};",
         )
         return html
 
@@ -77,7 +75,7 @@ class SecurityHtmlReporter:
             metadata=ReportMetadata(
                 title=title,
                 target=target,
-                report_type='scan',
+                report_type="scan",
                 created_at=datetime.utcnow().isoformat(),
             ),
             risk_score=self._calc_risk_score(vulnerabilities),
@@ -98,7 +96,7 @@ class SecurityHtmlReporter:
         """
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(html, encoding='utf-8')
+        path.write_text(html, encoding="utf-8")
         return str(path)
 
     # ── 内部方法 ──────────────────────────────────────────────
@@ -106,64 +104,69 @@ class SecurityHtmlReporter:
     def _load_template(self, template_path: str) -> str:
         """加载 React 模板"""
         if template_path and Path(template_path).exists():
-            return Path(template_path).read_text(encoding='utf-8')
+            return Path(template_path).read_text(encoding="utf-8")
 
         # 使用内置模板
-        builtin = Path(__file__).parent / 'templates' / 'react_report_template.html'
+        builtin = Path(__file__).parent / "templates" / "react_report_template.html"
         if builtin.exists():
-            return builtin.read_text(encoding='utf-8')
+            return builtin.read_text(encoding="utf-8")
 
         raise FileNotFoundError(
-            f'Report template not found at {builtin}. '
-            'Reinstall hosforge or provide a custom template path.'
+            f"Report template not found at {builtin}. "
+            "Reinstall hosforge or provide a custom template path."
         )
 
     def _build_report_json(self, data: ReportData) -> str:
         """构建注入报告的数据 JSON"""
         summary = {
-            'totalFiles': data.metadata.target.count('/') + 1 if data.metadata.target else 0,
-            'totalVulnerabilities': len(data.vulnerabilities),
-            'scanDuration': 0,
-            'severityCounts': {
-                'critical': data.critical_count,
-                'high': data.high_count,
-                'medium': data.medium_count,
-                'low': data.low_count,
-                'info': 0,
+            "totalFiles": data.metadata.target.count("/") + 1 if data.metadata.target else 0,
+            "totalVulnerabilities": len(data.vulnerabilities),
+            "scanDuration": 0,
+            "severityCounts": {
+                "critical": data.critical_count,
+                "high": data.high_count,
+                "medium": data.medium_count,
+                "low": data.low_count,
+                "info": 0,
             },
-            'overallFpr': 0.0,
+            "overallFpr": 0.0,
         }
 
         vulns = []
         for i, v in enumerate(data.vulnerabilities, 1):
-            vuln = {
-                'id': v.id or f'VULN-{i:03d}',
-                'title': v.name,
-                'severity': v.severity,
-                'category': 'general_static',
-                'status': 'confirmed' if v.severity in ('critical', 'high') else 'uncertain',
-                'confidence': 0.85 if v.severity in ('critical', 'high') else 0.6,
-                'location': f'{v.affected_component}:{v.discovered_at}' if v.affected_component else '',
-                'description': v.description,
-                'files': [v.affected_component] if v.affected_component else [],
-                'codeContext': None,
-                'evidence': [],
-                'fixSuggestion': v.remediation,
-            }
-
+            evidence_list: list[dict[str, str]] = []
             if v.cwe_id or v.cve_id:
-                vuln['evidence'] = [{
-                    'type': 'reference',
-                    'location': f'CWE: {v.cwe_id}' if v.cwe_id else f'CVE: {v.cve_id}',
-                    'reason': f'参见 {v.cwe_id}' if v.cwe_id else f'关联 {v.cve_id}',
-                }]
+                evidence_list = [
+                    {
+                        "type": "reference",
+                        "location": f"CWE: {v.cwe_id}" if v.cwe_id else f"CVE: {v.cve_id}",
+                        "reason": f"参见 {v.cwe_id}" if v.cwe_id else f"关联 {v.cve_id}",
+                    }
+                ]
+
+            vuln = {
+                "id": v.id or f"VULN-{i:03d}",
+                "title": v.name,
+                "severity": v.severity,
+                "category": "general_static",
+                "status": "confirmed" if v.severity in ("critical", "high") else "uncertain",
+                "confidence": 0.85 if v.severity in ("critical", "high") else 0.6,
+                "location": (
+                    f"{v.affected_component}:{v.discovered_at}" if v.affected_component else ""
+                ),
+                "description": v.description,
+                "files": [v.affected_component] if v.affected_component else [],
+                "codeContext": None,
+                "evidence": evidence_list,
+                "fixSuggestion": v.remediation,
+            }
 
             vulns.append(vuln)
 
         report = {
-            'summary': summary,
-            'vulnerabilities': vulns,
-            'files': self._build_file_list(vulns),
+            "summary": summary,
+            "vulnerabilities": vulns,
+            "files": self._build_file_list(vulns),
         }
 
         return json.dumps(report, ensure_ascii=False, indent=2)
@@ -173,16 +176,16 @@ class SecurityHtmlReporter:
         """从漏洞列表构建文件关联列表"""
         file_map: dict[str, dict] = {}
         for v in vulns:
-            for f in v.get('files', []):
+            for f in v.get("files", []):
                 if f not in file_map:
-                    file_map[f] = {'path': f, 'issueCount': 0, 'vulnIds': []}
-                file_map[f]['issueCount'] += 1
-                file_map[f]['vulnIds'].append(v['id'])
+                    file_map[f] = {"path": f, "issueCount": 0, "vulnIds": []}
+                file_map[f]["issueCount"] += 1
+                file_map[f]["vulnIds"].append(v["id"])
         return list(file_map.values())
 
     @staticmethod
     def _calc_risk_score(vulnerabilities: list[VulnerabilityEntry]) -> int:
         """计算风险评分"""
-        weights = {'critical': 10, 'high': 5, 'medium': 3, 'low': 1, 'info': 0}
+        weights = {"critical": 10, "high": 5, "medium": 3, "low": 1, "info": 0}
         total = sum(weights.get(v.severity, 0) for v in vulnerabilities)
         return min(100, total * 2)

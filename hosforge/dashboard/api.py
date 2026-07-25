@@ -13,35 +13,39 @@ from fastapi import APIRouter, Query
 
 from hosforge.dashboard.dashboard import (
     SecurityDashboard,
-    VulnStatWidget,
-    RiskScoreWidget,
-    RecentFindingsWidget,
 )
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix='/api/hos/dashboard', tags=['HOS-Forge'])
+router = APIRouter(prefix="/api/hos/dashboard", tags=["HOS-Forge"])
 
 
-@router.get('/overview')
+@router.get("/overview")
 async def dashboard_overview() -> dict[str, Any]:
     """Dashboard 概览数据"""
-    dashboard = SecurityDashboard()
+    SecurityDashboard()
     return {
-        'widgets': [
-            {'type': 'risk-score', 'data': {'score': 0}},
-            {'type': 'vuln-stats', 'data': {
-                'critical': 0, 'high': 0, 'medium': 0, 'low': 0, 'info': 0,
-            }},
+        "widgets": [
+            {"type": "risk-score", "data": {"score": 0}},
+            {
+                "type": "vuln-stats",
+                "data": {
+                    "critical": 0,
+                    "high": 0,
+                    "medium": 0,
+                    "low": 0,
+                    "info": 0,
+                },
+            },
         ],
-        'status': 'ok',
+        "status": "ok",
     }
 
 
-@router.get('/vulnerabilities')
+@router.get("/vulnerabilities")
 async def vulnerability_list(
-    severity: str = Query('', description='Filter by severity'),
-    limit: int = Query(50, description='Max results'),
+    severity: str = Query("", description="Filter by severity"),
+    limit: int = Query(50, description="Max results"),
 ) -> list[dict[str, Any]]:
     """获取漏洞列表"""
     from hosforge.knowledge import LocalKnowledgeBase
@@ -51,7 +55,7 @@ async def vulnerability_list(
     return [c.to_dict() for c in cves]
 
 
-@router.get('/mcp-services')
+@router.get("/mcp-services")
 async def mcp_services() -> list[dict[str, Any]]:
     """获取 MCP 服务拓扑状态"""
     from hosforge.mcp_server.bridge.discovery import MCPDiscoveryEngine
@@ -61,12 +65,12 @@ async def mcp_services() -> list[dict[str, Any]]:
     return [s.to_dict() for s in services]
 
 
-@router.get('/report')
+@router.get("/report")
 async def generate_report(
-    target: str = Query('', description='Report target'),
+    target: str = Query("", description="Report target"),
 ) -> str:
     """生成完整 HTML 报告"""
-    from hosforge.reporter import SecurityHtmlReporter, ReportData, ReportMetadata
+    from hosforge.reporter import ReportData, ReportMetadata, SecurityHtmlReporter
 
     reporter = SecurityHtmlReporter()
     data = ReportData(

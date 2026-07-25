@@ -26,10 +26,9 @@ HOS Model Optimizer - 配置优化模块
 
 import argparse
 import copy
-import os
 import sys
 from pathlib import Path
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Any, Dict, List, Optional
 
 try:
     import yaml
@@ -41,23 +40,28 @@ except ImportError:
 # 异常定义
 # ============================================================
 
+
 class ConfigError(Exception):
     """配置相关异常的基类"""
+
     pass
 
 
 class ConfigValidationError(ConfigError):
     """配置验证失败时抛出"""
+
     pass
 
 
 class ConfigConflictError(ConfigError):
     """配置项之间存在冲突时抛出"""
+
     pass
 
 
 class TemplateNotFoundError(ConfigError):
     """请求的模板不存在时抛出"""
+
     pass
 
 
@@ -436,6 +440,7 @@ _CONFLICT_RULES: List[Dict[str, Any]] = [
 # 核心类
 # ============================================================
 
+
 class ConfigManager:
     """配置管理器，负责加载、生成、验证和管理配置"""
 
@@ -472,9 +477,7 @@ class ConfigManager:
             ConfigError: 文件不存在或解析失败
         """
         if yaml is None:
-            raise ConfigError(
-                "PyYAML 未安装，请运行: pip install pyyaml>=6.0"
-            )
+            raise ConfigError("PyYAML 未安装，请运行: pip install pyyaml>=6.0")
 
         path = Path(config_path)
         if not path.exists():
@@ -486,14 +489,12 @@ class ConfigManager:
             with open(path, "r", encoding="utf-8") as f:
                 config = yaml.safe_load(f)
         except yaml.YAMLError as e:
-            raise ConfigError(f"YAML 解析失败: {e}")
+            raise ConfigError(f"YAML 解析失败: {e}") from e
 
         if config is None:
             config = {}
         if not isinstance(config, dict):
-            raise ConfigError(
-                f"配置文件顶层结构必须是字典，当前为: {type(config).__name__}"
-            )
+            raise ConfigError(f"配置文件顶层结构必须是字典，当前为: {type(config).__name__}")
 
         return config
 
@@ -509,9 +510,7 @@ class ConfigManager:
             ConfigError: 保存失败
         """
         if yaml is None:
-            raise ConfigError(
-                "PyYAML 未安装，请运行: pip install pyyaml>=6.0"
-            )
+            raise ConfigError("PyYAML 未安装，请运行: pip install pyyaml>=6.0")
 
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -526,7 +525,7 @@ class ConfigManager:
                     sort_keys=False,
                 )
         except (IOError, yaml.YAMLError) as e:
-            raise ConfigError(f"保存配置文件失败: {e}")
+            raise ConfigError(f"保存配置文件失败: {e}") from e
 
     def merge_configs(self, base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -541,11 +540,7 @@ class ConfigManager:
         """
         result = copy.deepcopy(base)
         for key, value in override.items():
-            if (
-                key in result
-                and isinstance(result[key], dict)
-                and isinstance(value, dict)
-            ):
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
                 result[key] = self.merge_configs(result[key], value)
             else:
                 result[key] = copy.deepcopy(value)
@@ -579,9 +574,7 @@ class ConfigManager:
         """
         if scenario not in _8GB_OPTIMAL_CONFIGS:
             available = ", ".join(sorted(_8GB_OPTIMAL_CONFIGS.keys()))
-            raise ConfigError(
-                f"不支持的场景: {scenario}，可选: {available}"
-            )
+            raise ConfigError(f"不支持的场景: {scenario}，可选: {available}")
 
         if vram_gb > 8.0:
             vram_gb = 8.0
@@ -619,9 +612,7 @@ class ConfigManager:
         elif model_size_b <= 8.0:
             size_key = "7b"
         else:
-            raise ConfigError(
-                f"模型大小 {model_size_b}B 超出 8GB VRAM 场景支持范围（最大 ~7B）"
-            )
+            raise ConfigError(f"模型大小 {model_size_b}B 超出 8GB VRAM 场景支持范围（最大 ~7B）")
 
         # 映射任务类型到场景
         task_scenario_map = {
@@ -638,9 +629,7 @@ class ConfigManager:
         scenario = task_scenario_map[task]
         return self.generate_optimal_config(scenario, vram_gb=vram_gb)
 
-    def _adjust_for_vram(
-        self, config: Dict[str, Any], vram_gb: float
-    ) -> Dict[str, Any]:
+    def _adjust_for_vram(self, config: Dict[str, Any], vram_gb: float) -> Dict[str, Any]:
         """
         根据实际可用 VRAM 微调配置参数
 
@@ -733,8 +722,7 @@ class ConfigManager:
                 dtype = self._get_nested(config, "model.dtype")
                 if fmt == "gguf" and dtype is not None:
                     issues.append(
-                        f"[冲突] {rule['description']}: "
-                        f"format=gguf 时不应设置 dtype={dtype}"
+                        f"[冲突] {rule['description']}: " f"format=gguf 时不应设置 dtype={dtype}"
                     )
 
             elif condition == "value_gt":
@@ -742,9 +730,7 @@ class ConfigManager:
                     val = self._get_nested(config, key)
                     threshold = rule.get("threshold", 1)
                     if val is not None and val > threshold:
-                        issues.append(
-                            f"[冲突] {rule['description']}: {key}={val}"
-                        )
+                        issues.append(f"[冲突] {rule['description']}: {key}={val}")
 
             elif condition == "backend_mismatch":
                 backend = self._get_nested(config, "backend")
@@ -768,31 +754,24 @@ class ConfigManager:
         # temperature 范围检查
         temp = self._get_nested(config, "sampling.temperature")
         if temp is not None and (temp < 0 or temp > 2.0):
-            issues.append(
-                f"[范围] sampling.temperature={temp} 超出合理范围 [0, 2.0]"
-            )
+            issues.append(f"[范围] sampling.temperature={temp} 超出合理范围 [0, 2.0]")
 
         # top_p 范围检查
         top_p = self._get_nested(config, "sampling.top_p")
         if top_p is not None and (top_p < 0 or top_p > 1.0):
-            issues.append(
-                f"[范围] sampling.top_p={top_p} 超出合理范围 [0, 1.0]"
-            )
+            issues.append(f"[范围] sampling.top_p={top_p} 超出合理范围 [0, 1.0]")
 
         # gpu_memory_utilization 范围检查
         gpu_util = self._get_nested(config, "inference.gpu_memory_utilization")
         if gpu_util is not None and (gpu_util < 0.5 or gpu_util > 0.95):
             issues.append(
-                f"[范围] inference.gpu_memory_utilization={gpu_util} "
-                f"超出安全范围 [0.5, 0.95]"
+                f"[范围] inference.gpu_memory_utilization={gpu_util} " f"超出安全范围 [0.5, 0.95]"
             )
 
         # learning_rate 合理性检查
         lr = self._get_nested(config, "training.learning_rate")
         if lr is not None and (lr <= 0 or lr > 1e-2):
-            issues.append(
-                f"[范围] training.learning_rate={lr} 超出合理范围 (0, 1e-2]"
-            )
+            issues.append(f"[范围] training.learning_rate={lr} 超出合理范围 (0, 1e-2]")
 
         # n_ctx / max_model_len / context_length 正值检查
         for key in ["inference.n_ctx", "inference.max_model_len", "inference.context_length"]:
@@ -838,13 +817,9 @@ class ConfigManager:
         others = [i for i in issues if not i.startswith("[冲突]")]
 
         if conflicts:
-            raise ConfigConflictError(
-                "配置冲突:\n" + "\n".join(conflicts)
-            )
+            raise ConfigConflictError("配置冲突:\n" + "\n".join(conflicts))
         if others:
-            raise ConfigValidationError(
-                "配置验证失败:\n" + "\n".join(others)
-            )
+            raise ConfigValidationError("配置验证失败:\n" + "\n".join(others))
 
     # ----------------------------------------------------------
     # 配置模板管理
@@ -981,6 +956,7 @@ class ConfigManager:
 # 命令行接口
 # ============================================================
 
+
 def _build_parser() -> argparse.ArgumentParser:
     """构建命令行参数解析器"""
     parser = argparse.ArgumentParser(
@@ -1035,26 +1011,17 @@ def _build_parser() -> argparse.ArgumentParser:
     )
 
     # 通用参数
-    parser.add_argument(
-        "--config", type=str, help="配置文件路径（用于 --validate）"
-    )
-    parser.add_argument(
-        "--output", "-o", type=str, help="输出文件路径"
-    )
+    parser.add_argument("--config", type=str, help="配置文件路径（用于 --validate）")
+    parser.add_argument("--output", "-o", type=str, help="输出文件路径")
 
     # 生成相关参数
     parser.add_argument(
         "--scenario",
         type=str,
-        help="场景名称（用于 --generate），可选: "
-        + ", ".join(sorted(_8GB_OPTIMAL_CONFIGS.keys())),
+        help="场景名称（用于 --generate），可选: " + ", ".join(sorted(_8GB_OPTIMAL_CONFIGS.keys())),
     )
-    parser.add_argument(
-        "--model-path", type=str, default="", help="模型路径"
-    )
-    parser.add_argument(
-        "--vram", type=float, default=8.0, help="可用显存大小（GB），默认 8"
-    )
+    parser.add_argument("--model-path", type=str, default="", help="模型路径")
+    parser.add_argument("--vram", type=float, default=8.0, help="可用显存大小（GB），默认 8")
 
     # 自动生成相关参数
     parser.add_argument(
@@ -1144,9 +1111,14 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print(f"配置已保存到: {args.output}")
             else:
                 if yaml is not None:
-                    print(yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False))
+                    print(
+                        yaml.dump(
+                            config, default_flow_style=False, allow_unicode=True, sort_keys=False
+                        )
+                    )
                 else:
                     import json
+
                     print(json.dumps(config, indent=2, ensure_ascii=False))
             return 0
 
@@ -1167,9 +1139,14 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print(f"配置已保存到: {args.output}")
             else:
                 if yaml is not None:
-                    print(yaml.dump(config, default_flow_style=False, allow_unicode=True, sort_keys=False))
+                    print(
+                        yaml.dump(
+                            config, default_flow_style=False, allow_unicode=True, sort_keys=False
+                        )
+                    )
                 else:
                     import json
+
                     print(json.dumps(config, indent=2, ensure_ascii=False))
             return 0
 

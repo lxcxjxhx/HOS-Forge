@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -34,30 +33,34 @@ async def run_reality_check(paths: list[str] | None = None) -> dict[str, Any]:
         # 自动查找源码文件
         root = Path.cwd()
         paths = [
-            str(p) for p in root.rglob('*.py')
-            if '.git' not in str(p) and '__pycache__' not in str(p)
+            str(p)
+            for p in root.rglob("*.py")
+            if ".git" not in str(p) and "__pycache__" not in str(p)
         ]
 
-    logger.info('Running Reality Check on %d files...', len(paths))
+    logger.info("Running Reality Check on %d files...", len(paths))
 
     # 调用外部 Silly-Mock 工具
     try:
         result = subprocess.run(
-            ['npx', '@hos/silly-mock'] + paths,
-            capture_output=True, text=True, timeout=60,
+            ["npx", "@hos/silly-mock"] + paths,
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
         output = result.stdout
     except (FileNotFoundError, subprocess.TimeoutExpired) as e:
-        output = f'[WARN] Silly-Mock not available: {e}'
+        output = f"[WARN] Silly-Mock not available: {e}"
 
     return {
-        'files_scanned': len(paths),
-        'output': output[:2000],
-        'passed': 'SCORE' not in output or int(output.split('SCORE:')[1].split('/')[0]) >= SCORE_THRESHOLD,
+        "files_scanned": len(paths),
+        "output": output[:2000],
+        "passed": "SCORE" not in output
+        or int(output.split("SCORE:")[1].split("/")[0]) >= SCORE_THRESHOLD,
     }
 
 
-async def run_sast_scan(path: str = '.') -> dict[str, Any]:
+async def run_sast_scan(path: str = ".") -> dict[str, Any]:
     """
     执行 SAST 代码扫描。
 
@@ -67,29 +70,40 @@ async def run_sast_scan(path: str = '.') -> dict[str, Any]:
     Returns:
         dict: 扫描结果
     """
-    logger.info('Running SAST scan on %s...', path)
+    logger.info("Running SAST scan on %s...", path)
 
     try:
         result = subprocess.run(
-            ['semgrep', 'scan', '--config', 'p/owasp-top-ten',
-             '--config', 'p/python', '--json', path],
-            capture_output=True, text=True, timeout=120,
+            [
+                "semgrep",
+                "scan",
+                "--config",
+                "p/owasp-top-ten",
+                "--config",
+                "p/python",
+                "--json",
+                path,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         import json
+
         data = json.loads(result.stdout) if result.stdout else {}
-        findings = len(data.get('results', []))
+        findings = len(data.get("results", []))
     except (FileNotFoundError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:
         findings = 0
-        logger.warning('SAST scan skipped: %s', e)
+        logger.warning("SAST scan skipped: %s", e)
 
     return {
-        'path': path,
-        'findings': findings,
-        'passed': findings < 10,  # 少于10个发现视为通过
+        "path": path,
+        "findings": findings,
+        "passed": findings < 10,  # 少于10个发现视为通过
     }
 
 
-def generate_precommit_hook(output_path: str = '.git/hooks/pre-commit') -> str:
+def generate_precommit_hook(output_path: str = ".git/hooks/pre-commit") -> str:
     """
     生成 pre-commit hook 脚本。
 
@@ -126,5 +140,5 @@ exit 0
     path.write_text(hook)
     path.chmod(0o755)
 
-    logger.info('Pre-commit hook generated: %s', output_path)
+    logger.info("Pre-commit hook generated: %s", output_path)
     return hook

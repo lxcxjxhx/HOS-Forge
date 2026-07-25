@@ -14,7 +14,6 @@ from hosforge.security_agents.base import (
     SecurityAgentConfig,
     SecurityFinding,
     SecurityVulnerability,
-    Severity,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,16 +32,19 @@ class DefenseAgent(BaseSecurityAgent):
     """
 
     def __init__(self, config: SecurityAgentConfig | None = None):
-        super().__init__(config or SecurityAgentConfig(
-            name='DefenseAgent',
-            description='安全防御/修复 Agent — 漏洞修复 / 代码加固 / 安全策略',
-        ))
+        super().__init__(
+            config
+            or SecurityAgentConfig(
+                name="DefenseAgent",
+                description="安全防御/修复 Agent — 漏洞修复 / 代码加固 / 安全策略",
+            )
+        )
         # 安全修复模板库
         self._fix_templates: dict[str, str] = self._load_fix_templates()
 
     @property
     def name(self) -> str:
-        return 'DefenseAgent'
+        return "DefenseAgent"
 
     async def analyze(self, target: str, **kwargs: Any) -> SecurityFinding:
         """
@@ -55,9 +57,9 @@ class DefenseAgent(BaseSecurityAgent):
         finding = SecurityFinding(
             target=target,
             agent_name=self.name,
-            summary=f'DefenseAgent 分析完成: {target}',
+            summary=f"DefenseAgent 分析完成: {target}",
         )
-        logger.info('DefenseAgent analyzing: %s', target)
+        logger.info("DefenseAgent analyzing: %s", target)
         return finding
 
     async def fix(self, vulnerability: SecurityVulnerability) -> str:
@@ -74,15 +76,16 @@ class DefenseAgent(BaseSecurityAgent):
         template = self._fix_templates.get(cwe_id)
 
         if template:
-            logger.info('Using fix template for %s (CWE: %s)', vulnerability.name, cwe_id)
+            logger.info("Using fix template for %s (CWE: %s)", vulnerability.name, cwe_id)
             return self._apply_template(template, vulnerability)
 
         logger.info(
-            'No template for CWE %s, generating AI-based fix for %s',
-            cwe_id, vulnerability.name,
+            "No template for CWE %s, generating AI-based fix for %s",
+            cwe_id,
+            vulnerability.name,
         )
         # TODO: 集成AI模型生成修复
-        return f'# TODO: Auto-fix for {vulnerability.name} ({cwe_id})\n'
+        return f"# TODO: Auto-fix for {vulnerability.name} ({cwe_id})\n"
 
     async def validate_fix(
         self,
@@ -98,17 +101,17 @@ class DefenseAgent(BaseSecurityAgent):
             3. 功能等价性
         """
         # TODO: 集成HOS-Sec-Engine验证
-        logger.info('Validating fix...')
+        logger.info("Validating fix...")
         return True
 
     def _load_fix_templates(self) -> dict[str, str]:
         """加载CWE对应的修复模板"""
         return {
-            'CWE-89': self._template_sql_injection(),
-            'CWE-79': self._template_xss(),
-            'CWE-78': self._template_command_injection(),
-            'CWE-22': self._template_path_traversal(),
-            'CWE-798': self._template_hardcoded_credentials(),
+            "CWE-89": self._template_sql_injection(),
+            "CWE-79": self._template_xss(),
+            "CWE-78": self._template_command_injection(),
+            "CWE-22": self._template_path_traversal(),
+            "CWE-798": self._template_hardcoded_credentials(),
         }
 
     def _apply_template(
@@ -117,7 +120,7 @@ class DefenseAgent(BaseSecurityAgent):
         vuln: SecurityVulnerability,
     ) -> str:
         """应用修复模板"""
-        context = vuln.code_snippet or ''
+        context = vuln.code_snippet or ""
         return template.format(
             code=context,
             file=vuln.file_path,
@@ -126,7 +129,7 @@ class DefenseAgent(BaseSecurityAgent):
 
     @staticmethod
     def _template_sql_injection() -> str:
-        return '''\
+        return """\
 # HOS-Forge Auto-Fix: SQL Injection (CWE-89)
 # Original code had SQL injection risk
 # Replace with parameterized query:
@@ -141,11 +144,11 @@ cursor.execute(
     "SELECT * FROM users WHERE id = ?",
     (user_input,),
 )
-'''
+"""
 
     @staticmethod
     def _template_xss() -> str:
-        return '''\
+        return """\
 # HOS-Forge Auto-Fix: Cross-Site Scripting (CWE-79)
 # Use safe content rendering
 
@@ -156,11 +159,11 @@ from markupsafe import escape
 
 # ✅ Fixed:
 template = f"<div>{escape(user_input)}</div>"
-'''
+"""
 
     @staticmethod
     def _template_command_injection() -> str:
-        return '''\
+        return """\
 # HOS-Forge Auto-Fix: Command Injection (CWE-78)
 # Avoid shell=True and use subprocess with list args
 
@@ -174,11 +177,11 @@ subprocess.call(
     ["ping", user_input],
     shell=False,
 )
-'''
+"""
 
     @staticmethod
     def _template_path_traversal() -> str:
-        return '''\
+        return """\
 # HOS-Forge Auto-Fix: Path Traversal (CWE-22)
 # Validate and sanitize file paths
 
@@ -194,11 +197,11 @@ user_path = os.path.normpath(user_input).lstrip("/")
 if user_path.startswith("..") or "/" in user_path:
     raise ValueError("Invalid path")
 safe_path = os.path.join(BASE_DIR, user_path)
-'''
+"""
 
     @staticmethod
     def _template_hardcoded_credentials() -> str:
-        return '''\
+        return """\
 # HOS-Forge Auto-Fix: Hardcoded Credentials (CWE-798)
 # Move secrets to environment variables
 
@@ -211,4 +214,4 @@ import os
 PASSWORD = os.environ.get("APP_PASSWORD")
 if not PASSWORD:
     raise EnvironmentError("APP_PASSWORD not set in environment")
-'''
+"""

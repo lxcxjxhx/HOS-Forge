@@ -14,12 +14,12 @@ HOS MCP Bridge — 三方 MCP 桥接层。
 使外部 MCP 工具如同 HOS-Forge 原生工具一样被调用。
 """
 
-from hosforge.mcp_server.bridge.discovery import MCPDiscoveryEngine, DiscoveredService
 from hosforge.mcp_server.bridge.adapter import MCPAdapter, MCPToolSchema
+from hosforge.mcp_server.bridge.discovery import DiscoveredService, MCPDiscoveryEngine
 
 __all__ = [
-    'MCPDiscoveryEngine',
-    'DiscoveredService',
-    'MCPAdapter',
-    'MCPToolSchema',
+    "MCPDiscoveryEngine",
+    "DiscoveredService",
+    "MCPAdapter",
+    "MCPToolSchema",
 ]

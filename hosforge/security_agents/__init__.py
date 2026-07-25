@@ -8,40 +8,40 @@ HOS-Forge Security Agents — AI驱动的安全分析Agent体系。
     - DefenseAgent: 安全修复和加固
 """
 
-from hosforge.security_agents.base import (
-    BaseSecurityAgent,
-    SecurityAgentConfig,
-    SecurityVulnerability,
-    Severity,
-    SecurityFinding,
-)
-from hosforge.security_agents.supervisor import SecuritySupervisorAgent
-from hosforge.security_agents.audit import AuditAgent
-from hosforge.security_agents.defense import DefenseAgent
 from hosforge.security_agents.attack import (
     AttackAgent,
+    PentestPhase,
     PentestReport,
     PentestTarget,
-    PentestPhase,
     PhaseResult,
     ReconResult,
     ScanResult,
 )
+from hosforge.security_agents.audit import AuditAgent
+from hosforge.security_agents.base import (
+    BaseSecurityAgent,
+    SecurityAgentConfig,
+    SecurityFinding,
+    SecurityVulnerability,
+    Severity,
+)
+from hosforge.security_agents.defense import DefenseAgent
+from hosforge.security_agents.supervisor import SecuritySupervisorAgent
 
 __all__ = [
-    'BaseSecurityAgent',
-    'SecurityAgentConfig',
-    'SecurityVulnerability',
-    'Severity',
-    'SecurityFinding',
-    'SecuritySupervisorAgent',
-    'AuditAgent',
-    'DefenseAgent',
-    'AttackAgent',
-    'PentestReport',
-    'PentestTarget',
-    'PentestPhase',
-    'PhaseResult',
-    'ReconResult',
-    'ScanResult',
+    "BaseSecurityAgent",
+    "SecurityAgentConfig",
+    "SecurityVulnerability",
+    "Severity",
+    "SecurityFinding",
+    "SecuritySupervisorAgent",
+    "AuditAgent",
+    "DefenseAgent",
+    "AttackAgent",
+    "PentestReport",
+    "PentestTarget",
+    "PentestPhase",
+    "PhaseResult",
+    "ReconResult",
+    "ScanResult",
 ]

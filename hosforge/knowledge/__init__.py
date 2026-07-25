@@ -10,17 +10,17 @@ HOS-Forge Knowledge — 安全知识大脑 (增强版)。
 """
 
 from hosforge.knowledge.base import (
-    SecurityKnowledgeBase,
-    LocalKnowledgeBase,
-    KnowledgeEntry,
     CVERecord,
     CWERecord,
+    KnowledgeEntry,
+    LocalKnowledgeBase,
+    SecurityKnowledgeBase,
 )
 
 __all__ = [
-    'SecurityKnowledgeBase',
-    'LocalKnowledgeBase',
-    'KnowledgeEntry',
-    'CVERecord',
-    'CWERecord',
+    "SecurityKnowledgeBase",
+    "LocalKnowledgeBase",
+    "KnowledgeEntry",
+    "CVERecord",
+    "CWERecord",
 ]

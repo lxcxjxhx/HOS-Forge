@@ -17,20 +17,21 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SecurityToolResult:
     """安全工具执行结果"""
-    tool_name: str = ''
+
+    tool_name: str = ""
     success: bool = True
-    output: str = ''
-    error: str = ''
+    output: str = ""
+    error: str = ""
     raw_data: dict[str, Any] = field(default_factory=dict)
     execution_time_ms: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            'tool_name': self.tool_name,
-            'success': self.success,
-            'output': self.output,
-            'error': self.error,
-            'execution_time_ms': self.execution_time_ms,
+            "tool_name": self.tool_name,
+            "success": self.success,
+            "output": self.output,
+            "error": self.error,
+            "execution_time_ms": self.execution_time_ms,
         }
 
 

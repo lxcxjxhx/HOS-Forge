@@ -20,8 +20,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MCPToolSchema:
     """外部 MCP 工具的模式定义"""
-    name: str = ''
-    description: str = ''
+
+    name: str = ""
+    description: str = ""
     input_schema: dict[str, Any] = field(default_factory=dict)
 
 
@@ -39,7 +40,7 @@ class MCPAdapter(abc.ABC):
         self.service_name = service_name
         self._connected = False
         self._tools: list[MCPToolSchema] = []
-        self.logger = logging.getLogger(f'MCPAdapter[{service_name}]')
+        self.logger = logging.getLogger(f"MCPAdapter[{service_name}]")
 
     @property
     def is_connected(self) -> bool:
@@ -86,41 +87,44 @@ class StdioMCPAdapter(MCPAdapter):
     async def connect(self) -> bool:
         try:
             self._process = await asyncio.create_subprocess_exec(
-                self._command, *self._args,
+                self._command,
+                *self._args,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
             self._connected = True
-            self.logger.info('Connected via stdio: %s %s', self._command, ' '.join(self._args))
+            self.logger.info("Connected via stdio: %s %s", self._command, " ".join(self._args))
             return True
         except FileNotFoundError:
-            self.logger.error('Command not found: %s', self._command)
+            self.logger.error("Command not found: %s", self._command)
             return False
         except Exception as e:
-            self.logger.error('Connection failed: %s', e)
+            self.logger.error("Connection failed: %s", e)
             return False
 
     async def call_tool(self, name: str, args: dict[str, Any]) -> Any:
         if not self._connected or not self._process:
-            raise ConnectionError(f'{self.service_name} not connected')
+            raise ConnectionError(f"{self.service_name} not connected")
 
         request = {
-            'jsonrpc': '2.0',
-            'id': id(name),
-            'method': 'tools/call',
-            'params': {'name': name, 'arguments': args},
+            "jsonrpc": "2.0",
+            "id": id(name),
+            "method": "tools/call",
+            "params": {"name": name, "arguments": args},
         }
 
-        payload = json.dumps(request) + '\n'
+        payload = json.dumps(request) + "\n"
+        if self._process.stdin is None:
+            raise ConnectionError(f"{self.service_name} stdin not available")
         self._process.stdin.write(payload.encode())
         await self._process.stdin.drain()
 
-        response = await asyncio.wait_for(
-            self._process.stdout.readline(), timeout=60
-        )
+        if self._process.stdout is None:
+            raise ConnectionError(f"{self.service_name} stdout not available")
+        response = await asyncio.wait_for(self._process.stdout.readline(), timeout=60)
         result = json.loads(response.decode())
-        return result.get('result', {})
+        return result.get("result", {})
 
     async def disconnect(self) -> None:
         if self._process:
@@ -130,7 +134,7 @@ class StdioMCPAdapter(MCPAdapter):
             except asyncio.TimeoutError:
                 self._process.kill()
             self._connected = False
-            self.logger.info('Disconnected')
+            self.logger.info("Disconnected")
 
 
 class SSEHttpMCPAdapter(MCPAdapter):
@@ -142,59 +146,58 @@ class SSEHttpMCPAdapter(MCPAdapter):
 
     def __init__(self, service_name: str, base_url: str):
         super().__init__(service_name)
-        self._base_url = base_url.rstrip('/')
-        self._session = None
+        self._base_url = base_url.rstrip("/")
+        self._session: Any = None
 
     async def connect(self) -> bool:
         try:
             import httpx
+
             self._session = httpx.AsyncClient(
                 base_url=self._base_url,
                 timeout=30,
             )
             # 健康检查
-            resp = await self._session.get('/health')
+            resp = await self._session.get("/health")
             self._connected = resp.status_code < 500
             if self._connected:
-                self.logger.info('Connected via SSE: %s', self._base_url)
+                self.logger.info("Connected via SSE: %s", self._base_url)
             return self._connected
         except Exception as e:
-            self.logger.error('SSE connection failed: %s', e)
+            self.logger.error("SSE connection failed: %s", e)
             return False
 
     async def call_tool(self, name: str, args: dict[str, Any]) -> Any:
         if not self._connected or not self._session:
-            raise ConnectionError(f'{self.service_name} not connected')
+            raise ConnectionError(f"{self.service_name} not connected")
 
         # 映射工具名到 HTTP 端点
-        endpoint = f'/tools/{name}'
+        endpoint = f"/tools/{name}"
 
         resp = await self._session.post(
             endpoint,
-            json={'arguments': args},
+            json={"arguments": args},
         )
         if resp.status_code == 200:
             return resp.json()
         else:
-            raise RuntimeError(
-                f'Tool call failed ({resp.status_code}): {resp.text}'
-            )
+            raise RuntimeError(f"Tool call failed ({resp.status_code}): {resp.text}")
 
     async def list_tools(self) -> list[MCPToolSchema]:
         if not self._connected or not self._session:
             return []
 
         try:
-            resp = await self._session.get('/tools')
+            resp = await self._session.get("/tools")
             if resp.status_code == 200:
                 data = resp.json()
                 self._tools = [
                     MCPToolSchema(
-                        name=t.get('name', ''),
-                        description=t.get('description', ''),
-                        input_schema=t.get('inputSchema', {}),
+                        name=t.get("name", ""),
+                        description=t.get("description", ""),
+                        input_schema=t.get("inputSchema", {}),
                     )
-                    for t in data.get('tools', [])
+                    for t in data.get("tools", [])
                 ]
         except Exception:
             pass
@@ -205,4 +208,4 @@ class SSEHttpMCPAdapter(MCPAdapter):
         if self._session:
             await self._session.aclose()
             self._connected = False
-            self.logger.info('Disconnected')
+            self.logger.info("Disconnected")

@@ -23,9 +23,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from hosforge.mcp_server.bridge.discovery import MCPDiscoveryEngine, DiscoveredService
 from hosforge.mcp_server.bridge.connectors.burp import BurpConnector
 from hosforge.mcp_server.bridge.connectors.security_hub import SecurityHubConnector
+from hosforge.mcp_server.bridge.discovery import DiscoveredService, MCPDiscoveryEngine
 
 logger = logging.getLogger(__name__)
 
@@ -33,94 +33,133 @@ logger = logging.getLogger(__name__)
 @dataclass
 class WorkflowStep:
     """工作流单个步骤"""
-    step_id: str = ''
-    name: str = ''
-    service: str = ''           # 目标 MCP 服务
-    tool: str = ''              # 调用的工具名
+
+    step_id: str = ""
+    name: str = ""
+    service: str = ""  # 目标 MCP 服务
+    tool: str = ""  # 调用的工具名
     args: dict[str, Any] = field(default_factory=dict)
     depends_on: list[str] = field(default_factory=list)  # 依赖的 step_id
     timeout: int = 120
-    status: str = 'pending'     # pending | running | completed | failed | skipped
+    status: str = "pending"  # pending | running | completed | failed | skipped
     result: Any = None
-    error: str = ''
-    started_at: str = ''
-    completed_at: str = ''
+    error: str = ""
+    started_at: str = ""
+    completed_at: str = ""
 
 
 @dataclass
 class WorkflowResult:
     """工作流执行结果"""
-    workflow_id: str = ''
-    name: str = ''
-    status: str = 'pending'
+
+    workflow_id: str = ""
+    name: str = ""
+    status: str = "pending"
     steps: list[WorkflowStep] = field(default_factory=list)
     outputs: dict[str, Any] = field(default_factory=dict)
-    summary: str = ''
-    started_at: str = ''
-    completed_at: str = ''
+    summary: str = ""
+    started_at: str = ""
+    completed_at: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            'workflow_id': self.workflow_id,
-            'name': self.name,
-            'status': self.status,
-            'steps': [
+            "workflow_id": self.workflow_id,
+            "name": self.name,
+            "status": self.status,
+            "steps": [
                 {
-                    'step_id': s.step_id,
-                    'name': s.name,
-                    'service': s.service,
-                    'tool': s.tool,
-                    'status': s.status,
-                    'error': s.error,
+                    "step_id": s.step_id,
+                    "name": s.name,
+                    "service": s.service,
+                    "tool": s.tool,
+                    "status": s.status,
+                    "error": s.error,
                 }
                 for s in self.steps
             ],
-            'summary': self.summary,
+            "summary": self.summary,
         }
 
 
 # ── 预定义工作流模板 ──────────────────────────────────────────
 WORKFLOW_TEMPLATES: dict[str, dict[str, Any]] = {
-    'web_audit': {
-        'name': 'Web 安全审计',
-        'description': '从信息收集到漏洞验证的完整 Web 审计流程',
-        'steps': [
-            {'name': '端口扫描', 'service': 'security-hub', 'tool': 'nmap',
-             'timeout': 300, 'args': {'ports': '1-1024'}},
-            {'name': '目录枚举', 'service': 'security-hub', 'tool': 'gobuster_dir',
-             'depends_on': [0]},
-            {'name': '漏洞扫描', 'service': 'security-hub', 'tool': 'nuclei_scan',
-             'depends_on': [0]},
-            {'name': 'Burp 分析', 'service': 'burp', 'tool': 'proxy_history',
-             'depends_on': [0]},
-            {'name': 'SQL 注入检测', 'service': 'security-hub', 'tool': 'sqlmap_scan',
-             'depends_on': [0]},
+    "web_audit": {
+        "name": "Web 安全审计",
+        "description": "从信息收集到漏洞验证的完整 Web 审计流程",
+        "steps": [
+            {
+                "name": "端口扫描",
+                "service": "security-hub",
+                "tool": "nmap",
+                "timeout": 300,
+                "args": {"ports": "1-1024"},
+            },
+            {
+                "name": "目录枚举",
+                "service": "security-hub",
+                "tool": "gobuster_dir",
+                "depends_on": [0],
+            },
+            {
+                "name": "漏洞扫描",
+                "service": "security-hub",
+                "tool": "nuclei_scan",
+                "depends_on": [0],
+            },
+            {"name": "Burp 分析", "service": "burp", "tool": "proxy_history", "depends_on": [0]},
+            {
+                "name": "SQL 注入检测",
+                "service": "security-hub",
+                "tool": "sqlmap_scan",
+                "depends_on": [0],
+            },
         ],
     },
-    'quick_recon': {
-        'name': '快速侦察',
-        'description': '快速信息收集 — 端口 + 子域名 + WHOIS',
-        'steps': [
-            {'name': '端口扫描', 'service': 'security-hub', 'tool': 'nmap',
-             'timeout': 120, 'args': {'ports': '80,443,22,3389,3306,6379'}},
-            {'name': '子域名枚举', 'service': 'security-hub', 'tool': 'subfinder'},
-            {'name': 'WHOIS 查询', 'service': 'security-hub', 'tool': 'whois_lookup'},
+    "quick_recon": {
+        "name": "快速侦察",
+        "description": "快速信息收集 — 端口 + 子域名 + WHOIS",
+        "steps": [
+            {
+                "name": "端口扫描",
+                "service": "security-hub",
+                "tool": "nmap",
+                "timeout": 120,
+                "args": {"ports": "80,443,22,3389,3306,6379"},
+            },
+            {"name": "子域名枚举", "service": "security-hub", "tool": "subfinder"},
+            {"name": "WHOIS 查询", "service": "security-hub", "tool": "whois_lookup"},
         ],
     },
-    'full_pentest': {
-        'name': '完整渗透测试',
-        'description': '全流程渗透测试 (PTES 标准)',
-        'steps': [
-            {'name': '信息收集', 'service': 'security-hub', 'tool': 'nmap',
-             'timeout': 600, 'args': {'ports': '1-65535'}},
-            {'name': '漏洞扫描', 'service': 'security-hub', 'tool': 'nuclei_scan',
-             'depends_on': [0]},
-            {'name': 'Web 扫描', 'service': 'burp', 'tool': 'start_scan',
-             'depends_on': [0]},
-            {'name': '代码审计', 'service': 'hos-forge', 'tool': 'semgrep_scan',
-             'args': {'rules': ['p/security-audit']}},
-            {'name': '报告生成', 'service': 'hos-forge', 'tool': 'report_generate',
-             'depends_on': [1, 2, 3]},
+    "full_pentest": {
+        "name": "完整渗透测试",
+        "description": "全流程渗透测试 (PTES 标准)",
+        "steps": [
+            {
+                "name": "信息收集",
+                "service": "security-hub",
+                "tool": "nmap",
+                "timeout": 600,
+                "args": {"ports": "1-65535"},
+            },
+            {
+                "name": "漏洞扫描",
+                "service": "security-hub",
+                "tool": "nuclei_scan",
+                "depends_on": [0],
+            },
+            {"name": "Web 扫描", "service": "burp", "tool": "start_scan", "depends_on": [0]},
+            {
+                "name": "代码审计",
+                "service": "hos-forge",
+                "tool": "semgrep_scan",
+                "args": {"rules": ["p/security-audit"]},
+            },
+            {
+                "name": "报告生成",
+                "service": "hos-forge",
+                "tool": "report_generate",
+                "depends_on": [1, 2, 3],
+            },
         ],
     },
 }
@@ -146,10 +185,10 @@ class MCPOrchestrator:
 
         # 自动初始化标准连接器
         for svc in services:
-            if 'burp' in svc.name.lower() and 'burp' not in self._connectors:
-                self._connectors['burp'] = BurpConnector()
-            if 'security-hub' in svc.name.lower() and 'security-hub' not in self._connectors:
-                self._connectors['security-hub'] = SecurityHubConnector()
+            if "burp" in svc.name.lower() and "burp" not in self._connectors:
+                self._connectors["burp"] = BurpConnector()
+            if "security-hub" in svc.name.lower() and "security-hub" not in self._connectors:
+                self._connectors["security-hub"] = SecurityHubConnector()
 
         return services
 
@@ -161,12 +200,12 @@ class MCPOrchestrator:
                 ok = await connector.connect()
                 results[name] = ok
                 if ok:
-                    logger.info('Connected: %s', name)
+                    logger.info("Connected: %s", name)
                 else:
-                    logger.warning('Failed to connect: %s', name)
+                    logger.warning("Failed to connect: %s", name)
             except Exception as e:
                 results[name] = False
-                logger.error('Connection error %s: %s', name, e)
+                logger.error("Connection error %s: %s", name, e)
         return results
 
     def register_connector(self, name: str, connector: Any) -> None:
@@ -177,7 +216,7 @@ class MCPOrchestrator:
 
     async def run_pipeline(
         self,
-        template_name: str = '',
+        template_name: str = "",
         steps: list[dict[str, Any]] | None = None,
         **shared_args,
     ) -> WorkflowResult:
@@ -196,14 +235,14 @@ class MCPOrchestrator:
         if not steps and template_name:
             template = WORKFLOW_TEMPLATES.get(template_name)
             if not template:
-                raise ValueError(f'Unknown workflow template: {template_name}')
-            steps = template['steps']
-            workflow_name = template['name']
+                raise ValueError(f"Unknown workflow template: {template_name}")
+            steps = template["steps"]
+            workflow_name = template["name"]
         else:
-            workflow_name = 'custom'
+            workflow_name = "custom"
 
         steps = steps or []
-        workflow_id = f'wf-{uuid.uuid4().hex[:8]}'
+        workflow_id = f"wf-{uuid.uuid4().hex[:8]}"
         now = datetime.utcnow().isoformat()
 
         result = WorkflowResult(
@@ -214,27 +253,29 @@ class MCPOrchestrator:
 
         # 注入共享参数
         for step in steps:
-            if shared_args.get('target'):
-                step.setdefault('args', {})['target'] = shared_args['target']
+            if shared_args.get("target"):
+                step.setdefault("args", {})["target"] = shared_args["target"]
 
         # 构建步骤
         workflow_steps: list[WorkflowStep] = []
         for i, s in enumerate(steps):
-            depends = [steps[d]['name'] for d in s.pop('depends_on', [])]
-            workflow_steps.append(WorkflowStep(
-                step_id=f'{workflow_id}-s{i}',
-                name=s.get('name', f'step-{i}'),
-                service=s.get('service', ''),
-                tool=s.get('tool', ''),
-                args=s.get('args', {}),
-                depends_on=depends,
-                timeout=s.get('timeout', 120),
-            ))
+            depends = [steps[d]["name"] for d in s.pop("depends_on", [])]
+            workflow_steps.append(
+                WorkflowStep(
+                    step_id=f"{workflow_id}-s{i}",
+                    name=s.get("name", f"step-{i}"),
+                    service=s.get("service", ""),
+                    tool=s.get("tool", ""),
+                    args=s.get("args", {}),
+                    depends_on=depends,
+                    timeout=s.get("timeout", 120),
+                )
+            )
         result.steps = workflow_steps
 
         # 按依赖关系执行
         completed: dict[str, Any] = {}
-        remaining = list(workflow_steps)
+        remaining: list[WorkflowStep] = list(workflow_steps)
 
         while remaining:
             batch: list[WorkflowStep] = []
@@ -247,10 +288,10 @@ class MCPOrchestrator:
             if not batch:
                 # 死锁检测
                 blocked = [s.name for s in remaining]
-                logger.error('Workflow deadlock: steps %s waiting on unmet dependencies', blocked)
+                logger.error("Workflow deadlock: steps %s waiting on unmet dependencies", blocked)
                 for s in remaining:
-                    s.status = 'skipped'
-                    s.error = f'Deadlock: unmet dependencies: {s.depends_on}'
+                    s.status = "skipped"
+                    s.error = f"Deadlock: unmet dependencies: {s.depends_on}"
                 break
 
             # 并行执行本批步骤
@@ -261,15 +302,15 @@ class MCPOrchestrator:
                 completed[step.name] = step.result
 
         # 汇总
-        result.status = 'completed' if all(
-            s.status == 'completed' for s in workflow_steps
-        ) else 'partial'
+        result.status = (
+            "completed" if all(s.status == "completed" for s in workflow_steps) else "partial"
+        )
         result.completed_at = datetime.utcnow().isoformat()
         result.outputs = completed
         result.summary = self._generate_summary(result)
 
         self._workflows[workflow_id] = result
-        logger.info('Workflow %s completed: %s', workflow_id, result.status)
+        logger.info("Workflow %s completed: %s", workflow_id, result.status)
         return result
 
     async def run_parallel(
@@ -288,29 +329,29 @@ class MCPOrchestrator:
             dict[str, Any]: 各任务结果
         """
         for task in tasks:
-            if shared_args.get('target'):
-                task.setdefault('args', {})['target'] = shared_args['target']
+            if shared_args.get("target"):
+                task.setdefault("args", {})["target"] = shared_args["target"]
 
         async def run_task(task: dict) -> tuple[str, Any]:
-            name = task.get('name', 'task')
+            name = task.get("name", "task")
             try:
                 result = await self._execute_tool_call(
-                    task.get('service', ''),
-                    task.get('tool', ''),
-                    task.get('args', {}),
+                    task.get("service", ""),
+                    task.get("tool", ""),
+                    task.get("args", {}),
                 )
                 return name, result
             except Exception as e:
-                return name, {'error': str(e)}
+                return name, {"error": str(e)}
 
         results = await asyncio.gather(*[run_task(t) for t in tasks])
         return dict(results)
 
     async def _execute_step(self, step: WorkflowStep) -> None:
         """执行单个工作流步骤"""
-        step.status = 'running'
+        step.status = "running"
         step.started_at = datetime.utcnow().isoformat()
-        logger.info('Step: %s (%s/%s)', step.name, step.service, step.tool)
+        logger.info("Step: %s (%s/%s)", step.name, step.service, step.tool)
 
         try:
             result = await asyncio.wait_for(
@@ -318,12 +359,12 @@ class MCPOrchestrator:
                 timeout=step.timeout,
             )
             step.result = result
-            step.status = 'completed'
+            step.status = "completed"
         except asyncio.TimeoutError:
-            step.status = 'failed'
-            step.error = f'Timeout after {step.timeout}s'
+            step.status = "failed"
+            step.error = f"Timeout after {step.timeout}s"
         except Exception as e:
-            step.status = 'failed'
+            step.status = "failed"
             step.error = str(e)
 
         step.completed_at = datetime.utcnow().isoformat()
@@ -338,18 +379,19 @@ class MCPOrchestrator:
         service = service.lower()
 
         # HOS-Forge 原生工具
-        if service in ('hos-forge', 'hos', 'native'):
+        if service in ("hos-forge", "hos", "native"):
             from hosforge.mcp_server.tools.security_tools import _call_native_tool
+
             return await _call_native_tool(tool, args)
 
         # Burp MCP
-        if service == 'burp' and 'burp' in self._connectors:
-            burp: BurpConnector = self._connectors['burp']
+        if service == "burp" and "burp" in self._connectors:
+            burp: BurpConnector = self._connectors["burp"]
             tool_map = {
-                'proxy_history': burp.get_proxy_history,
-                'analyze_request': burp.analyze_request,
-                'start_scan': burp.start_scan,
-                'repeater': burp.send_to_repeater,
+                "proxy_history": burp.get_proxy_history,
+                "analyze_request": burp.analyze_request,
+                "start_scan": burp.start_scan,
+                "repeater": burp.send_to_repeater,
             }
             handler = tool_map.get(tool)
             if handler:
@@ -357,25 +399,25 @@ class MCPOrchestrator:
             return await burp._adapter.call_tool(tool, args)
 
         # mcp-security-hub
-        if service == 'security-hub' and 'security-hub' in self._connectors:
-            hub: SecurityHubConnector = self._connectors['security-hub']
+        if service == "security-hub" and "security-hub" in self._connectors:
+            hub: SecurityHubConnector = self._connectors["security-hub"]
             tool_map = {
-                'nmap': hub.nmap_scan,
-                'nuclei_scan': hub.nuclei_scan,
-                'sqlmap_scan': hub.sqlmap_scan,
-                'cve_search': hub.cve_search,
-                'subfinder': hub.subdomain_enum,
-                'gobuster_dir': hub.directory_bruteforce,
-                'semgrep_scan': hub.semgrep_scan,
-                'whois_lookup': lambda **kw: hub._call('whois_lookup', kw),
-                'ghidra_analyze': hub.ghidra_analyze,
+                "nmap": hub.nmap_scan,
+                "nuclei_scan": hub.nuclei_scan,
+                "sqlmap_scan": hub.sqlmap_scan,
+                "cve_search": hub.cve_search,
+                "subfinder": hub.subdomain_enum,
+                "gobuster_dir": hub.directory_bruteforce,
+                "semgrep_scan": hub.semgrep_scan,
+                "whois_lookup": lambda **kw: hub._call("whois_lookup", kw),
+                "ghidra_analyze": hub.ghidra_analyze,
             }
             handler = tool_map.get(tool)
             if handler:
                 return await handler(**args)
             return await hub._call(tool, args)
 
-        raise ValueError(f'Unknown service: {service}')
+        raise ValueError(f"Unknown service: {service}")
 
     # ── 工作流模板管理 ─────────────────────────────────────────
 
@@ -384,10 +426,10 @@ class MCPOrchestrator:
         """列出所有可用的工作流模板"""
         return {
             name: {
-                'name': t['name'],
-                'description': t['description'],
-                'step_count': len(t['steps']),
-                'steps': [s['name'] for s in t['steps']],
+                "name": t["name"],
+                "description": t["description"],
+                "step_count": len(t["steps"]),
+                "steps": [s["name"] for s in t["steps"]],
             }
             for name, t in WORKFLOW_TEMPLATES.items()
         }
@@ -396,7 +438,7 @@ class MCPOrchestrator:
     def add_template(name: str, template: dict[str, Any]) -> None:
         """添加自定义工作流模板"""
         WORKFLOW_TEMPLATES[name] = template
-        logger.info('Added workflow template: %s', name)
+        logger.info("Added workflow template: %s", name)
 
     # ── 辅助 ───────────────────────────────────────────────────
 
@@ -407,17 +449,17 @@ class MCPOrchestrator:
     def _generate_summary(self, result: WorkflowResult) -> str:
         """生成工作流摘要"""
         total = len(result.steps)
-        completed = sum(1 for s in result.steps if s.status == 'completed')
-        failed = sum(1 for s in result.steps if s.status == 'failed')
-        skipped = sum(1 for s in result.steps if s.status == 'skipped')
+        completed = sum(1 for s in result.steps if s.status == "completed")
+        failed = sum(1 for s in result.steps if s.status == "failed")
+        skipped = sum(1 for s in result.steps if s.status == "skipped")
 
         parts = [
             f'工作流 "{result.name}" 执行完毕:',
-            f'  共 {total} 步, {completed} 完成',
+            f"  共 {total} 步, {completed} 完成",
         ]
         if failed:
-            parts.append(f'  {failed} 步失败')
+            parts.append(f"  {failed} 步失败")
         if skipped:
-            parts.append(f'  {skipped} 步跳过')
+            parts.append(f"  {skipped} 步跳过")
 
-        return '\n'.join(parts)
+        return "\n".join(parts)

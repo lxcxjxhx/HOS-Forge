@@ -26,12 +26,11 @@ import argparse
 import json
 import logging
 import math
-import os
 import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -40,24 +39,29 @@ logger = logging.getLogger(__name__)
 # 异常定义
 # ============================================================
 
+
 class EvaluationError(Exception):
     """评测相关异常的基类"""
+
     pass
 
 
 class DatasetFormatError(EvaluationError):
     """数据集格式不正确时抛出"""
+
     pass
 
 
 class MetricComputeError(EvaluationError):
     """指标计算失败时抛出"""
+
     pass
 
 
 # ============================================================
 # 数据结构定义
 # ============================================================
+
 
 @dataclass
 class EvaluationConfig:
@@ -71,27 +75,27 @@ class EvaluationConfig:
     # 数据集配置
     dataset_path: str = ""
     dataset_format: Optional[str] = None  # 自动检测: alpaca / sharegpt / messages
-    max_samples: Optional[int] = None     # 最大评测样本数，None 表示全部
-    max_seq_length: int = 512             # 最大序列长度
+    max_samples: Optional[int] = None  # 最大评测样本数，None 表示全部
+    max_seq_length: int = 512  # 最大序列长度
 
     # 评测指标
     metrics: List[str] = field(default_factory=lambda: ["bleu", "rouge"])
 
     # 任务类型
-    task_type: str = "text_generation"    # text_generation / perplexity
+    task_type: str = "text_generation"  # text_generation / perplexity
 
     # 生成参数
     max_new_tokens: int = 256
     temperature: float = 0.7
     top_p: float = 0.9
-    batch_size: int = 1                   # 8GB VRAM 场景建议 batch_size=1
+    batch_size: int = 1  # 8GB VRAM 场景建议 batch_size=1
 
     # 输出配置
-    output_format: str = "json"           # json / markdown
-    output_path: Optional[str] = None     # 结果输出路径
+    output_format: str = "json"  # json / markdown
+    output_path: Optional[str] = None  # 结果输出路径
 
     # 8GB VRAM 优化
-    load_in_4bit: bool = False            # 4-bit 量化加载以节省显存
+    load_in_4bit: bool = False  # 4-bit 量化加载以节省显存
     device_map: str = "auto"
 
     # 其他
@@ -102,6 +106,7 @@ class EvaluationConfig:
 @dataclass
 class SampleResult:
     """单条样本的评测结果"""
+
     index: int
     prompt: str
     reference: str
@@ -112,6 +117,7 @@ class SampleResult:
 @dataclass
 class EvaluationResult:
     """评测结果数据类"""
+
     model_path: str
     dataset_path: str
     task_type: str
@@ -126,6 +132,7 @@ class EvaluationResult:
 # ============================================================
 # 评测指标加载器
 # ============================================================
+
 
 class MetricLoader:
     """
@@ -151,6 +158,7 @@ class MetricLoader:
             return
         try:
             import evaluate
+
             self._evaluate_module = evaluate
         except ImportError:
             self._evaluate_module = None
@@ -197,8 +205,7 @@ class MetricLoader:
             return self._compute_f1(predictions, references)
         else:
             raise MetricComputeError(
-                f"不支持的指标: {metric_name}，"
-                f"支持的指标: {', '.join(self.SUPPORTED_METRICS)}"
+                f"不支持的指标: {metric_name}，" f"支持的指标: {', '.join(self.SUPPORTED_METRICS)}"
             )
 
     def _compute_perplexity(
@@ -219,8 +226,8 @@ class MetricLoader:
 
         try:
             import torch
-        except ImportError:
-            raise MetricComputeError("计算 PPL 需要 PyTorch")
+        except ImportError as e:
+            raise MetricComputeError("计算 PPL 需要 PyTorch") from e
 
         stride = 512
         all_nlls = []
@@ -245,7 +252,7 @@ class MetricLoader:
                     chunk = input_ids[:, begin:end]
                     target = chunk.clone()
                     # 第一个 chunk 不需要计算前面 token 的 loss
-                    target[:, :max(0, prev_end - begin)] = -100
+                    target[:, : max(0, prev_end - begin)] = -100
 
                     outputs = model(chunk, labels=target)
                     nlls = outputs.loss
@@ -295,7 +302,7 @@ class MetricLoader:
         total_score = 0.0
         valid_count = 0
 
-        for pred, ref in zip(predictions, references):
+        for pred, ref in zip(predictions, references, strict=False):
             pred_tokens = pred.split()
             ref_tokens = ref.split()
 
@@ -306,15 +313,14 @@ class MetricLoader:
             precisions = []
             for n in range(1, 5):
                 pred_ngrams = Counter(
-                    tuple(pred_tokens[i:i + n]) for i in range(len(pred_tokens) - n + 1)
+                    tuple(pred_tokens[i : i + n]) for i in range(len(pred_tokens) - n + 1)
                 )
                 ref_ngrams = Counter(
-                    tuple(ref_tokens[i:i + n]) for i in range(len(ref_tokens) - n + 1)
+                    tuple(ref_tokens[i : i + n]) for i in range(len(ref_tokens) - n + 1)
                 )
 
                 clipped = sum(
-                    min(count, ref_ngrams.get(ngram, 0))
-                    for ngram, count in pred_ngrams.items()
+                    min(count, ref_ngrams.get(ngram, 0)) for ngram, count in pred_ngrams.items()
                 )
                 total = max(len(pred_tokens) - n + 1, 1)
                 precisions.append(clipped / total if clipped > 0 else 0)
@@ -364,7 +370,7 @@ class MetricLoader:
         total_score = 0.0
         valid_count = 0
 
-        for pred, ref in zip(predictions, references):
+        for pred, ref in zip(predictions, references, strict=False):
             pred_tokens = pred.split()
             ref_tokens = ref.split()
 
@@ -415,7 +421,7 @@ class MetricLoader:
             return 0.0
 
         match_count = 0
-        for pred, ref in zip(predictions, references):
+        for pred, ref in zip(predictions, references, strict=False):
             pred_norm = self._normalize_text(pred)
             ref_norm = self._normalize_text(ref)
             if pred_norm == ref_norm:
@@ -435,7 +441,7 @@ class MetricLoader:
         total_f1 = 0.0
         valid_count = 0
 
-        for pred, ref in zip(predictions, references):
+        for pred, ref in zip(predictions, references, strict=False):
             pred_tokens = set(self._normalize_text(pred).split())
             ref_tokens = set(self._normalize_text(ref).split())
 
@@ -460,6 +466,7 @@ class MetricLoader:
     def _normalize_text(text: str) -> str:
         """文本标准化：小写、去除多余空白和标点"""
         import string
+
         text = text.lower().strip()
         # 去除标点
         text = text.translate(str.maketrans("", "", string.punctuation))
@@ -471,6 +478,7 @@ class MetricLoader:
 # ============================================================
 # 数据集加载器
 # ============================================================
+
 
 class DatasetLoader:
     """
@@ -526,10 +534,10 @@ class DatasetLoader:
             except Exception:
                 try:
                     raw_data = self._load_jsonl(path)
-                except Exception:
+                except Exception as e:
                     raise DatasetFormatError(
                         f"无法解析数据集文件: {dataset_path}，支持 .json 和 .jsonl 格式"
-                    )
+                    ) from e
 
         if not raw_data:
             raise DatasetFormatError("数据集为空")
@@ -573,9 +581,7 @@ class DatasetLoader:
                 try:
                     data.append(json.loads(line))
                 except json.JSONDecodeError as e:
-                    raise DatasetFormatError(
-                        f"JSONL 第 {line_num} 行解析失败: {e}"
-                    )
+                    raise DatasetFormatError(f"JSONL 第 {line_num} 行解析失败: {e}") from e
         return data
 
     def _detect_format(self, sample: Dict[str, Any]) -> str:
@@ -604,9 +610,7 @@ class DatasetLoader:
             f"请使用 --format 参数指定格式（支持: {', '.join(self.SUPPORTED_FORMATS)}）"
         )
 
-    def _parse_data(
-        self, raw_data: List[Dict[str, Any]], fmt: str
-    ) -> List[Tuple[str, str]]:
+    def _parse_data(self, raw_data: List[Dict[str, Any]], fmt: str) -> List[Tuple[str, str]]:
         """根据格式解析数据为 (prompt, reference) 元组列表"""
         if fmt == "alpaca":
             return self._parse_alpaca(raw_data)
@@ -712,6 +716,7 @@ class DatasetLoader:
 # 评测执行引擎
 # ============================================================
 
+
 class EvaluationEngine:
     """
     评测执行引擎，负责加载模型并执行推理生成。
@@ -738,10 +743,10 @@ class EvaluationEngine:
         try:
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-        except ImportError:
+        except ImportError as e:
             raise EvaluationError(
                 "评测需要 transformers 和 torch，请安装: pip install transformers torch"
-            )
+            ) from e
 
         model_path = self.config.model_path
         tokenizer_path = self.config.tokenizer_path or model_path
@@ -783,9 +788,7 @@ class EvaluationEngine:
 
         logger.info("模型加载完成")
 
-    def generate_predictions(
-        self, samples: List[Tuple[str, str]]
-    ) -> List[str]:
+    def generate_predictions(self, samples: List[Tuple[str, str]]) -> List[str]:
         """
         对数据集样本执行推理生成。
 
@@ -800,8 +803,8 @@ class EvaluationEngine:
 
         try:
             import torch
-        except ImportError:
-            raise EvaluationError("推理生成需要 PyTorch")
+        except ImportError as e:
+            raise EvaluationError("推理生成需要 PyTorch") from e
 
         predictions = []
         device = next(self._model.parameters()).device
@@ -834,7 +837,7 @@ class EvaluationEngine:
 
             # 解码（仅保留新生成的部分）
             input_len = inputs["input_ids"].shape[1]
-            for i, output in enumerate(outputs):
+            for output in outputs:
                 new_tokens = output[input_len:]
                 text = self._tokenizer.decode(new_tokens, skip_special_tokens=True)
                 predictions.append(text.strip())
@@ -888,6 +891,7 @@ class EvaluationEngine:
             self._tokenizer = None
         try:
             import torch
+
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
@@ -898,6 +902,7 @@ class EvaluationEngine:
 # ============================================================
 # 结果导出器
 # ============================================================
+
 
 class ResultExporter:
     """评测结果导出器，支持 JSON 和 Markdown 格式"""
@@ -953,8 +958,8 @@ class ResultExporter:
             "",
             "## 基本信息",
             "",
-            f"| 项目 | 值 |",
-            f"|------|------|",
+            "| 项目 | 值 |",
+            "|------|------|",
             f"| 模型路径 | `{result.model_path}` |",
             f"| 数据集路径 | `{result.dataset_path}` |",
             f"| 任务类型 | {result.task_type} |",
@@ -971,27 +976,31 @@ class ResultExporter:
         for metric_name, score in sorted(result.metrics_summary.items()):
             lines.append(f"| {metric_name.upper()} | {score} |")
 
-        lines.extend([
-            "",
-            "## 样本评测详情",
-            "",
-        ])
+        lines.extend(
+            [
+                "",
+                "## 样本评测详情",
+                "",
+            ]
+        )
 
         # 最多展示前 20 条样本详情
         max_display = min(len(result.sample_results), 20)
         for sr in result.sample_results[:max_display]:
-            lines.extend([
-                f"### 样本 #{sr.index + 1}",
-                "",
-                f"**Prompt:** {sr.prompt[:200]}{'...' if len(sr.prompt) > 200 else ''}",
-                "",
-                f"**参考:** {sr.reference[:200]}{'...' if len(sr.reference) > 200 else ''}",
-                "",
-                f"**预测:** {sr.prediction[:200]}{'...' if len(sr.prediction) > 200 else ''}",
-                "",
-                f"**指标:** {', '.join(f'{k}={v}' for k, v in sr.metrics.items())}",
-                "",
-            ])
+            lines.extend(
+                [
+                    f"### 样本 #{sr.index + 1}",
+                    "",
+                    f"**Prompt:** {sr.prompt[:200]}{'...' if len(sr.prompt) > 200 else ''}",
+                    "",
+                    f"**参考:** {sr.reference[:200]}{'...' if len(sr.reference) > 200 else ''}",
+                    "",
+                    f"**预测:** {sr.prediction[:200]}{'...' if len(sr.prediction) > 200 else ''}",
+                    "",
+                    f"**指标:** {', '.join(f'{k}={v}' for k, v in sr.metrics.items())}",
+                    "",
+                ]
+            )
 
         if len(result.sample_results) > max_display:
             lines.append(f"> 仅展示前 {max_display} 条样本，共 {len(result.sample_results)} 条")
@@ -1025,6 +1034,7 @@ class ResultExporter:
 # ============================================================
 # 主评测接口
 # ============================================================
+
 
 def evaluate_model(config: EvaluationConfig) -> EvaluationResult:
     """
@@ -1105,13 +1115,15 @@ def evaluate_model(config: EvaluationConfig) -> EvaluationResult:
                 except Exception:
                     single_metrics[metric_name] = 0.0
 
-        sample_results.append(SampleResult(
-            index=i,
-            prompt=prompt,
-            reference=reference,
-            prediction=pred,
-            metrics=single_metrics,
-        ))
+        sample_results.append(
+            SampleResult(
+                index=i,
+                prompt=prompt,
+                reference=reference,
+                prediction=pred,
+                metrics=single_metrics,
+            )
+        )
 
     result = EvaluationResult(
         model_path=config.model_path,
@@ -1149,6 +1161,7 @@ def evaluate_model(config: EvaluationConfig) -> EvaluationResult:
 # ============================================================
 # 多模型对比评测
 # ============================================================
+
 
 def compare_models(
     model_paths: List[str],
@@ -1242,9 +1255,7 @@ def _print_comparison_summary(results: List[EvaluationResult]) -> None:
     print(f"{'=' * 60}\n")
 
 
-def _export_comparison(
-    results: List[EvaluationResult], output_path: str, fmt: str
-) -> None:
+def _export_comparison(results: List[EvaluationResult], output_path: str, fmt: str) -> None:
     """导出多模型对比结果"""
     if fmt == "json":
         data = {
@@ -1296,14 +1307,16 @@ def _export_comparison(
 
         lines.extend(["", "## 各模型详情", ""])
         for r in results:
-            lines.extend([
-                f"### {r.model_path}",
-                "",
-                f"- 评测样本数: {r.total_samples}",
-                f"- 耗时: {r.elapsed_seconds}s",
-                f"- 评测时间: {r.timestamp}",
-                "",
-            ])
+            lines.extend(
+                [
+                    f"### {r.model_path}",
+                    "",
+                    f"- 评测样本数: {r.total_samples}",
+                    f"- 耗时: {r.elapsed_seconds}s",
+                    f"- 评测时间: {r.timestamp}",
+                    "",
+                ]
+            )
 
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -1315,6 +1328,7 @@ def _export_comparison(
 # ============================================================
 # 命令行接口
 # ============================================================
+
 
 def _build_parser() -> argparse.ArgumentParser:
     """构建命令行参数解析器"""
@@ -1342,93 +1356,131 @@ def _build_parser() -> argparse.ArgumentParser:
 
     # 模型参数
     parser.add_argument(
-        "--model", type=str, nargs="+", required=True,
+        "--model",
+        type=str,
+        nargs="+",
+        required=True,
         help="模型路径（支持多个模型进行对比评测）",
     )
     parser.add_argument(
-        "--tokenizer", type=str, default=None,
+        "--tokenizer",
+        type=str,
+        default=None,
         help="分词器路径（默认与模型路径相同）",
     )
     parser.add_argument(
-        "--trust-remote-code", action="store_true", default=True,
+        "--trust-remote-code",
+        action="store_true",
+        default=True,
         help="信任远程代码（默认 True）",
     )
 
     # 数据集参数
     parser.add_argument(
-        "--dataset", type=str, required=True,
+        "--dataset",
+        type=str,
+        required=True,
         help="评测数据集路径（JSON/JSONL 格式）",
     )
     parser.add_argument(
-        "--format", type=str, default=None,
+        "--format",
+        type=str,
+        default=None,
         choices=["alpaca", "sharegpt", "messages"],
         help="数据集格式（默认自动检测）",
     )
     parser.add_argument(
-        "--max-samples", type=int, default=None,
+        "--max-samples",
+        type=int,
+        default=None,
         help="最大评测样本数（默认全部）",
     )
     parser.add_argument(
-        "--max-seq-length", type=int, default=512,
+        "--max-seq-length",
+        type=int,
+        default=512,
         help="最大序列长度（默认 512）",
     )
 
     # 评测指标
     parser.add_argument(
-        "--metrics", type=str, nargs="+",
+        "--metrics",
+        type=str,
+        nargs="+",
         default=["bleu", "rouge"],
         help="评测指标列表（默认: bleu rouge），支持: ppl bleu rouge exact_match f1",
     )
 
     # 任务类型
     parser.add_argument(
-        "--task", type=str, default="text_generation",
+        "--task",
+        type=str,
+        default="text_generation",
         choices=["text_generation", "perplexity"],
         help="任务类型（默认: text_generation）",
     )
 
     # 生成参数
     parser.add_argument(
-        "--max-new-tokens", type=int, default=256,
+        "--max-new-tokens",
+        type=int,
+        default=256,
         help="最大生成 token 数（默认 256）",
     )
     parser.add_argument(
-        "--temperature", type=float, default=0.7,
+        "--temperature",
+        type=float,
+        default=0.7,
         help="采样温度（默认 0.7）",
     )
     parser.add_argument(
-        "--top-p", type=float, default=0.9,
+        "--top-p",
+        type=float,
+        default=0.9,
         help="nucleus sampling 参数（默认 0.9）",
     )
     parser.add_argument(
-        "--batch-size", type=int, default=1,
+        "--batch-size",
+        type=int,
+        default=1,
         help="推理批大小（8GB VRAM 建议 1，默认 1）",
     )
 
     # 输出配置
     parser.add_argument(
-        "--output", "-o", type=str, default=None,
+        "--output",
+        "-o",
+        type=str,
+        default=None,
         help="结果输出路径（支持 .json 和 .md 格式）",
     )
     parser.add_argument(
-        "--output-format", type=str, default="json",
+        "--output-format",
+        type=str,
+        default="json",
         choices=["json", "markdown"],
         help="输出格式（默认: json）",
     )
 
     # 8GB VRAM 优化
     parser.add_argument(
-        "--load-in-4bit", action="store_true", default=False,
+        "--load-in-4bit",
+        action="store_true",
+        default=False,
         help="使用 4-bit 量化加载模型（节省显存，适合 8GB VRAM 场景）",
     )
 
     # 其他
     parser.add_argument(
-        "--seed", type=int, default=42,
+        "--seed",
+        type=int,
+        default=42,
         help="随机种子（默认 42）",
     )
     parser.add_argument(
-        "--verbose", action="store_true", default=False,
+        "--verbose",
+        action="store_true",
+        default=False,
         help="启用详细日志输出",
     )
 
