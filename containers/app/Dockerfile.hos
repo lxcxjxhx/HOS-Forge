@@ -3,7 +3,7 @@
 # 基于 OpenHands 安全增强，专注信息安全 IDE 能力
 # ===========================================================================
 ARG HOS_BUILD_VERSION=v0.1.0
-FROM python:3.13.7-slim-trixie AS base
+FROM python:3.14.6-slim-trixie AS base
 
 FROM base AS hos-forge
 WORKDIR /app
