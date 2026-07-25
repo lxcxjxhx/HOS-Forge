@@ -12,5 +12,5 @@ Maintains full backward compatibility with OpenHands while adding
 the security layer as extensions.
 """
 
-__version__ = '0.1.0'
-__description__ = 'HOS-Forge: AI Native Cyber Security IDE — 基于 OpenHands 的安全开发扩展层'
+__version__ = "0.1.0"
+__description__ = "HOS-Forge: AI Native Cyber Security IDE — 基于 OpenHands 的安全开发扩展层"

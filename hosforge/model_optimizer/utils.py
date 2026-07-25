@@ -9,16 +9,16 @@ HOS Model Optimizer - 工具函数模块
 - 模型路径处理
 """
 
+import logging
 import os
 import sys
-import logging
 from pathlib import Path
-from typing import Optional, List
-
+from typing import List, Optional
 
 # ============================================================
 # 日志配置
 # ============================================================
+
 
 def setup_logger(
     name: str = "hos_optimizer",
@@ -67,6 +67,7 @@ def setup_logger(
 # 文件操作工具
 # ============================================================
 
+
 def ensure_dir(path: str) -> str:
     """
     确保目录存在，不存在则创建
@@ -91,7 +92,7 @@ def get_file_size_gb(path: str) -> float:
     Returns:
         文件大小（GB）
     """
-    return os.path.getsize(path) / (1024 ** 3)
+    return os.path.getsize(path) / (1024**3)
 
 
 def get_dir_size_gb(path: str) -> float:
@@ -110,7 +111,7 @@ def get_dir_size_gb(path: str) -> float:
             fp = os.path.join(dirpath, f)
             if os.path.isfile(fp):
                 total += os.path.getsize(fp)
-    return total / (1024 ** 3)
+    return total / (1024**3)
 
 
 def find_model_files(path: str) -> List[str]:
@@ -135,6 +136,7 @@ def find_model_files(path: str) -> List[str]:
 # ============================================================
 # 模型路径处理
 # ============================================================
+
 
 def resolve_model_path(path: str) -> str:
     """
@@ -164,7 +166,7 @@ def is_model_path(path: str) -> bool:
     if os.path.exists(path):
         return True
     # HF Hub ID 格式检查（如 "Qwen/Qwen2.5-0.5B"）
-    if "/" in path and not os.path.sep in path.replace("/", os.path.sep):
+    if "/" in path and os.path.sep not in path.replace("/", os.path.sep):
         parts = path.split("/")
         if len(parts) == 2 and all(parts):
             return True

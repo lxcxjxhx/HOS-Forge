@@ -33,16 +33,19 @@ class AuditAgent(BaseSecurityAgent):
     """
 
     def __init__(self, config: SecurityAgentConfig | None = None):
-        super().__init__(config or SecurityAgentConfig(
-            name='AuditAgent',
-            description='代码安全审计 Agent — SAST / CWE 分析 / 漏洞定位',
-        ))
+        super().__init__(
+            config
+            or SecurityAgentConfig(
+                name="AuditAgent",
+                description="代码安全审计 Agent — SAST / CWE 分析 / 漏洞定位",
+            )
+        )
         # 内置规则引擎规则
         self._builtin_rules: list[dict[str, Any]] = self._load_default_rules()
 
     @property
     def name(self) -> str:
-        return 'AuditAgent'
+        return "AuditAgent"
 
     async def analyze(self, target: str, **kwargs: Any) -> SecurityFinding:
         """
@@ -56,8 +59,8 @@ class AuditAgent(BaseSecurityAgent):
                 mode: 'quick' | 'full' (默认 full)
                 rules: 自定义规则列表
         """
-        mode = kwargs.get('mode', 'full')
-        custom_rules = kwargs.get('rules', [])
+        mode = kwargs.get("mode", "full")
+        custom_rules = kwargs.get("rules", [])
 
         finding = SecurityFinding(
             target=target,
@@ -65,18 +68,19 @@ class AuditAgent(BaseSecurityAgent):
         )
 
         logger.info(
-            'AuditAgent analyzing target=%s mode=%s',
-            target, mode,
+            "AuditAgent analyzing target=%s mode=%s",
+            target,
+            mode,
         )
 
         # 规则引擎分析
         all_rules = self._builtin_rules + list(custom_rules)
         for rule in all_rules:
-            if self.config.min_severity.value > rule.get('severity', Severity.LOW).value:
+            if self.config.min_severity.value > rule.get("severity", Severity.LOW).value:
                 continue
 
             if len(finding.vulnerabilities) >= self.config.max_vulnerabilities:
-                logger.warning('Max vulnerabilities reached, stopping analysis')
+                logger.warning("Max vulnerabilities reached, stopping analysis")
                 break
 
             try:
@@ -84,15 +88,14 @@ class AuditAgent(BaseSecurityAgent):
                 if vuln:
                     finding.vulnerabilities.append(vuln)
             except Exception as e:
-                logger.error('Rule evaluation failed: %s', e)
+                logger.error("Rule evaluation failed: %s", e)
 
         finding.summary = (
-            f'AuditAgent 发现 {len(finding.vulnerabilities)} 个潜在安全问题 '
-            f'(模式: {mode})'
+            f"AuditAgent 发现 {len(finding.vulnerabilities)} 个潜在安全问题 " f"(模式: {mode})"
         )
         finding.scan_duration_ms = 0  # 实际应记录耗时
 
-        logger.info('Audit complete: %d findings', len(finding.vulnerabilities))
+        logger.info("Audit complete: %d findings", len(finding.vulnerabilities))
         return finding
 
     async def _apply_rule(
@@ -106,8 +109,8 @@ class AuditAgent(BaseSecurityAgent):
         实际实现将调用 HOS-Sec-Engine 或 AI 模型进行分析。
         当前为基础占位实现。
         """
-        rule_name = rule.get('name', 'unknown')
-        logger.debug('Applying rule: %s to %s', rule_name, target)
+        rule_name = rule.get("name", "unknown")
+        logger.debug("Applying rule: %s to %s", rule_name, target)
 
         # TODO: 集成 HOS-Sec-Engine 实际分析
         # 当前返回占位结果
@@ -118,12 +121,12 @@ class AuditAgent(BaseSecurityAgent):
         return [
             # SQL注入检测
             {
-                'id': 'R001',
-                'name': 'SQL Injection Detection',
-                'description': '检测潜在的SQL注入风险',
-                'severity': Severity.CRITICAL,
-                'cwe': 'CWE-89',
-                'patterns': [
+                "id": "R001",
+                "name": "SQL Injection Detection",
+                "description": "检测潜在的SQL注入风险",
+                "severity": Severity.CRITICAL,
+                "cwe": "CWE-89",
+                "patterns": [
                     r"execute\(.*\+.*\)",
                     r"cursor\.execute\(.*f['\"]",
                     r"raw_input.*sql",
@@ -131,12 +134,12 @@ class AuditAgent(BaseSecurityAgent):
             },
             # XSS检测
             {
-                'id': 'R002',
-                'name': 'Cross-Site Scripting (XSS)',
-                'description': '检测反射型/存储型XSS',
-                'severity': Severity.HIGH,
-                'cwe': 'CWE-79',
-                'patterns': [
+                "id": "R002",
+                "name": "Cross-Site Scripting (XSS)",
+                "description": "检测反射型/存储型XSS",
+                "severity": Severity.HIGH,
+                "cwe": "CWE-79",
+                "patterns": [
                     r"innerHTML\s*=",
                     r"document\.write\(.*request",
                     r"mark_safe\(",
@@ -144,12 +147,12 @@ class AuditAgent(BaseSecurityAgent):
             },
             # 命令注入
             {
-                'id': 'R003',
-                'name': 'Command Injection',
-                'description': '检测OS命令注入风险',
-                'severity': Severity.CRITICAL,
-                'cwe': 'CWE-78',
-                'patterns': [
+                "id": "R003",
+                "name": "Command Injection",
+                "description": "检测OS命令注入风险",
+                "severity": Severity.CRITICAL,
+                "cwe": "CWE-78",
+                "patterns": [
                     r"os\.system\(.*\+",
                     r"subprocess\.call\(.*\+",
                     r"eval\(.*request",
@@ -157,24 +160,24 @@ class AuditAgent(BaseSecurityAgent):
             },
             # 路径遍历
             {
-                'id': 'R004',
-                'name': 'Path Traversal',
-                'description': '检测路径遍历漏洞',
-                'severity': Severity.HIGH,
-                'cwe': 'CWE-22',
-                'patterns': [
+                "id": "R004",
+                "name": "Path Traversal",
+                "description": "检测路径遍历漏洞",
+                "severity": Severity.HIGH,
+                "cwe": "CWE-22",
+                "patterns": [
                     r"open\(.*\.\./",
                     r"\.\.\/.*open\(",
                 ],
             },
             # 弱密码硬编码
             {
-                'id': 'R005',
-                'name': 'Hardcoded Credentials',
-                'description': '检测硬编码密码/密钥',
-                'severity': Severity.CRITICAL,
-                'cwe': 'CWE-798',
-                'patterns': [
+                "id": "R005",
+                "name": "Hardcoded Credentials",
+                "description": "检测硬编码密码/密钥",
+                "severity": Severity.CRITICAL,
+                "cwe": "CWE-798",
+                "patterns": [
                     r"password\s*=\s*['\"][^'\"]{3,}['\"]",
                     r"api_key\s*=\s*['\"][^'\"]{8,}['\"]",
                     r"secret\s*=\s*['\"][^'\"]{8,}['\"]",
@@ -182,24 +185,24 @@ class AuditAgent(BaseSecurityAgent):
             },
             # SSRF
             {
-                'id': 'R006',
-                'name': 'Server-Side Request Forgery',
-                'description': '检测SSRF风险',
-                'severity': Severity.HIGH,
-                'cwe': 'CWE-918',
-                'patterns': [
+                "id": "R006",
+                "name": "Server-Side Request Forgery",
+                "description": "检测SSRF风险",
+                "severity": Severity.HIGH,
+                "cwe": "CWE-918",
+                "patterns": [
                     r"requests\.get\(.*request\.get\(",
                     r"urlopen\(.*request\.",
                 ],
             },
             # 不安全的反序列化
             {
-                'id': 'R007',
-                'name': 'Insecure Deserialization',
-                'description': '检测不安全的反序列化',
-                'severity': Severity.HIGH,
-                'cwe': 'CWE-502',
-                'patterns': [
+                "id": "R007",
+                "name": "Insecure Deserialization",
+                "description": "检测不安全的反序列化",
+                "severity": Severity.HIGH,
+                "cwe": "CWE-502",
+                "patterns": [
                     r"pickle\.loads\(",
                     r"yaml\.load\(.*Loader",
                     r"eval\(.*input",

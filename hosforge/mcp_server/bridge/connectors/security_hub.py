@@ -27,20 +27,20 @@ logger = logging.getLogger(__name__)
 
 # mcp-security-hub 的子工具清单
 SECURITY_HUB_TOOLS = {
-    'nmap': '🔍 Nmap 端口扫描 — 主机发现/端口扫描/服务识别',
-    'subfinder': '🌐 子域名枚举 — 被动子域名收集',
-    'dns_lookup': '📡 DNS 查询 — A/AAAA/MX/NS/TXT 记录',
-    'whois_lookup': '📋 WHOIS 查询 — 域名注册信息',
-    'nuclei_scan': '📡 Nuclei 漏洞扫描 — 模板化漏洞检测',
-    'sqlmap_scan': '💉 SQLMap SQL 注入检测',
-    'zap_scan': '🛡️ OWASP ZAP 主动扫描',
-    'ghidra_analyze': '🔬 Ghidra 二进制分析',
-    'hashcat_crack': '🔑 Hashcat 密码破解',
-    'cve_search': '📖 CVE 漏洞搜索',
-    'osint_email': '📧 邮箱 OSINT 搜集',
-    'semgrep_scan': '🔬 Semgrep 代码审计',
-    'gobuster_dir': '📁 目录爆破',
-    'wpscan_scan': '🔍 WordPress 安全扫描',
+    "nmap": "🔍 Nmap 端口扫描 — 主机发现/端口扫描/服务识别",
+    "subfinder": "🌐 子域名枚举 — 被动子域名收集",
+    "dns_lookup": "📡 DNS 查询 — A/AAAA/MX/NS/TXT 记录",
+    "whois_lookup": "📋 WHOIS 查询 — 域名注册信息",
+    "nuclei_scan": "📡 Nuclei 漏洞扫描 — 模板化漏洞检测",
+    "sqlmap_scan": "💉 SQLMap SQL 注入检测",
+    "zap_scan": "🛡️ OWASP ZAP 主动扫描",
+    "ghidra_analyze": "🔬 Ghidra 二进制分析",
+    "hashcat_crack": "🔑 Hashcat 密码破解",
+    "cve_search": "📖 CVE 漏洞搜索",
+    "osint_email": "📧 邮箱 OSINT 搜集",
+    "semgrep_scan": "🔬 Semgrep 代码审计",
+    "gobuster_dir": "📁 目录爆破",
+    "wpscan_scan": "🔍 WordPress 安全扫描",
 }
 
 
@@ -59,9 +59,9 @@ class SecurityHubConnector:
 
     def __init__(self):
         self._adapter = StdioMCPAdapter(
-            service_name='mcp-security-hub',
-            command='docker',
-            args=['run', '--rm', '-i', 'fuzzinglabs/mcp-security-hub'],
+            service_name="mcp-security-hub",
+            command="docker",
+            args=["run", "--rm", "-i", "fuzzinglabs/mcp-security-hub"],
         )
         self._connected = False
 
@@ -70,10 +70,10 @@ class SecurityHubConnector:
         ok = await self._adapter.connect()
         self._connected = ok
         if ok:
-            logger.info('Connected to mcp-security-hub')
+            logger.info("Connected to mcp-security-hub")
         return ok
 
-    async def nmap_scan(self, target: str, ports: str = '1-1024') -> dict[str, Any]:
+    async def nmap_scan(self, target: str, ports: str = "1-1024") -> dict[str, Any]:
         """
         Nmap 端口扫描。
 
@@ -84,57 +84,81 @@ class SecurityHubConnector:
         Returns:
             dict: 扫描结果
         """
-        return await self._call('nmap', {
-            'target': target,
-            'ports': ports,
-        })
+        return await self._call(
+            "nmap",
+            {
+                "target": target,
+                "ports": ports,
+            },
+        )
 
-    async def nuclei_scan(self, target: str, severity: str = 'medium') -> dict[str, Any]:
+    async def nuclei_scan(self, target: str, severity: str = "medium") -> dict[str, Any]:
         """Nuclei 漏洞扫描"""
-        return await self._call('nuclei_scan', {
-            'target': target,
-            'severity': severity,
-        })
+        return await self._call(
+            "nuclei_scan",
+            {
+                "target": target,
+                "severity": severity,
+            },
+        )
 
-    async def sqlmap_scan(self, url: str, data: str = '') -> dict[str, Any]:
+    async def sqlmap_scan(self, url: str, data: str = "") -> dict[str, Any]:
         """SQLMap SQL 注入检测"""
-        return await self._call('sqlmap_scan', {
-            'url': url,
-            'data': data,
-        })
+        return await self._call(
+            "sqlmap_scan",
+            {
+                "url": url,
+                "data": data,
+            },
+        )
 
     async def cve_search(self, keyword: str, limit: int = 20) -> dict[str, Any]:
         """CVE 漏洞搜索"""
-        return await self._call('cve_search', {
-            'keyword': keyword,
-            'limit': limit,
-        })
+        return await self._call(
+            "cve_search",
+            {
+                "keyword": keyword,
+                "limit": limit,
+            },
+        )
 
     async def ghidra_analyze(self, binary_path: str) -> dict[str, Any]:
         """Ghidra 二进制分析"""
-        return await self._call('ghidra_analyze', {
-            'path': binary_path,
-        })
+        return await self._call(
+            "ghidra_analyze",
+            {
+                "path": binary_path,
+            },
+        )
 
     async def subdomain_enum(self, domain: str) -> dict[str, Any]:
         """子域名枚举"""
-        return await self._call('subfinder', {
-            'domain': domain,
-        })
+        return await self._call(
+            "subfinder",
+            {
+                "domain": domain,
+            },
+        )
 
-    async def directory_bruteforce(self, url: str, wordlist: str = 'common') -> dict[str, Any]:
+    async def directory_bruteforce(self, url: str, wordlist: str = "common") -> dict[str, Any]:
         """目录爆破"""
-        return await self._call('gobuster_dir', {
-            'url': url,
-            'wordlist': wordlist,
-        })
+        return await self._call(
+            "gobuster_dir",
+            {
+                "url": url,
+                "wordlist": wordlist,
+            },
+        )
 
-    async def semgrep_scan(self, path: str, rules: str = 'default') -> dict[str, Any]:
+    async def semgrep_scan(self, path: str, rules: str = "default") -> dict[str, Any]:
         """Semgrep 代码审计"""
-        return await self._call('semgrep_scan', {
-            'path': path,
-            'rules': rules,
-        })
+        return await self._call(
+            "semgrep_scan",
+            {
+                "path": path,
+                "rules": rules,
+            },
+        )
 
     async def list_capabilities(self) -> dict[str, str]:
         """列出所有可用的安全工具能力"""
@@ -148,11 +172,11 @@ class SecurityHubConnector:
     async def _call(self, tool: str, args: dict[str, Any]) -> dict[str, Any]:
         """调用 mcp-security-hub 的工具"""
         if not self._connected:
-            raise ConnectionError('mcp-security-hub not connected')
+            raise ConnectionError("mcp-security-hub not connected")
 
         try:
             result = await self._adapter.call_tool(tool, args)
             return result
         except Exception as e:
-            logger.error('%s call failed: %s', tool, e)
-            return {'success': False, 'error': str(e)}
+            logger.error("%s call failed: %s", tool, e)
+            return {"success": False, "error": str(e)}

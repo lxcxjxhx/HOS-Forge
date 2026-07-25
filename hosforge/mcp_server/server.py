@@ -39,8 +39,8 @@ logger = logging.getLogger(__name__)
 
 # 创建 MCP 服务器
 app = FastMCP(
-    'HOS-Forge',
-    version='0.1.0',
+    "HOS-Forge",
+    version="0.1.0",
 )
 
 
@@ -49,38 +49,39 @@ def main() -> None:
     register_tools(app)
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    if '--help' in sys.argv or '-h' in sys.argv:
-        print('HOS-Forge MCP Server v0.1.0')
-        print('')
-        print('用法:')
-        print('  hos-mcp                   启动 HTTP 模式 (:8321)')
-        print('  hos-mcp --port 8321       指定端口')
-        print('  hos-mcp --stdio           启动 stdio 模式 (Claude Desktop)')
-        print('')
-        print('Claude Desktop 注册:')
+    if "--help" in sys.argv or "-h" in sys.argv:
+        print("HOS-Forge MCP Server v0.1.0")
+        print("")
+        print("用法:")
+        print("  hos-mcp                   启动 HTTP 模式 (:8321)")
+        print("  hos-mcp --port 8321       指定端口")
+        print("  hos-mcp --stdio           启动 stdio 模式 (Claude Desktop)")
+        print("")
+        print("Claude Desktop 注册:")
         print('  "mcpServers": {')
         print('    "hos-forge": {')
         print('      "command": "hos-mcp",')
         print('      "args": ["--stdio"]')
-        print('    }')
-        print('  }')
+        print("    }")
+        print("  }")
         return
 
-    if '--stdio' in sys.argv:
-        logger.info('HOS MCP Server starting in stdio mode')
-        app.run(transport='stdio')
+    if "--stdio" in sys.argv:
+        logger.info("HOS MCP Server starting in stdio mode")
+        app.run(transport="stdio")
     else:
         port = 8321
         for i, arg in enumerate(sys.argv):
-            if arg == '--port' and i + 1 < len(sys.argv):
+            if arg == "--port" and i + 1 < len(sys.argv):
                 port = int(sys.argv[i + 1])
-        logger.info('HOS MCP Server starting on port %s', port)
+        logger.info("HOS MCP Server starting on port %s", port)
         import asyncio
-        asyncio.run(app.run_http_async(host='0.0.0.0', port=port))
+
+        asyncio.run(app.run_http_async(host="0.0.0.0", port=port))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

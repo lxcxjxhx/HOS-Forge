@@ -11,6 +11,6 @@ from hosforge.mcp_server.bridge.connectors.burp import BurpConnector
 from hosforge.mcp_server.bridge.connectors.security_hub import SecurityHubConnector
 
 __all__ = [
-    'BurpConnector',
-    'SecurityHubConnector',
+    "BurpConnector",
+    "SecurityHubConnector",
 ]

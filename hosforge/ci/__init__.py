@@ -10,4 +10,4 @@ HOS-Forge CI/CD — 安全质量门禁集成。
 
 from hosforge.ci.check import run_reality_check, run_sast_scan
 
-__all__ = ['run_reality_check', 'run_sast_scan']
+__all__ = ["run_reality_check", "run_sast_scan"]

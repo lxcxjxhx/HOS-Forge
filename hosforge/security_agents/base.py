@@ -18,66 +18,69 @@ logger = logging.getLogger(__name__)
 
 class Severity(enum.Enum):
     """漏洞严重程度"""
-    CRITICAL = 'critical'
-    HIGH = 'high'
-    MEDIUM = 'medium'
-    LOW = 'low'
-    INFO = 'info'
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    INFO = "info"
 
 
 @dataclass
 class SecurityVulnerability:
     """安全漏洞数据结构"""
-    id: str = ''
-    name: str = ''
-    description: str = ''
+
+    id: str = ""
+    name: str = ""
+    description: str = ""
     severity: Severity = Severity.INFO
-    cwe_id: str = ''          # e.g. CWE-89
-    cve_id: str = ''          # e.g. CVE-2024-XXXXX
-    file_path: str = ''       # 漏洞所在文件
-    line_number: int = 0      # 行号
-    code_snippet: str = ''    # 相关代码片段
-    remediation: str = ''     # 修复建议
+    cwe_id: str = ""  # e.g. CWE-89
+    cve_id: str = ""  # e.g. CVE-2024-XXXXX
+    file_path: str = ""  # 漏洞所在文件
+    line_number: int = 0  # 行号
+    code_snippet: str = ""  # 相关代码片段
+    remediation: str = ""  # 修复建议
     references: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            'id': self.id,
-            'name': self.name,
-            'description': self.description,
-            'severity': self.severity.value,
-            'cwe_id': self.cwe_id,
-            'cve_id': self.cve_id,
-            'file_path': self.file_path,
-            'line_number': self.line_number,
-            'code_snippet': self.code_snippet,
-            'remediation': self.remediation,
-            'references': self.references,
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "severity": self.severity.value,
+            "cwe_id": self.cwe_id,
+            "cve_id": self.cve_id,
+            "file_path": self.file_path,
+            "line_number": self.line_number,
+            "code_snippet": self.code_snippet,
+            "remediation": self.remediation,
+            "references": self.references,
         }
 
 
 @dataclass
 class SecurityFinding:
     """安全分析结果——可包含多个漏洞"""
-    target: str = ''                    # 分析目标 (file/module/project)
-    agent_name: str = ''                # 执行Agent名称
+
+    target: str = ""  # 分析目标 (file/module/project)
+    agent_name: str = ""  # 执行Agent名称
     vulnerabilities: list[SecurityVulnerability] = field(default_factory=list)
-    summary: str = ''
+    summary: str = ""
     scan_duration_ms: int = 0
     success: bool = True
-    error_message: str = ''
+    error_message: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            'target': self.target,
-            'agent_name': self.agent_name,
-            'summary': self.summary,
-            'success': self.success,
-            'error_message': self.error_message,
-            'vulnerabilities': [v.to_dict() for v in self.vulnerabilities],
-            'vulnerability_count': len(self.vulnerabilities),
-            'by_severity': {
+            "target": self.target,
+            "agent_name": self.agent_name,
+            "summary": self.summary,
+            "success": self.success,
+            "error_message": self.error_message,
+            "vulnerabilities": [v.to_dict() for v in self.vulnerabilities],
+            "vulnerability_count": len(self.vulnerabilities),
+            "by_severity": {
                 level: sum(1 for v in self.vulnerabilities if v.severity == level)
                 for level in Severity
             },
@@ -87,13 +90,14 @@ class SecurityFinding:
 @dataclass
 class SecurityAgentConfig:
     """安全Agent配置"""
-    name: str = ''
-    description: str = ''
+
+    name: str = ""
+    description: str = ""
     enabled: bool = True
     max_vulnerabilities: int = 50
     min_severity: Severity = Severity.LOW
-    model: str = ''                       # LLM model override
-    custom_rules_path: str = ''           # 自定义规则路径
+    model: str = ""  # LLM model override
+    custom_rules_path: str = ""  # 自定义规则路径
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -109,8 +113,9 @@ class BaseSecurityAgent(abc.ABC):
     def __init__(self, config: SecurityAgentConfig | None = None):
         self.config = config or SecurityAgentConfig(name=self.__class__.__name__)
         logger.info(
-            'Initialized security agent: %s (enabled=%s)',
-            self.name, self.config.enabled,
+            "Initialized security agent: %s (enabled=%s)",
+            self.name,
+            self.config.enabled,
         )
 
     @property
@@ -143,9 +148,7 @@ class BaseSecurityAgent(abc.ABC):
         Returns:
             str: 修复后的代码/补丁
         """
-        raise NotImplementedError(
-            f'{self.name} does not support auto-fix'
-        )
+        raise NotImplementedError(f"{self.name} does not support auto-fix")
 
     async def validate_fix(
         self,
@@ -162,6 +165,4 @@ class BaseSecurityAgent(abc.ABC):
         Returns:
             bool: 修复是否有效
         """
-        raise NotImplementedError(
-            f'{self.name} does not support fix validation'
-        )
+        raise NotImplementedError(f"{self.name} does not support fix validation")

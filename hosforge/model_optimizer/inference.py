@@ -27,14 +27,13 @@ HOS-Model-Optimizer 统一推理模块
 """
 
 import argparse
-import json
-import time
 import logging
-import sys
 import os
+import sys
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any, Union
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +42,11 @@ logger = logging.getLogger(__name__)
 # 数据结构定义
 # ============================================================
 
+
 @dataclass
 class InferenceRequest:
     """推理请求数据结构"""
+
     prompt: str
     max_tokens: int = 256
     temperature: float = 0.7
@@ -61,6 +62,7 @@ class InferenceRequest:
 @dataclass
 class InferenceResult:
     """推理结果数据结构"""
+
     text: str
     token_ids: List[int] = field(default_factory=list)
     prompt: str = ""
@@ -76,6 +78,7 @@ class InferenceResult:
 @dataclass
 class PerformanceStats:
     """性能统计数据结构"""
+
     total_requests: int = 0
     total_prompt_tokens: int = 0
     total_completion_tokens: int = 0
@@ -127,6 +130,7 @@ class PerformanceStats:
 # ============================================================
 # 性能监控器
 # ============================================================
+
 
 class PerformanceMonitor:
     """
@@ -193,6 +197,7 @@ class PerformanceMonitor:
 # 工具函数
 # ============================================================
 
+
 def get_gpu_memory_usage_mb() -> float:
     """
     获取当前 GPU 显存占用（MB）。
@@ -200,6 +205,7 @@ def get_gpu_memory_usage_mb() -> float:
     """
     try:
         import torch
+
         if torch.cuda.is_available():
             # 返回所有 GPU 中已分配显存的最大值
             max_allocated = 0.0
@@ -220,6 +226,7 @@ def get_total_gpu_memory_mb() -> float:
     """
     try:
         import torch
+
         if torch.cuda.is_available():
             return torch.cuda.get_device_properties(0).total_mem / (1024 * 1024)
     except (ImportError, AttributeError):
@@ -278,6 +285,7 @@ def _check_import(module_name: str) -> bool:
 # ============================================================
 # 推理后端抽象基类
 # ============================================================
+
 
 class InferenceBackend(ABC):
     """
@@ -342,6 +350,7 @@ class InferenceBackend(ABC):
 # llama-cpp-python 后端
 # ============================================================
 
+
 class LlamaCppBackend(InferenceBackend):
     """
     llama-cpp-python 推理后端。
@@ -383,12 +392,12 @@ class LlamaCppBackend(InferenceBackend):
         """
         try:
             from llama_cpp import Llama
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "llama-cpp-python 未安装，请运行：\n"
                 "  pip install llama-cpp-python\n"
                 "如需 CUDA 支持，请参考：https://github.com/abetlen/llama-cpp-python"
-            )
+            ) from e
 
         # 自动计算 GPU offload 层数
         if self.n_gpu_layers == -1:
@@ -522,11 +531,11 @@ class LlamaCppBackend(InferenceBackend):
         try:
             from llama_cpp.server.app import create_app
             from llama_cpp.server.settings import Settings
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "llama-cpp-python server 模块不可用，请安装：\n"
                 "  pip install llama-cpp-python[server]"
-            )
+            ) from e
 
         import uvicorn
 
@@ -553,6 +562,7 @@ class LlamaCppBackend(InferenceBackend):
 # ============================================================
 # vLLM 后端
 # ============================================================
+
 
 class VLLMBackend(InferenceBackend):
     """
@@ -598,11 +608,8 @@ class VLLMBackend(InferenceBackend):
         """
         try:
             from vllm import LLM
-        except ImportError:
-            raise ImportError(
-                "vLLM 未安装，请运行：\n"
-                "  pip install vllm"
-            )
+        except ImportError as e:
+            raise ImportError("vLLM 未安装，请运行：\n" "  pip install vllm") from e
 
         import torch
 
@@ -714,15 +721,19 @@ class VLLMBackend(InferenceBackend):
             total_prompt_tokens += prompt_tokens
             total_completion_tokens += completion_tokens
 
-            results.append(InferenceResult(
-                text=text,
-                token_ids=token_ids,
-                prompt=output.prompt,
-                latency_ms=elapsed_ms,
-                tokens_per_second=(completion_tokens / (elapsed_ms / 1000)) if elapsed_ms > 0 else 0,
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-            ))
+            results.append(
+                InferenceResult(
+                    text=text,
+                    token_ids=token_ids,
+                    prompt=output.prompt,
+                    latency_ms=elapsed_ms,
+                    tokens_per_second=(
+                        (completion_tokens / (elapsed_ms / 1000)) if elapsed_ms > 0 else 0
+                    ),
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                )
+            )
 
         # 批量请求作为整体记录一次性能数据
         self.monitor.record_request(
@@ -742,8 +753,8 @@ class VLLMBackend(InferenceBackend):
         """
         try:
             import uvicorn
-        except ImportError:
-            raise ImportError("uvicorn 未安装，请运行：pip install uvicorn")
+        except ImportError as e:
+            raise ImportError("uvicorn 未安装，请运行：pip install uvicorn") from e
 
         logger.info(f"启动 vLLM API 服务: http://{host}:{port}")
         logger.info(f"模型: {self.model_path}")
@@ -771,6 +782,7 @@ class VLLMBackend(InferenceBackend):
             # 清理 CUDA 缓存
             try:
                 import torch
+
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
             except ImportError:
@@ -781,6 +793,7 @@ class VLLMBackend(InferenceBackend):
 # ============================================================
 # SGLang 后端
 # ============================================================
+
 
 class SGLangBackend(InferenceBackend):
     """
@@ -818,16 +831,13 @@ class SGLangBackend(InferenceBackend):
         """
         try:
             import sglang as sgl
-        except ImportError:
-            raise ImportError(
-                "SGLang 未安装，请运行：\n"
-                "  pip install sglang"
-            )
+        except ImportError as e:
+            raise ImportError("SGLang 未安装，请运行：\n" "  pip install sglang") from e
 
         logger.info(f"加载 SGLang 引擎: {self.model_path}")
         logger.info(f"  静态显存比例: {self.mem_fraction_static}")
         logger.info(f"  上下文长度: {self.context_length}")
-        logger.info(f"  RadixAttention: 自动启用")
+        logger.info("  RadixAttention: 自动启用")
 
         self._runtime = sgl.Runtime(
             model_path=self.model_path,
@@ -859,7 +869,7 @@ class SGLangBackend(InferenceBackend):
         # 约束生成：如果提供了 JSON Schema，添加到采样参数中
         if request.json_schema is not None:
             sampling_params["json_schema"] = request.json_schema
-            logger.debug(f"启用 JSON Schema 约束生成")
+            logger.debug("启用 JSON Schema 约束生成")
 
         if request.stop:
             sampling_params["stop"] = request.stop
@@ -933,15 +943,19 @@ class SGLangBackend(InferenceBackend):
             total_prompt_tokens += prompt_tokens
             total_completion_tokens += completion_tokens
 
-            results.append(InferenceResult(
-                text=text,
-                token_ids=token_ids,
-                prompt=requests[i].prompt if i < len(requests) else "",
-                latency_ms=elapsed_ms,
-                tokens_per_second=(completion_tokens / (elapsed_ms / 1000)) if elapsed_ms > 0 else 0,
-                prompt_tokens=prompt_tokens,
-                completion_tokens=completion_tokens,
-            ))
+            results.append(
+                InferenceResult(
+                    text=text,
+                    token_ids=token_ids,
+                    prompt=requests[i].prompt if i < len(requests) else "",
+                    latency_ms=elapsed_ms,
+                    tokens_per_second=(
+                        (completion_tokens / (elapsed_ms / 1000)) if elapsed_ms > 0 else 0
+                    ),
+                    prompt_tokens=prompt_tokens,
+                    completion_tokens=completion_tokens,
+                )
+            )
 
         self.monitor.record_request(
             prompt_tokens=total_prompt_tokens,
@@ -979,6 +993,7 @@ class SGLangBackend(InferenceBackend):
             self._loaded = False
             try:
                 import torch
+
                 if torch.cuda.is_available():
                     torch.cuda.empty_cache()
             except ImportError:
@@ -989,6 +1004,7 @@ class SGLangBackend(InferenceBackend):
 # ============================================================
 # 统一推理接口
 # ============================================================
+
 
 class UnifiedInferenceEngine:
     """
@@ -1019,7 +1035,7 @@ class UnifiedInferenceEngine:
     # 各后端针对 8GB VRAM 的默认配置
     DEFAULT_CONFIGS = {
         "llama_cpp": {
-            "n_gpu_layers": -1,       # 自动计算
+            "n_gpu_layers": -1,  # 自动计算
             "n_ctx": 4096,
             "n_batch": 512,
             "use_mmap": True,
@@ -1181,6 +1197,7 @@ class UnifiedInferenceEngine:
 # 命令行接口
 # ============================================================
 
+
 def run_benchmark(engine: UnifiedInferenceEngine, num_warmup: int = 2, num_runs: int = 5):
     """
     运行推理性能基准测试。
@@ -1199,7 +1216,7 @@ def run_benchmark(engine: UnifiedInferenceEngine, num_warmup: int = 2, num_runs:
     ]
 
     print(f"\n{'=' * 50}")
-    print(f"推理性能基准测试")
+    print("推理性能基准测试")
     print(f"后端: {engine.backend_name}")
     print(f"模型: {engine.model_path}")
     print(f"预热次数: {num_warmup}, 测试次数: {num_runs}")
@@ -1242,8 +1259,10 @@ def run_benchmark(engine: UnifiedInferenceEngine, num_warmup: int = 2, num_runs:
     vram_used = get_gpu_memory_usage_mb()
     vram_total = get_total_gpu_memory_mb()
     if vram_total > 0:
-        print(f"  当前显存占用:      {vram_used:.1f} / {vram_total:.1f} MB "
-              f"({vram_used / vram_total * 100:.1f}%)")
+        print(
+            f"  当前显存占用:      {vram_used:.1f} / {vram_total:.1f} MB "
+            f"({vram_used / vram_total * 100:.1f}%)"
+        )
 
 
 def run_chat(engine: UnifiedInferenceEngine):
@@ -1302,7 +1321,7 @@ def run_single_inference(engine: UnifiedInferenceEngine, prompt: str, **kwargs):
     print(f"{'=' * 50}")
     print(f"输入: {prompt}")
     print(f"输出: {result.text}")
-    print(f"\n性能指标:")
+    print("\n性能指标:")
     print(f"  延迟: {result.latency_ms:.1f}ms")
     print(f"  生成 tokens: {result.completion_tokens}")
     print(f"  吞吐量: {result.tokens_per_second:.1f} tokens/s")
@@ -1337,48 +1356,57 @@ def main():
     )
 
     # 模型和后端
-    parser.add_argument("--model", type=str, required=True,
-                        help="模型路径或 HF 仓库 ID（llama-cpp 需要 GGUF 文件路径）")
-    parser.add_argument("--backend", type=str, default=None,
-                        choices=["llama-cpp", "vllm", "sglang"],
-                        help="推理后端（默认自动检测最优后端）")
+    parser.add_argument(
+        "--model",
+        type=str,
+        required=True,
+        help="模型路径或 HF 仓库 ID（llama-cpp 需要 GGUF 文件路径）",
+    )
+    parser.add_argument(
+        "--backend",
+        type=str,
+        default=None,
+        choices=["llama-cpp", "vllm", "sglang"],
+        help="推理后端（默认自动检测最优后端）",
+    )
 
     # 推理模式
     mode_group = parser.add_mutually_exclusive_group()
-    mode_group.add_argument("--serve", action="store_true",
-                            help="启动 OpenAI 兼容 API 服务")
-    mode_group.add_argument("--chat", action="store_true",
-                            help="命令行交互模式")
-    mode_group.add_argument("--benchmark", action="store_true",
-                            help="运行性能基准测试")
-    mode_group.add_argument("--prompt", type=str, default=None,
-                            help="单次推理的输入提示")
+    mode_group.add_argument("--serve", action="store_true", help="启动 OpenAI 兼容 API 服务")
+    mode_group.add_argument("--chat", action="store_true", help="命令行交互模式")
+    mode_group.add_argument("--benchmark", action="store_true", help="运行性能基准测试")
+    mode_group.add_argument("--prompt", type=str, default=None, help="单次推理的输入提示")
 
     # 服务配置
-    parser.add_argument("--host", type=str, default="0.0.0.0",
-                        help="服务监听地址（默认 0.0.0.0）")
-    parser.add_argument("--port", type=int, default=None,
-                        help="服务端口（vLLM 默认 8000，SGLang 默认 30000，llama-cpp 默认 8080）")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="服务监听地址（默认 0.0.0.0）")
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=None,
+        help="服务端口（vLLM 默认 8000，SGLang 默认 30000，llama-cpp 默认 8080）",
+    )
 
     # 推理参数
-    parser.add_argument("--max-tokens", type=int, default=256,
-                        help="最大生成 token 数（默认 256）")
-    parser.add_argument("--temperature", type=float, default=0.7,
-                        help="采样温度（默认 0.7）")
-    parser.add_argument("--top-p", type=float, default=0.9,
-                        help="nucleus sampling 参数（默认 0.9）")
+    parser.add_argument("--max-tokens", type=int, default=256, help="最大生成 token 数（默认 256）")
+    parser.add_argument("--temperature", type=float, default=0.7, help="采样温度（默认 0.7）")
+    parser.add_argument(
+        "--top-p", type=float, default=0.9, help="nucleus sampling 参数（默认 0.9）"
+    )
 
     # 8GB VRAM 优化相关
-    parser.add_argument("--gpu-memory-utilization", type=float, default=None,
-                        help="GPU 显存利用率（vLLM，默认 0.9）")
-    parser.add_argument("--max-model-len", type=int, default=None,
-                        help="最大模型长度（默认 4096）")
-    parser.add_argument("--n-gpu-layers", type=int, default=None,
-                        help="GPU offload 层数（llama-cpp，-1 为全部）")
+    parser.add_argument(
+        "--gpu-memory-utilization",
+        type=float,
+        default=None,
+        help="GPU 显存利用率（vLLM，默认 0.9）",
+    )
+    parser.add_argument("--max-model-len", type=int, default=None, help="最大模型长度（默认 4096）")
+    parser.add_argument(
+        "--n-gpu-layers", type=int, default=None, help="GPU offload 层数（llama-cpp，-1 为全部）"
+    )
 
     # 日志
-    parser.add_argument("--verbose", action="store_true",
-                        help="启用详细日志输出")
+    parser.add_argument("--verbose", action="store_true", help="启用详细日志输出")
 
     args = parser.parse_args()
 
@@ -1412,9 +1440,12 @@ def main():
                 backend_name = detect_best_backend()
             backend_name_normalized = backend_name.lower().replace("-", "_")
             backend_cls = UnifiedInferenceEngine.BACKEND_REGISTRY[backend_name_normalized]
-            backend_kwargs_merged = {**UnifiedInferenceEngine.DEFAULT_CONFIGS.get(
-                UnifiedInferenceEngine._normalize_backend_key(backend_name_normalized), {}
-            ), **backend_kwargs}
+            backend_kwargs_merged = {
+                **UnifiedInferenceEngine.DEFAULT_CONFIGS.get(
+                    UnifiedInferenceEngine._normalize_backend_key(backend_name_normalized), {}
+                ),
+                **backend_kwargs,
+            }
             backend_instance = backend_cls(args.model, **backend_kwargs_merged)
             backend_instance.load()
             backend_instance.serve(host=args.host, port=port)

@@ -22,4 +22,4 @@ MCP 工具列表:
     - hos_report_generate    — 报告生成
 """
 
-__version__ = '0.1.0'
+__version__ = "0.1.0"

@@ -11,21 +11,21 @@ HOS-Forge Security Dashboard — 信息安全态势仪表盘。
 """
 
 from hosforge.dashboard.dashboard import (
-    SecurityDashboard,
     DashboardWidget,
-    VulnStatWidget,
-    RiskScoreWidget,
-    PentestResultWidget,
     MCPTopologyWidget,
+    PentestResultWidget,
     RecentFindingsWidget,
+    RiskScoreWidget,
+    SecurityDashboard,
+    VulnStatWidget,
 )
 
 __all__ = [
-    'SecurityDashboard',
-    'DashboardWidget',
-    'VulnStatWidget',
-    'RiskScoreWidget',
-    'PentestResultWidget',
-    'MCPTopologyWidget',
-    'RecentFindingsWidget',
+    "SecurityDashboard",
+    "DashboardWidget",
+    "VulnStatWidget",
+    "RiskScoreWidget",
+    "PentestResultWidget",
+    "MCPTopologyWidget",
+    "RecentFindingsWidget",
 ]

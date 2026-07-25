@@ -16,12 +16,12 @@ HOS-Forge Model Optimizer — 本地模型微调与 RAG 打标强化引擎。
 """
 
 from hosforge.model_optimizer.config import ConfigManager
+from hosforge.model_optimizer.deploy import ConfigSelector, HardwareDetector, ServiceLauncher
 from hosforge.model_optimizer.inference import UnifiedInferenceEngine
 from hosforge.model_optimizer.quantize import QuantizationError
-from hosforge.model_optimizer.deploy import HardwareDetector, ConfigSelector, ServiceLauncher
 
 # HOS-Forge 扩展
-from hosforge.model_optimizer.rag_tagger import SecurityRAGTagger, RAGTaggingEngine
+from hosforge.model_optimizer.rag_tagger import RAGTaggingEngine, SecurityRAGTagger
 
 __all__ = [
     "ConfigManager",

@@ -31,14 +31,14 @@ class SemgrepTool(BaseSecurityTool):
         result = await tool.run("/path/to/project", rules=["python", "javascript"])
     """
 
-    def __init__(self, semgrep_path: str = 'semgrep'):
+    def __init__(self, semgrep_path: str = "semgrep"):
         super().__init__()
         self._semgrep_path = semgrep_path
         self._available: bool | None = None
 
     @property
     def name(self) -> str:
-        return 'semgrep'
+        return "semgrep"
 
     async def validate(self) -> bool:
         """检查 Semgrep 是否可用"""
@@ -68,44 +68,44 @@ class SemgrepTool(BaseSecurityTool):
             return SecurityToolResult(
                 tool_name=self.name,
                 success=False,
-                error='Semgrep is not installed',
+                error="Semgrep is not installed",
             )
 
-        rules = kwargs.get('rules', ['p/default'])
-        config = kwargs.get('config', '')
-        languages = kwargs.get('languages', [])
-        severity = kwargs.get('severity', 'info')
-        output_format = kwargs.get('output_format', 'json')
+        rules = kwargs.get("rules", ["p/default"])
+        config = kwargs.get("config", "")
+        languages = kwargs.get("languages", [])
+        severity = kwargs.get("severity", "info")
+        output_format = kwargs.get("output_format", "json")
 
-        cmd = [self._semgrep_path, 'scan']
+        cmd = [self._semgrep_path, "scan"]
 
         # 规则配置
         if config:
-            cmd.extend(['--config', config])
+            cmd.extend(["--config", config])
         else:
             for rule in rules:
-                cmd.extend(['--config', rule])
+                cmd.extend(["--config", rule])
 
         # 语言过滤
         if languages:
-            cmd.extend(['--lang', ','.join(languages)])
+            cmd.extend(["--lang", ",".join(languages)])
 
         # 最低严重级别
-        cmd.extend(['--severity', severity.upper()])
+        cmd.extend(["--severity", severity.upper()])
 
         # 输出格式
-        if output_format == 'json':
-            cmd.append('--json')
-        elif output_format == 'sarif':
-            cmd.append('--sarif')
+        if output_format == "json":
+            cmd.append("--json")
+        elif output_format == "sarif":
+            cmd.append("--sarif")
 
         # 目标路径
         cmd.append(target)
 
         # 强制颜色输出
-        cmd.append('--force-color')
+        cmd.append("--force-color")
 
-        logger.info('Semgrep command: %s', ' '.join(cmd[:4]) + ' ...')
+        logger.info("Semgrep command: %s", " ".join(cmd[:4]) + " ...")
 
         try:
             process = await asyncio.create_subprocess_exec(
@@ -116,20 +116,21 @@ class SemgrepTool(BaseSecurityTool):
 
             try:
                 stdout, stderr = await asyncio.wait_for(
-                    process.communicate(), timeout=120,
+                    process.communicate(),
+                    timeout=120,
                 )
             except asyncio.TimeoutError:
                 process.kill()
                 return SecurityToolResult(
                     tool_name=self.name,
                     success=False,
-                    error='Semgrep scan timed out after 120s',
+                    error="Semgrep scan timed out after 120s",
                 )
 
             output = stdout.decode()
 
             findings = []
-            if output_format == 'json' and output.strip():
+            if output_format == "json" and output.strip():
                 try:
                     data = json.loads(output)
                     findings = self._parse_semgrep_results(data)
@@ -140,28 +141,30 @@ class SemgrepTool(BaseSecurityTool):
                 tool_name=self.name,
                 success=process.returncode in (0, 1),  # 1 = findings found
                 output=output,
-                raw_data={'findings': findings},
+                raw_data={"findings": findings},
             )
 
         except FileNotFoundError:
             return SecurityToolResult(
                 tool_name=self.name,
                 success=False,
-                error='Semgrep not found',
+                error="Semgrep not found",
             )
 
     def _parse_semgrep_results(self, data: dict) -> list[dict]:
         """解析 Semgrep JSON 输出"""
         findings = []
-        for result in data.get('results', []):
-            findings.append({
-                'check_id': result.get('check_id', ''),
-                'path': result.get('path', ''),
-                'start_line': result.get('start', {}).get('line', 0),
-                'end_line': result.get('end', {}).get('line', 0),
-                'message': result.get('extra', {}).get('message', ''),
-                'severity': result.get('extra', {}).get('severity', 'INFO'),
-                'cwe': result.get('extra', {}).get('metadata', {}).get('cwe', ''),
-                'cve': result.get('extra', {}).get('metadata', {}).get('cve', ''),
-            })
+        for result in data.get("results", []):
+            findings.append(
+                {
+                    "check_id": result.get("check_id", ""),
+                    "path": result.get("path", ""),
+                    "start_line": result.get("start", {}).get("line", 0),
+                    "end_line": result.get("end", {}).get("line", 0),
+                    "message": result.get("extra", {}).get("message", ""),
+                    "severity": result.get("extra", {}).get("severity", "INFO"),
+                    "cwe": result.get("extra", {}).get("metadata", {}).get("cwe", ""),
+                    "cve": result.get("extra", {}).get("metadata", {}).get("cve", ""),
+                }
+            )
         return findings

@@ -31,20 +31,22 @@ logger = logging.getLogger(__name__)
 
 class PentestPhase(str, Enum):
     """渗透测试阶段"""
-    RECON = 'reconnaissance'         # 侦察
-    SCANNING = 'scanning'            # 扫描
-    VULN_ASSESS = 'vuln_assessment'  # 漏洞评估
-    EXPLOIT = 'exploitation'         # 利用验证
-    REPORTING = 'reporting'          # 报告
-    COMPLETED = 'completed'          # 完成
+
+    RECON = "reconnaissance"  # 侦察
+    SCANNING = "scanning"  # 扫描
+    VULN_ASSESS = "vuln_assessment"  # 漏洞评估
+    EXPLOIT = "exploitation"  # 利用验证
+    REPORTING = "reporting"  # 报告
+    COMPLETED = "completed"  # 完成
 
 
 @dataclass
 class PentestTarget:
     """渗透测试目标"""
-    host: str = ''              # IP 或域名
-    port_range: str = '1-65535'
-    protocols: list[str] = field(default_factory=lambda: ['tcp', 'udp'])
+
+    host: str = ""  # IP 或域名
+    port_range: str = "1-65535"
+    protocols: list[str] = field(default_factory=lambda: ["tcp", "udp"])
     services: list[str] = field(default_factory=list)
     technologies: list[str] = field(default_factory=list)
     scope_authorized: bool = False  # 授权确认
@@ -53,75 +55,79 @@ class PentestTarget:
 @dataclass
 class ReconResult:
     """侦察阶段结果"""
+
     open_ports: list[int] = field(default_factory=list)
-    services: dict[int, str] = field(default_factory=dict)   # port → service
-    banners: dict[int, str] = field(default_factory=dict)     # port → banner
+    services: dict[int, str] = field(default_factory=dict)  # port → service
+    banners: dict[int, str] = field(default_factory=dict)  # port → banner
     technologies: list[str] = field(default_factory=list)
     subdomains: list[str] = field(default_factory=list)
-    notes: str = ''
+    notes: str = ""
 
 
 @dataclass
 class ScanResult:
     """扫描阶段结果"""
+
     vulnerability_hints: list[dict[str, Any]] = field(default_factory=list)
     misconfigurations: list[str] = field(default_factory=list)
-    findings_summary: str = ''
+    findings_summary: str = ""
     scan_details: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class PhaseResult:
     """单个阶段执行结果"""
+
     phase: PentestPhase = PentestPhase.RECON
-    status: str = 'pending'       # pending | running | completed | failed | skipped
-    started_at: str = ''
-    completed_at: str = ''
+    status: str = "pending"  # pending | running | completed | failed | skipped
+    started_at: str = ""
+    completed_at: str = ""
     data: dict[str, Any] = field(default_factory=dict)
-    error: str = ''
+    error: str = ""
 
 
 @dataclass
 class PentestReport:
     """渗透测试完整报告"""
-    report_id: str = ''
-    title: str = ''
+
+    report_id: str = ""
+    title: str = ""
     target: PentestTarget = field(default_factory=PentestTarget)
-    started_at: str = ''
-    completed_at: str = ''
+    started_at: str = ""
+    completed_at: str = ""
     phases: list[PhaseResult] = field(default_factory=list)
     vulnerabilities: list[SecurityVulnerability] = field(default_factory=list)
-    executive_summary: str = ''
-    risk_score: int = 0           # 0-100
+    executive_summary: str = ""
+    risk_score: int = 0  # 0-100
     recommendations: list[str] = field(default_factory=list)
-    authorized: bool = False      # 授权标志
+    authorized: bool = False  # 授权标志
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            'report_id': self.report_id,
-            'title': self.title,
-            'target': {
-                'host': self.target.host,
-                'port_range': self.target.port_range,
-                'services': self.target.services,
-                'technologies': self.target.technologies,
+            "report_id": self.report_id,
+            "title": self.title,
+            "target": {
+                "host": self.target.host,
+                "port_range": self.target.port_range,
+                "services": self.target.services,
+                "technologies": self.target.technologies,
             },
-            'started_at': self.started_at,
-            'completed_at': self.completed_at,
-            'phases': [
+            "started_at": self.started_at,
+            "completed_at": self.completed_at,
+            "phases": [
                 {
-                    'phase': p.phase.value,
-                    'status': p.status,
-                    'error': p.error,
+                    "phase": p.phase.value,
+                    "status": p.status,
+                    "error": p.error,
                 }
                 for p in self.phases
             ],
-            'vulnerability_count': len(self.vulnerabilities),
-            'vulnerabilities': [v.to_dict() for v in self.vulnerabilities],
-            'executive_summary': self.executive_summary,
-            'risk_score': self.risk_score,
-            'recommendations': self.recommendations,
-            'authorized': self.authorized,
+            "vulnerability_count": len(self.vulnerabilities),
+            "vulnerabilities": [v.to_dict() for v in self.vulnerabilities],
+            "executive_summary": self.executive_summary,
+            "risk_score": self.risk_score,
+            "recommendations": self.recommendations,
+            "authorized": self.authorized,
         }
 
 
@@ -147,21 +153,24 @@ class AttackAgent(BaseSecurityAgent):
     """
 
     def __init__(self, config: SecurityAgentConfig | None = None):
-        super().__init__(config or SecurityAgentConfig(
-            name='AttackAgent',
-            description='AI 渗透测试 Agent — Recon/Scanning/Vuln Assessment/Exploit',
-        ))
+        super().__init__(
+            config
+            or SecurityAgentConfig(
+                name="AttackAgent",
+                description="AI 渗透测试 Agent — Recon/Scanning/Vuln Assessment/Exploit",
+            )
+        )
         self._current_report: PentestReport | None = None
         self._tool_adapters: dict[str, Any] = {}
 
     @property
     def name(self) -> str:
-        return 'AttackAgent'
+        return "AttackAgent"
 
     def register_tool(self, name: str, tool: Any) -> None:
         """注册外部工具适配器"""
         self._tool_adapters[name] = tool
-        logger.info('Registered tool: %s', name)
+        logger.info("Registered tool: %s", name)
 
     async def analyze(self, target: str, **kwargs: Any) -> SecurityFinding:
         """
@@ -178,14 +187,14 @@ class AttackAgent(BaseSecurityAgent):
         Returns:
             SecurityFinding: 渗透测试发现
         """
-        authorized = kwargs.get('authorized', False)
-        port_range = kwargs.get('port_range', '1-65535')
-        fast_mode = kwargs.get('fast_mode', False)
-        skip_exploit = kwargs.get('skip_exploit', not authorized)
+        authorized = kwargs.get("authorized", False)
+        port_range = kwargs.get("port_range", "1-65535")
+        fast_mode = kwargs.get("fast_mode", False)
+        skip_exploit = kwargs.get("skip_exploit", not authorized)
 
         pentest_target = PentestTarget(
             host=target,
-            port_range=port_range if not fast_mode else '1-1024,3306,5432,6379,8080,8443,27017',
+            port_range=port_range if not fast_mode else "1-1024,3306,5432,6379,8080,8443,27017",
             scope_authorized=authorized,
         )
 
@@ -217,8 +226,8 @@ class AttackAgent(BaseSecurityAgent):
             PentestReport: 渗透测试报告
         """
         report = PentestReport(
-            report_id=f'PT-{uuid.uuid4().hex[:8].upper()}',
-            title=f'Penetration Test Report — {target.host}',
+            report_id=f"PT-{uuid.uuid4().hex[:8].upper()}",
+            title=f"Penetration Test Report — {target.host}",
             target=target,
             started_at=datetime.utcnow().isoformat(),
             authorized=target.scope_authorized,
@@ -232,8 +241,8 @@ class AttackAgent(BaseSecurityAgent):
             # ── Phase 1: Reconnaissance ──────────────────────────────
             recon = await self._phase_reconnaissance(target)
             report.phases.append(recon)
-            if recon.status == 'failed':
-                report.executive_summary = f'Reconnaissance failed: {recon.error}'
+            if recon.status == "failed":
+                report.executive_summary = f"Reconnaissance failed: {recon.error}"
                 report.risk_score = 0
                 report.completed_at = datetime.utcnow().isoformat()
                 return report
@@ -241,19 +250,19 @@ class AttackAgent(BaseSecurityAgent):
             # ── Phase 2: Scanning ────────────────────────────────────
             scan = await self._phase_scanning(target, recon)
             report.phases.append(scan)
-            if scan.status != 'failed':
+            if scan.status != "failed":
                 # 从扫描结果提取初步漏洞信息
-                for hint in scan.data.get('vulnerability_hints', []):
+                for hint in scan.data.get("vulnerability_hints", []):
                     vuln = self._hint_to_vulnerability(hint, target.host)
                     if vuln:
                         all_vulns.append(vuln)
                         risk_scores.append(self._severity_to_score(vuln.severity))
 
             # ── Phase 3: Vulnerability Assessment ────────────────────
-            if scan.status != 'failed':
+            if scan.status != "failed":
                 vassess = await self._phase_vuln_assessment(target, scan)
                 report.phases.append(vassess)
-                for vuln_data in vassess.data.get('confirmed_vulns', []):
+                for vuln_data in vassess.data.get("confirmed_vulns", []):
                     vuln = self._hint_to_vulnerability(vuln_data, target.host)
                     if vuln:
                         all_vulns.append(vuln)
@@ -263,21 +272,23 @@ class AttackAgent(BaseSecurityAgent):
             if not skip_exploit and target.scope_authorized:
                 exploit = await self._phase_exploitation(target, all_vulns)
                 report.phases.append(exploit)
-                for vuln_data in exploit.data.get('verified_vulns', []):
+                for vuln_data in exploit.data.get("verified_vulns", []):
                     vuln = self._hint_to_vulnerability(vuln_data, target.host)
                     if vuln:
                         all_vulns.append(vuln)
                         risk_scores.append(self._severity_to_score(vuln.severity))
             else:
-                report.phases.append(PhaseResult(
-                    phase=PentestPhase.EXPLOIT,
-                    status='skipped',
-                    data={'reason': 'Not authorized or skip_exploit=True'},
-                ))
+                report.phases.append(
+                    PhaseResult(
+                        phase=PentestPhase.EXPLOIT,
+                        status="skipped",
+                        data={"reason": "Not authorized or skip_exploit=True"},
+                    )
+                )
 
         except Exception as e:
-            logger.exception('Pentest failed: %s', e)
-            report.executive_summary = f'渗透测试执行出错: {e}'
+            logger.exception("Pentest failed: %s", e)
+            report.executive_summary = f"渗透测试执行出错: {e}"
 
         # ── Phase 5: Reporting ───────────────────────────────────────
         report.vulnerabilities = self._deduplicate_vulns(all_vulns)
@@ -286,20 +297,24 @@ class AttackAgent(BaseSecurityAgent):
         report.recommendations = self._generate_recommendations(report.vulnerabilities)
         report.completed_at = datetime.utcnow().isoformat()
 
-        report.phases.append(PhaseResult(
-            phase=PentestPhase.REPORTING,
-            status='completed',
-            completed_at=report.completed_at,
-            data={
-                'vulnerability_count': len(report.vulnerabilities),
-                'risk_score': report.risk_score,
-            },
-        ))
+        report.phases.append(
+            PhaseResult(
+                phase=PentestPhase.REPORTING,
+                status="completed",
+                completed_at=report.completed_at,
+                data={
+                    "vulnerability_count": len(report.vulnerabilities),
+                    "risk_score": report.risk_score,
+                },
+            )
+        )
 
         logger.info(
-            'Pentest complete: %s | %d vulns | risk=%d | authorized=%s',
-            target.host, len(report.vulnerabilities),
-            report.risk_score, target.scope_authorized,
+            "Pentest complete: %s | %d vulns | risk=%d | authorized=%s",
+            target.host,
+            len(report.vulnerabilities),
+            report.risk_score,
+            target.scope_authorized,
         )
 
         return report
@@ -314,47 +329,46 @@ class AttackAgent(BaseSecurityAgent):
         """
         result = PhaseResult(phase=PentestPhase.RECON)
         result.started_at = datetime.utcnow().isoformat()
-        logger.info('[Recon] Target: %s', target.host)
+        logger.info("[Recon] Target: %s", target.host)
 
         try:
             recon_data: dict[str, Any] = {
-                'target': target.host,
-                'open_ports': [],
-                'services': {},
-                'banners': {},
-                'technologies': [],
-                'subdomains': [],
+                "target": target.host,
+                "open_ports": [],
+                "services": {},
+                "banners": {},
+                "technologies": [],
+                "subdomains": [],
             }
 
             # 检查是否有 Nmap 工具注册
-            nmap_tool = self._tool_adapters.get('nmap')
+            nmap_tool = self._tool_adapters.get("nmap")
             if nmap_tool:
-                logger.info('[Recon] Using Nmap adapter for port scan')
+                logger.info("[Recon] Using Nmap adapter for port scan")
                 nmap_result = await nmap_tool.run(
                     target.host,
                     ports=target.port_range,
                 )
                 if nmap_result.success:
-                    recon_data['open_ports'] = nmap_result.raw_data.get('open_ports', [])
-                    recon_data['services'] = nmap_result.raw_data.get('services', {})
-                    recon_data['banners'] = nmap_result.raw_data.get('banners', {})
+                    recon_data["open_ports"] = nmap_result.raw_data.get("open_ports", [])
+                    recon_data["services"] = nmap_result.raw_data.get("services", {})
+                    recon_data["banners"] = nmap_result.raw_data.get("banners", {})
 
             # 无工具时的基础侦察
-            if not recon_data['open_ports']:
-                logger.info('[Recon] No tool available, using AI-guided recon')
-                recon_data['notes'] = (
-                    'AI-guided reconnaissance. '
-                    'Use Nmap MCP for detailed port/service discovery.'
+            if not recon_data["open_ports"]:
+                logger.info("[Recon] No tool available, using AI-guided recon")
+                recon_data["notes"] = (
+                    "AI-guided reconnaissance. " "Use Nmap MCP for detailed port/service discovery."
                 )
 
-            recon_data['technologies'] = target.technologies
+            recon_data["technologies"] = target.technologies
             result.data = recon_data
-            result.status = 'completed'
-            logger.info('[Recon] Complete: %s', target.host)
+            result.status = "completed"
+            logger.info("[Recon] Complete: %s", target.host)
 
         except Exception as e:
-            logger.error('[Recon] Failed: %s', e)
-            result.status = 'failed'
+            logger.error("[Recon] Failed: %s", e)
+            result.status = "failed"
             result.error = str(e)
 
         result.completed_at = datetime.utcnow().isoformat()
@@ -372,78 +386,90 @@ class AttackAgent(BaseSecurityAgent):
         """
         result = PhaseResult(phase=PentestPhase.SCANNING)
         result.started_at = datetime.utcnow().isoformat()
-        logger.info('[Scan] Target: %s', target.host)
+        logger.info("[Scan] Target: %s", target.host)
 
         try:
             scan_data: dict[str, Any] = {
-                'vulnerability_hints': [],
-                'misconfigurations': [],
-                'scan_details': {},
+                "vulnerability_hints": [],
+                "misconfigurations": [],
+                "scan_details": {},
             }
 
-            open_ports = recon.data.get('open_ports', [])
-            services = recon.data.get('services', {})
+            open_ports = recon.data.get("open_ports", [])
+            services = recon.data.get("services", {})
 
             # Web 服务漏洞探测
-            web_ports = [p for p in open_ports if services.get(p, '') in ('http', 'https', 'http-proxy')]
+            web_ports = [
+                p for p in open_ports if services.get(p, "") in ("http", "https", "http-proxy")
+            ]
             if web_ports:
-                scan_data['vulnerability_hints'].extend([
-                    {
-                        'name': 'Web Service Exposure',
-                        'description': f'Web service detected on port(s): {web_ports}',
-                        'severity': 'medium',
-                        'confidence': 'high',
-                        'cwe': 'CWE-200',
-                    },
-                ])
+                scan_data["vulnerability_hints"].extend(
+                    [
+                        {
+                            "name": "Web Service Exposure",
+                            "description": f"Web service detected on port(s): {web_ports}",
+                            "severity": "medium",
+                            "confidence": "high",
+                            "cwe": "CWE-200",
+                        },
+                    ]
+                )
 
                 # 检查是否有 Nuclei 工具
-                nuclei_tool = self._tool_adapters.get('nuclei')
+                nuclei_tool = self._tool_adapters.get("nuclei")
                 if nuclei_tool:
-                    logger.info('[Scan] Using Nuclei adapter for vulnerability scanning')
+                    logger.info("[Scan] Using Nuclei adapter for vulnerability scanning")
                     for port in web_ports:
                         nuclei_result = await nuclei_tool.run(
-                            f'{target.host}:{port}',
-                            tags=['cve', 'misconfiguration'],
+                            f"{target.host}:{port}",
+                            tags=["cve", "misconfiguration"],
                         )
                         if nuclei_result.success:
-                            hints = nuclei_result.raw_data.get('findings', [])
-                            scan_data['vulnerability_hints'].extend(hints)
+                            hints = nuclei_result.raw_data.get("findings", [])
+                            scan_data["vulnerability_hints"].extend(hints)
 
             # 数据库服务暴露
             db_ports_map = {
-                3306: 'MySQL', 5432: 'PostgreSQL', 6379: 'Redis',
-                27017: 'MongoDB', 1433: 'MSSQL', 1521: 'Oracle',
+                3306: "MySQL",
+                5432: "PostgreSQL",
+                6379: "Redis",
+                27017: "MongoDB",
+                1433: "MSSQL",
+                1521: "Oracle",
             }
             for port, db_name in db_ports_map.items():
                 if port in open_ports:
-                    scan_data['vulnerability_hints'].append({
-                        'name': f'Database Service Exposure ({db_name})',
-                        'description': f'{db_name} database exposed on port {port}',
-                        'severity': 'high',
-                        'confidence': 'high',
-                        'cwe': 'CWE-200',
-                    })
+                    scan_data["vulnerability_hints"].append(
+                        {
+                            "name": f"Database Service Exposure ({db_name})",
+                            "description": f"{db_name} database exposed on port {port}",
+                            "severity": "high",
+                            "confidence": "high",
+                            "cwe": "CWE-200",
+                        }
+                    )
 
             # 常见高风险端口
-            high_risk_ports = {21: 'FTP', 23: 'Telnet', 445: 'SMB', 135: 'RPC', 3389: 'RDP'}
+            high_risk_ports = {21: "FTP", 23: "Telnet", 445: "SMB", 135: "RPC", 3389: "RDP"}
             for port, service in high_risk_ports.items():
                 if port in open_ports:
-                    scan_data['vulnerability_hints'].append({
-                        'name': f'High-Risk Service ({service})',
-                        'description': f'{service} exposed on port {port}',
-                        'severity': 'high',
-                        'confidence': 'high',
-                        'cwe': 'CWE-1100',
-                    })
+                    scan_data["vulnerability_hints"].append(
+                        {
+                            "name": f"High-Risk Service ({service})",
+                            "description": f"{service} exposed on port {port}",
+                            "severity": "high",
+                            "confidence": "high",
+                            "cwe": "CWE-1100",
+                        }
+                    )
 
             result.data = scan_data
-            result.status = 'completed'
-            logger.info('[Scan] Complete: %d hints found', len(scan_data['vulnerability_hints']))
+            result.status = "completed"
+            logger.info("[Scan] Complete: %d hints found", len(scan_data["vulnerability_hints"]))
 
         except Exception as e:
-            logger.error('[Scan] Failed: %s', e)
-            result.status = 'failed'
+            logger.error("[Scan] Failed: %s", e)
+            result.status = "failed"
             result.error = str(e)
 
         result.completed_at = datetime.utcnow().isoformat()
@@ -463,34 +489,36 @@ class AttackAgent(BaseSecurityAgent):
         result.started_at = datetime.utcnow().isoformat()
 
         try:
-            hints = scan.data.get('vulnerability_hints', [])
+            hints = scan.data.get("vulnerability_hints", [])
             confirmed_vulns: list[dict[str, Any]] = []
 
             for hint in hints:
-                name = hint.get('name', '')
-                severity_str = hint.get('severity', 'medium')
+                name = hint.get("name", "")
+                severity_str = hint.get("severity", "medium")
 
                 # 基于置信度过滤
-                confidence = hint.get('confidence', 'low')
-                if confidence == 'low' and severity_str in ('low', 'info'):
+                confidence = hint.get("confidence", "low")
+                if confidence == "low" and severity_str in ("low", "info"):
                     continue
 
-                confirmed_vulns.append({
-                    'name': name,
-                    'description': hint.get('description', ''),
-                    'severity': severity_str,
-                    'cwe': hint.get('cwe', ''),
-                    'confirmed': True,
-                    'confidence': confidence,
-                })
+                confirmed_vulns.append(
+                    {
+                        "name": name,
+                        "description": hint.get("description", ""),
+                        "severity": severity_str,
+                        "cwe": hint.get("cwe", ""),
+                        "confirmed": True,
+                        "confidence": confidence,
+                    }
+                )
 
-            result.data = {'confirmed_vulns': confirmed_vulns}
-            result.status = 'completed'
-            logger.info('[VulnAssess] Confirmed %d vulnerabilities', len(confirmed_vulns))
+            result.data = {"confirmed_vulns": confirmed_vulns}
+            result.status = "completed"
+            logger.info("[VulnAssess] Confirmed %d vulnerabilities", len(confirmed_vulns))
 
         except Exception as e:
-            logger.error('[VulnAssess] Failed: %s', e)
-            result.status = 'failed'
+            logger.error("[VulnAssess] Failed: %s", e)
+            result.status = "failed"
             result.error = str(e)
 
         result.completed_at = datetime.utcnow().isoformat()
@@ -511,9 +539,9 @@ class AttackAgent(BaseSecurityAgent):
         result.started_at = datetime.utcnow().isoformat()
 
         if not target.scope_authorized:
-            result.status = 'skipped'
-            result.data = {'reason': 'Not authorized — exploitation requires explicit permission'}
-            logger.warning('[Exploit] Skipped — target not authorized')
+            result.status = "skipped"
+            result.data = {"reason": "Not authorized — exploitation requires explicit permission"}
+            logger.warning("[Exploit] Skipped — target not authorized")
             return result
 
         try:
@@ -525,21 +553,23 @@ class AttackAgent(BaseSecurityAgent):
                     continue
 
                 # TODO: 集成 Metasploit/Custom exploit 验证
-                verified_vulns.append({
-                    'name': vuln.name,
-                    'cve': vuln.cve_id,
-                    'exploitable': True,
-                    'method': 'AI-guided verification (authorized)',
-                    'notes': 'Verified in authorized environment. No actual exploitation performed.',
-                })
+                verified_vulns.append(
+                    {
+                        "name": vuln.name,
+                        "cve": vuln.cve_id,
+                        "exploitable": True,
+                        "method": "AI-guided verification (authorized)",
+                        "notes": "Verified in authorized environment. No actual exploitation performed.",
+                    }
+                )
 
-            result.data = {'verified_vulns': verified_vulns}
-            result.status = 'completed'
-            logger.info('[Exploit] Verified %d vulnerabilities', len(verified_vulns))
+            result.data = {"verified_vulns": verified_vulns}
+            result.status = "completed"
+            logger.info("[Exploit] Verified %d vulnerabilities", len(verified_vulns))
 
         except Exception as e:
-            logger.error('[Exploit] Failed: %s', e)
-            result.status = 'failed'
+            logger.error("[Exploit] Failed: %s", e)
+            result.status = "failed"
             result.error = str(e)
 
         result.completed_at = datetime.utcnow().isoformat()
@@ -554,23 +584,23 @@ class AttackAgent(BaseSecurityAgent):
     ) -> SecurityVulnerability | None:
         """将扫描提示转换为 SecurityVulnerability"""
         severity_map = {
-            'critical': Severity.CRITICAL,
-            'high': Severity.HIGH,
-            'medium': Severity.MEDIUM,
-            'low': Severity.LOW,
-            'info': Severity.INFO,
+            "critical": Severity.CRITICAL,
+            "high": Severity.HIGH,
+            "medium": Severity.MEDIUM,
+            "low": Severity.LOW,
+            "info": Severity.INFO,
         }
-        cwe = hint.get('cwe', '')
-        name = hint.get('name', 'Unknown Vulnerability')
-        description = hint.get('description', '')
+        cwe = hint.get("cwe", "")
+        name = hint.get("name", "Unknown Vulnerability")
+        description = hint.get("description", "")
 
         return SecurityVulnerability(
-            id=f'VULN-{uuid.uuid4().hex[:6].upper()}',
+            id=f"VULN-{uuid.uuid4().hex[:6].upper()}",
             name=name,
             description=description,
-            severity=severity_map.get(hint.get('severity', 'medium'), Severity.MEDIUM),
-            cwe_id=cwe if cwe.startswith('CWE-') else f'CWE-{cwe}' if cwe else '',
-            cve_id=hint.get('cve', ''),
+            severity=severity_map.get(hint.get("severity", "medium"), Severity.MEDIUM),
+            cwe_id=cwe if cwe.startswith("CWE-") else f"CWE-{cwe}" if cwe else "",
+            cve_id=hint.get("cve", ""),
             file_path=host,
             metadata=hint,
         )
@@ -604,27 +634,25 @@ class AttackAgent(BaseSecurityAgent):
             by_severity[key] = by_severity.get(key, 0) + 1
 
         summary_parts = [
-            f'## 渗透测试报告: {report.target.host}',
-            f'**报告编号**: {report.report_id}',
-            f'**风险评分**: {report.risk_score}/100',
-            f'**发现漏洞**: {vuln_count} 个',
+            f"## 渗透测试报告: {report.target.host}",
+            f"**报告编号**: {report.report_id}",
+            f"**风险评分**: {report.risk_score}/100",
+            f"**发现漏洞**: {vuln_count} 个",
         ]
 
         if by_severity:
-            summary_parts.append(f'**严重分布**: {by_severity}')
+            summary_parts.append(f"**严重分布**: {by_severity}")
 
-        phases_completed = sum(
-            1 for p in report.phases if p.status == 'completed'
-        )
-        summary_parts.append(f'**完成阶段**: {phases_completed}/{len(report.phases)}')
+        phases_completed = sum(1 for p in report.phases if p.status == "completed")
+        summary_parts.append(f"**完成阶段**: {phases_completed}/{len(report.phases)}")
 
         if not report.authorized:
             summary_parts.append(
-                '\n⚠ **注意**: 本次测试为未授权评估模式，'
-                '利用验证阶段已跳过。请获得授权后重新测试。'
+                "\n⚠ **注意**: 本次测试为未授权评估模式，"
+                "利用验证阶段已跳过。请获得授权后重新测试。"
             )
 
-        return '\n\n'.join(summary_parts)
+        return "\n\n".join(summary_parts)
 
     def _generate_recommendations(
         self,
@@ -638,11 +666,11 @@ class AttackAgent(BaseSecurityAgent):
             if vuln.cwe_id and vuln.cwe_id not in seen_cwes:
                 seen_cwes.add(vuln.cwe_id)
                 recommendations.append(
-                    f'[CWE-{vuln.cwe_id}] {vuln.name} — {vuln.description[:100]}'
+                    f"[CWE-{vuln.cwe_id}] {vuln.name} — {vuln.description[:100]}"
                 )
 
         if not recommendations:
-            recommendations.append('未发现严重安全风险，建议保持现有安全措施。')
+            recommendations.append("未发现严重安全风险，建议保持现有安全措施。")
 
         return recommendations
 
@@ -654,7 +682,7 @@ class AttackAgent(BaseSecurityAgent):
         seen: set[str] = set()
         unique: list[SecurityVulnerability] = []
         for v in vulns:
-            key = f'{v.name}:{v.cwe_id}'
+            key = f"{v.name}:{v.cwe_id}"
             if key not in seen:
                 seen.add(key)
                 unique.append(v)
@@ -670,17 +698,17 @@ class AttackAgent(BaseSecurityAgent):
         Returns:
             str: HTML 报告内容 (固定格式，可直接保存/转发)
         """
-        vuln_rows = ''
+        vuln_rows = ""
         for i, v in enumerate(report.vulnerabilities, 1):
             severity_color = {
-                'critical': '#B33F4E',
-                'high': '#D4A040',
-                'medium': '#8C6E9F',
-                'low': '#6CCB4C',
-                'info': '#6B6F72',
-            }.get(v.severity.value, '#6B6F72')
+                "critical": "#B33F4E",
+                "high": "#D4A040",
+                "medium": "#8C6E9F",
+                "low": "#6CCB4C",
+                "info": "#6B6F72",
+            }.get(v.severity.value, "#6B6F72")
 
-            vuln_rows += f'''
+            vuln_rows += f"""
             <tr>
                 <td style="padding:12px;border-bottom:1px solid #3C3E42;">{i}</td>
                 <td style="padding:12px;border-bottom:1px solid #3C3E42;">
@@ -695,12 +723,16 @@ class AttackAgent(BaseSecurityAgent):
                 <td style="padding:12px;border-bottom:1px solid #3C3E42;color:#B49BC4;font-size:13px;">
                     {v.description[:120] + '...' if len(v.description) > 120 else v.description}
                 </td>
-            </tr>'''
+            </tr>"""
 
         # 风险评分条
-        risk_color = '#B33F4E' if report.risk_score >= 70 else '#D4A040' if report.risk_score >= 40 else '#6CCB4C'
+        risk_color = (
+            "#B33F4E"
+            if report.risk_score >= 70
+            else "#D4A040" if report.risk_score >= 40 else "#6CCB4C"
+        )
 
-        html = f'''<!DOCTYPE html>
+        html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -801,28 +833,34 @@ class AttackAgent(BaseSecurityAgent):
   <div class="section">
     <h2>🔄 执行阶段</h2>
     <div class="phase-grid">
-'''
+"""
         phase_icons = {
-            PentestPhase.RECON: '🔍', PentestPhase.SCANNING: '📡',
-            PentestPhase.VULN_ASSESS: '🎯', PentestPhase.EXPLOIT: '⚡',
-            PentestPhase.REPORTING: '📄', PentestPhase.COMPLETED: '✅',
+            PentestPhase.RECON: "🔍",
+            PentestPhase.SCANNING: "📡",
+            PentestPhase.VULN_ASSESS: "🎯",
+            PentestPhase.EXPLOIT: "⚡",
+            PentestPhase.REPORTING: "📄",
+            PentestPhase.COMPLETED: "✅",
         }
         phase_status_colors = {
-            'completed': '#6CCB4C', 'failed': '#B33F4E',
-            'skipped': '#6B6F72', 'running': '#D4A040', 'pending': '#6B6F72',
+            "completed": "#6CCB4C",
+            "failed": "#B33F4E",
+            "skipped": "#6B6F72",
+            "running": "#D4A040",
+            "pending": "#6B6F72",
         }
 
         for phase in report.phases:
-            icon = phase_icons.get(phase.phase, '●')
-            color = phase_status_colors.get(phase.status, '#6B6F72')
-            html += f'''
+            icon = phase_icons.get(phase.phase, "●")
+            color = phase_status_colors.get(phase.status, "#6B6F72")
+            html += f"""
       <div class="phase-card">
         <div class="icon">{icon}</div>
         <div class="name">{phase.phase.value.replace('_', ' ').title()}</div>
         <div class="status" style="color:{color};">{phase.status.upper()}</div>
-      </div>'''
+      </div>"""
 
-        html += '''
+        html += """
     </div>
   </div>
 
@@ -832,28 +870,28 @@ class AttackAgent(BaseSecurityAgent):
       <thead><tr>
         <th>#</th><th>严重程度</th><th>漏洞名称</th><th>CWE</th><th>描述</th>
       </tr></thead>
-      <tbody>'''
+      <tbody>"""
 
         if not report.vulnerabilities:
-            html += '''
+            html += """
         <tr><td colspan="5" style="text-align:center;padding:32px;color:#6B6F72;">
           未发现安全漏洞
-        </td></tr>'''
+        </td></tr>"""
         else:
             html += vuln_rows
 
-        html += '''
+        html += """
       </tbody>
     </table>
   </div>
 
   <div class="section">
     <h2>💡 修复建议</h2>
-    <ol class="rec-list">'''
+    <ol class="rec-list">"""
         for rec in report.recommendations:
-            html += f'\n      <li>{rec}</li>'
+            html += f"\n      <li>{rec}</li>"
 
-        html += '''
+        html += """
     </ol>
   </div>
 
@@ -864,7 +902,7 @@ class AttackAgent(BaseSecurityAgent):
 
 </div>
 </body>
-</html>'''
+</html>"""
 
         return html
 
@@ -879,35 +917,33 @@ class AttackAgent(BaseSecurityAgent):
             str: Markdown 报告内容
         """
         lines = [
-            f'# 🔐 HOS-Forge 渗透测试报告',
-            f'',
-            f'- **报告编号**: {report.report_id}',
-            f'- **目标**: {report.target.host}',
-            f'- **风险评分**: {report.risk_score}/100',
+            "# 🔐 HOS-Forge 渗透测试报告",
+            "",
+            f"- **报告编号**: {report.report_id}",
+            f"- **目标**: {report.target.host}",
+            f"- **风险评分**: {report.risk_score}/100",
             f'- **测试模式**: {"✅ 已授权" if report.authorized else "⚠ 未授权评估"}',
-            f'- **日期**: {report.completed_at[:10]}',
-            f'',
-            f'---',
-            f'',
-            f'## 执行摘要',
-            f'',
-            f'{report.executive_summary}',
-            f'',
-            f'## 漏洞汇总',
-            f'',
-            f'| # | 严重程度 | 漏洞名称 | CWE |',
-            f'|---|---------|---------|-----|',
+            f"- **日期**: {report.completed_at[:10]}",
+            "",
+            "---",
+            "",
+            "## 执行摘要",
+            "",
+            f"{report.executive_summary}",
+            "",
+            "## 漏洞汇总",
+            "",
+            "| # | 严重程度 | 漏洞名称 | CWE |",
+            "|---|---------|---------|-----|",
         ]
 
         for i, v in enumerate(report.vulnerabilities, 1):
-            lines.append(
-                f'| {i} | {v.severity.value.upper()} | {v.name} | {v.cwe_id or "-"} |'
-            )
+            lines.append(f'| {i} | {v.severity.value.upper()} | {v.name} | {v.cwe_id or "-"} |')
 
-        lines.extend(['', '## 修复建议', ''])
+        lines.extend(["", "## 修复建议", ""])
         for rec in report.recommendations:
-            lines.append(f'- {rec}')
+            lines.append(f"- {rec}")
 
-        lines.extend(['', '---', '', f'*Generated by HOS-Forge Attack Agent*'])
+        lines.extend(["", "---", "", "*Generated by HOS-Forge Attack Agent*"])
 
-        return '\n'.join(lines)
+        return "\n".join(lines)

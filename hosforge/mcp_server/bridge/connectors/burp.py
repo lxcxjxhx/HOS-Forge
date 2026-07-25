@@ -39,9 +39,9 @@ class BurpConnector:
         summary = await connector.analyze_request(target)
     """
 
-    def __init__(self, base_url: str = 'http://127.0.0.1:1337'):
+    def __init__(self, base_url: str = "http://127.0.0.1:1337"):
         self._adapter = SSEHttpMCPAdapter(
-            service_name='burp-mcp',
+            service_name="burp-mcp",
             base_url=base_url,
         )
         self._connected = False
@@ -63,12 +63,15 @@ class BurpConnector:
             list[dict]: 历史请求列表
         """
         if not self._connected:
-            raise ConnectionError('Burp MCP not connected')
+            raise ConnectionError("Burp MCP not connected")
 
-        result = await self._adapter.call_tool('get_proxy_history', {
-            'limit': limit,
-        })
-        return result.get('messages', [])
+        result = await self._adapter.call_tool(
+            "get_proxy_history",
+            {
+                "limit": limit,
+            },
+        )
+        return result.get("messages", [])
 
     async def analyze_request(self, request_data: str) -> dict[str, Any]:
         """
@@ -81,11 +84,14 @@ class BurpConnector:
             dict: 分析结果 (参数/路径/Cookie/Header 等)
         """
         if not self._connected:
-            raise ConnectionError('Burp MCP not connected')
+            raise ConnectionError("Burp MCP not connected")
 
-        result = await self._adapter.call_tool('analyze_request', {
-            'request': request_data,
-        })
+        result = await self._adapter.call_tool(
+            "analyze_request",
+            {
+                "request": request_data,
+            },
+        )
         return result
 
     async def send_to_repeater(self, request_data: str) -> dict[str, Any]:
@@ -99,11 +105,14 @@ class BurpConnector:
             dict: 响应结果
         """
         if not self._connected:
-            raise ConnectionError('Burp MCP not connected')
+            raise ConnectionError("Burp MCP not connected")
 
-        result = await self._adapter.call_tool('send_to_repeater', {
-            'request': request_data,
-        })
+        result = await self._adapter.call_tool(
+            "send_to_repeater",
+            {
+                "request": request_data,
+            },
+        )
         return result
 
     async def start_scan(self, url: str) -> dict[str, Any]:
@@ -117,11 +126,14 @@ class BurpConnector:
             dict: 扫描任务信息
         """
         if not self._connected:
-            raise ConnectionError('Burp MCP not connected')
+            raise ConnectionError("Burp MCP not connected")
 
-        result = await self._adapter.call_tool('start_scan', {
-            'url': url,
-        })
+        result = await self._adapter.call_tool(
+            "start_scan",
+            {
+                "url": url,
+            },
+        )
         return result
 
     async def get_scan_issues(self, scan_id: str) -> list[dict[str, Any]]:
@@ -135,12 +147,15 @@ class BurpConnector:
             list[dict]: 安全问题列表
         """
         if not self._connected:
-            raise ConnectionError('Burp MCP not connected')
+            raise ConnectionError("Burp MCP not connected")
 
-        result = await self._adapter.call_tool('get_scan_issues', {
-            'scan_id': scan_id,
-        })
-        return result.get('issues', [])
+        result = await self._adapter.call_tool(
+            "get_scan_issues",
+            {
+                "scan_id": scan_id,
+            },
+        )
+        return result.get("issues", [])
 
     async def disconnect(self) -> None:
         """断开连接"""
