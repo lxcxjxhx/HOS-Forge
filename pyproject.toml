@@ -161,6 +161,7 @@ readme = "README.md"
 repository = "https://github.com/lxcxjxhx/HOS-Forge"
 packages = [
   { include = "openhands/**/*" },
+  { include = "hosforge/**/*" },
   { include = "pyproject.toml", to = "openhands" },
   { include = "poetry.lock", to = "openhands" },
 ]

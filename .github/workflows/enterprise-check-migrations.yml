@@ -115,7 +115,7 @@ jobs:
           cache: "poetry"
       - name: Install Python dependencies using Poetry
         working-directory: ./enterprise
-        run: poetry install --with dev,test --no-root
+        run: poetry install --with dev,test
       - name: Show migration history
         working-directory: ./enterprise
         run: poetry run alembic history --verbose
