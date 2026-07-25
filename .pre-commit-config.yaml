@@ -14,7 +14,7 @@ repos:
       - id: end-of-file-fixer
         exclude: ^(docs/|modules/|python/|openhands-ui/|enterprise/|frontend/|\.github/)
       - id: check-yaml
-        exclude: ^(\.github/|docs/|enterprise/)
+        exclude: ^(\.github/|docs/|enterprise/|kind/manifests/)
       - id: check-json
         exclude: (tsconfig\.json|\.vscode/settings\.json|\.devcontainer/devcontainer\.json|frontend/tsconfig\.json|openhands-ui/tsconfig\.json)
       - id: check-added-large-files

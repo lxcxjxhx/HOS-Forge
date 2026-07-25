@@ -152,7 +152,6 @@ runtime = [
 ]
 
 [tool.poetry]
-package-mode = false
 name = "hos-forge"
 version = "0.1.0"
 description = "HOS-Forge: AI Native Cyber Security IDE — 基于 OpenHands 的 AI 原生网络安全 IDE"
