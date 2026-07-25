@@ -10,6 +10,7 @@ import {
 } from "./sdk-settings-field-metadata";
 
 // Mock console.warn to suppress warnings during tests and allow verification
+// eslint-disable-next-line no-console
 const originalWarn = console.warn;
 let warnSpy: ReturnType<typeof vi.spyOn>;
 
@@ -19,6 +20,7 @@ beforeEach(() => {
 
 afterEach(() => {
   warnSpy.mockRestore();
+  // eslint-disable-next-line no-console
   console.warn = originalWarn;
 });
 

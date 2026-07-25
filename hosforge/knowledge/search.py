@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from hosforge.exceptions import KnowledgeQueryError
 from hosforge.knowledge.embeddings import EmbeddingGenerator
 from hosforge.knowledge.vector_store import VectorStore
 from hosforge.logging_config import get_logger

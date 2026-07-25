@@ -1,5 +1,16 @@
 # Workflow that builds and pushes the OpenHands app and enterprise Docker images to ghcr.io.
 # Per-image build logic lives in .github/workflows/_build-image.yml.
+#
+# Required secrets / permissions:
+#   - secrets.GITHUB_TOKEN  (automatic) — used to authenticate to ghcr.io for push/pull.
+#     The token needs the default `packages: write` and `contents: read` scopes,
+#     which are granted via the `permissions` block in _build-image.yml.
+#   - No additional repository secrets are required; all authentication uses GITHUB_TOKEN.
+#
+# Required repository settings:
+#   - "Read and write packages" permission must be enabled in Settings → Actions → General.
+#   - For fork PRs, builds are skipped (`if: github.event.pull_request.head.repo.fork != true`)
+#     because fork PRs do not receive write permissions to the parent repo's GHCR.
 name: Docker
 
 on:
