@@ -358,6 +358,7 @@ lint.flake8-bugbear.extend-immutable-calls = [
 ]
 lint.flake8-quotes.docstring-quotes = "double"
 lint.flake8-quotes.inline-quotes = "single"
+lint.isort.known-first-party = [ "openhands" ]
 
 [tool.coverage.run]
 concurrency = [ "gevent" ]
