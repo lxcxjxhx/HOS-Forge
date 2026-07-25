@@ -1,12 +1,13 @@
-"""
-HOS-Forge Knowledge — 安全知识大脑 (增强版)。
+﻿"""
+HOS-Forge Knowledge - Security Knowledge Base (Enhanced).
 
-基于 SQLite/向量数据库的安全知识管理：
-    - CVE 漏洞库 (含 CVSS 评分)
-    - CWE 分类库 (含缓解措施)
-    - ExploitDB 利用库
-    - KEV 已知利用漏洞
-    - RAG 检索接口
+Based on SQLite/vector database security knowledge management:
+    - CVE vulnerability database (with CVSS scores)
+    - CWE classification database (with mitigations)
+    - ExploitDB exploitation database
+    - KEV known exploited vulnerabilities
+    - RAG retrieval interface
+    - Vector search (FAISS)
 """
 
 from hosforge.knowledge.base import (
@@ -16,6 +17,10 @@ from hosforge.knowledge.base import (
     LocalKnowledgeBase,
     SecurityKnowledgeBase,
 )
+from hosforge.knowledge.embeddings import EmbeddingGenerator
+from hosforge.knowledge.indexer import KnowledgeIndexer
+from hosforge.knowledge.search import SearchResult, SemanticSearcher
+from hosforge.knowledge.vector_store import VectorStore
 
 __all__ = [
     "SecurityKnowledgeBase",
@@ -23,4 +28,9 @@ __all__ = [
     "KnowledgeEntry",
     "CVERecord",
     "CWERecord",
+    "EmbeddingGenerator",
+    "VectorStore",
+    "SemanticSearcher",
+    "SearchResult",
+    "KnowledgeIndexer",
 ]
