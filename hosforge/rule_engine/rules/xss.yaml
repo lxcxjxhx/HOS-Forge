@@ -1,0 +1,42 @@
+name: xss
+type: vulnerability
+severity: high
+description: "Detects potential Cross-Site Scripting (XSS) vulnerabilities"
+logic_operator: OR
+
+patterns:
+  - type: regex
+    language: javascript
+    pattern: 'innerHTML\s*='
+    constraints: {}
+  - type: regex
+    language: javascript
+    pattern: 'document\.write\s*\('
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: 'Markup\s*\(.*\+.*\)'
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: 'render_template_string\s*\(.*%s'
+    constraints: {}
+
+conditions:
+  - input_source: user_input
+    not_sanitized_by:
+      - escape_html
+      - sanitize
+      - bleach.clean
+
+remediation: |
+  Always sanitize user input before rendering in HTML context.
+  Use framework-provided sanitization methods:
+  - React: Use JSX (automatically escapes)
+  - Vue: Use {{ }} interpolation (automatically escapes)
+  - Python: Use markupsafe.escape() or Jinja2 autoescape
+
+metadata:
+  cwe: "CWE-79"
+  owasp: "A03:2021 - Injection"
+  category: "injection"

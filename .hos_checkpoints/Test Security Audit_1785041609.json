@@ -1,0 +1,7 @@
+{
+  "workflow_name": "Test Security Audit",
+  "completed_tasks": [
+    "static_scan"
+  ],
+  "current_task": "exploit_verify"
+}

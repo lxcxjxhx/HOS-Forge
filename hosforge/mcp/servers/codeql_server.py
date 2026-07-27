@@ -1,7 +1,11 @@
 """CodeQL MCP Server - Advanced static analysis integration."""
 
+import logging
 from typing import Any, Dict
+
 from .base import BaseMCPServer
+
+logger = logging.getLogger(__name__)
 
 
 class CodeQLServer(BaseMCPServer):
@@ -26,10 +30,20 @@ class CodeQLServer(BaseMCPServer):
         Returns:
             Analysis results
         """
-        # Placeholder implementation
-        # In real implementation, this would call CodeQL CLI
-        return {
-            "status": "success",
-            "findings": [],
-            "message": f"Analyzed {target_path} ({language}) with CodeQL (placeholder)"
-        }
+        try:
+            # TODO: 集成 CodeQL CLI
+            # CodeQL 需要单独安装，参考：https://codeql.github.com/docs/
+            # 当前返回明确的未实现错误，而不是伪造成功
+            logger.warning("CodeQL integration not yet implemented")
+            return {
+                "status": "not_implemented",
+                "message": "CodeQL integration is not yet implemented. Please install CodeQL CLI and configure the integration.",
+                "tool_name": "codeql",
+                "findings": [],
+            }
+        except Exception as e:
+            logger.error(f"CodeQL analysis failed: {e}", exc_info=True)
+            return {
+                "status": "error",
+                "message": f"Analysis failed: {str(e)}"
+            }

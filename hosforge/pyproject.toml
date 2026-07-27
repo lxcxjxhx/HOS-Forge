@@ -4,7 +4,7 @@ requires = [ "poetry-core" ]
 
 [project]
 name = "hosforge"
-description = "HOS-Forge: AI Native Cyber Security IDE — 基于 OpenHands 的安全开发扩展层"
+description = "HOS-Forge: AI Native Security Platform — 跨 IDE 的 AI 安全运行时平台，提供安全检测、规则引擎与知识库"
 readme = "README.md"
 license = "MIT"
 authors = [
@@ -76,6 +76,9 @@ optional-dependencies.docs = [
 [tool.poetry]
 version = "0.1.0"
 
+[tool.poetry.scripts]
+hos = "hosforge.cli.main:main"
+
 [tool.poetry.dependencies]
 python = ">=3.12,<3.14"
 fastmcp = ">=3.2,<4"
@@ -89,6 +92,7 @@ transformers = ">=4.36.0"
 peft = ">=0.7.0"
 datasets = ">=2.16.0"
 huggingface-hub = ">=0.20.0"
+rich = ">=13.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.4.0"
@@ -134,7 +138,7 @@ testpaths = [ "tests" ]
 python_files = [ "test_*.py" ]
 python_classes = [ "Test*" ]
 python_functions = [ "test_*" ]
-addopts = "-v --cov=hosforge --cov-report=term-missing"
+addopts = "-v"
 asyncio_mode = "auto"
 
 [tool.mypy]

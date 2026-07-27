@@ -2,49 +2,4 @@
 # DISABLED: This workflow is disabled.
 # ============================================================================
 #
-# Why disabled:
-# - Depends on upstream reusable workflow:
-#     OpenHands/release-actions/.github/workflows/release-please.yml@main
-# - The upstream repo (OpenHands/release-actions) is public and reachable,
-#   but reusable-workflow calls across repos are fragile in forks, private
-#   mirrors, and CI environments that lack the required permissions/secrets.
-# - Release logic is complex (version tracking, changelog generation, PR
-#   back-labeling) and tightly coupled to the upstream implementation, making
-#   a local replacement impractical.
 #
-# How to re-enable:
-# 1. Verify the upstream repo OpenHands/release-actions is accessible from
-#    this repo's GitHub Actions environment (check Actions permissions,
-#    fork settings, and required secrets).
-# 2. Delete this comment block down to the blank line before "name:".
-# 3. Restore the original content (shown below for reference):
-#
-#    name: release
-#    on:
-#      push:
-#        branches:
-#          - main
-#          - 'release/**'
-#    jobs:
-#      openhands-app:
-#        permissions:
-#          contents: write
-#          pull-requests: write
-#        secrets: inherit
-#        uses: OpenHands/release-actions/.github/workflows/release-please.yml@main
-#      cloud:
-#        permissions:
-#          contents: write
-#          pull-requests: write
-#        secrets: inherit
-#        uses: OpenHands/release-actions/.github/workflows/release-please.yml@main
-#        with:
-#          config-file: release-please-config.cloud.json
-#          manifest-file: .release-please-manifest.cloud.json
-#
-# Alternative release flow (if upstream stays unavailable):
-# - Manually create GitHub Releases and tags.
-# - Use a standalone tool such as standard-version or semantic-release.
-# - Run release-please CLI locally (requires additional configuration).
-#
-# ============================================================================

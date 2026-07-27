@@ -1,0 +1,40 @@
+﻿poetry : +---------------------------------------------------------------------
+-+
+所在位置 行:1 字符: 39
++ ... \HOS-Forge; poetry run python -c "import openhands.server.listen; pri ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (+--------------...--------------+ 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+|  OpenHands SDK v1.36.0                                               |
+|                                                                      |
+|  Report a bug: github.com/OpenHands/software-agent-sdk/issues        |
+|  Get help: openhands.dev/joinslack                                   |
+|  Scale up: openhands.dev/product/sdk                                 |
+|                                                                      |
+|  Set OPENHANDS_SUPPRESS_BANNER=1 to hide this message                |
++----------------------------------------------------------------------+
+
+[92m17:42:40 - openhands:INFO[0m: server_config.py:50 - Using config class No
+ne
+[92m17:42:41 - openhands:INFO[0m: mcp_router.py:59 - Tavily API key not confi
+gured, skipping Tavily MCP proxy
+[92m17:42:41 - openhands:ERROR[0m: logger.py:375 - Uncaught exception
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import openhands.server.listen; print('Backend import OK')
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\1AAA-PROJECT\HOS\HOS-Forge\openhands\server\listen.py", line 6, in <
+module>
+    from openhands.app_server.app import app
+  File "C:\1AAA-PROJECT\HOS\HOS-Forge\openhands\app_server\app.py", line 57, in
+ <module>
+    version=get_version(),
+            ~~~~~~~~~~~^^
+  File "C:\1AAA-PROJECT\HOS\HOS-Forge\openhands\app_server\version.py", line 18
+, in get_version
+    for line in f:
+                ^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x94 in position 294: illegal
+ multibyte sequence

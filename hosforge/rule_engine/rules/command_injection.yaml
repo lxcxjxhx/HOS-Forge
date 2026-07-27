@@ -1,0 +1,42 @@
+name: command_injection
+type: vulnerability
+severity: critical
+description: "Detects potential OS command injection vulnerabilities"
+logic_operator: OR
+
+patterns:
+  - type: regex
+    language: python
+    pattern: 'os\.system\s*\(.*\+'
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: 'os\.popen\s*\(.*\+'
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: 'subprocess\.(?:call|run|Popen)\s*\(.*shell\s*=\s*True'
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: 'subprocess\.(?:call|run|Popen)\s*\(.*\+'
+    constraints: {}
+
+conditions:
+  - input_source: user_input
+    not_sanitized_by:
+      - shlex.quote
+      - shlex.escape
+
+remediation: |
+  Avoid shell=True when using subprocess. Use list-based arguments instead.
+  Example:
+    # Vulnerable
+    subprocess.call("ls " + user_input, shell=True)
+    # Safe
+    subprocess.run(["ls", user_input], shell=False)
+
+metadata:
+  cwe: "CWE-78"
+  owasp: "A03:2021 - Injection"
+  category: "injection"

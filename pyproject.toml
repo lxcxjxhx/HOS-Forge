@@ -6,7 +6,7 @@ requires = [ "poetry-core" ]
 
 [project]
 name = "hos-forge"
-description = "HOS-Forge: AI Native Cyber Security IDE — 基于 OpenHands 的 AI 原生网络安全 IDE"
+description = "HOS-Forge: AI Native Security Platform — 跨 IDE 的 AI 安全运行时平台，提供安全检测、规则引擎与知识库"
 readme = "README.md"
 license = "MIT"
 authors = [
@@ -118,6 +118,7 @@ urls.Homepage = "https://github.com/lxcxjxhx/HOS-Forge"
 urls.Repository = "https://github.com/lxcxjxhx/HOS-Forge"
 
 # HOS-Forge CLI 入口
+scripts.hos = "hosforge.cli.main:main"
 scripts.hos-ci = "hosforge.ci.__main__:main"
 scripts.hos-dashboard = "hosforge.dashboard.cli:main"
 scripts.hos-mcp = "hosforge.mcp_server.server:main"

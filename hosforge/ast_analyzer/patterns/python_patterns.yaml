@@ -1,0 +1,129 @@
+# Python vulnerability patterns for AST analyzer
+patterns:
+  # SQL Injection
+  - name: sql_injection_exec
+    severity: critical
+    pattern_type: call
+    language: python
+    description: "Potential SQL injection via execute() with string formatting"
+    remediation: "Use parameterized queries: cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))"
+    targets:
+      - execute
+      - cursor.execute
+
+  # Command Injection
+  - name: command_injection_os_system
+    severity: critical
+    pattern_type: call
+    language: python
+    description: "Command injection via os.system()"
+    remediation: "Use subprocess.run() with shell=False and pass arguments as a list"
+    targets:
+      - os.system
+      - os.popen
+
+  - name: command_injection_subprocess
+    severity: high
+    pattern_type: call
+    language: python
+    description: "Potential command injection via subprocess with shell=True"
+    remediation: "Avoid shell=True; pass commands as a list of arguments"
+    targets:
+      - subprocess.call
+      - subprocess.run
+      - subprocess.Popen
+      - subprocess.check_output
+
+  # Code Injection
+  - name: code_injection_eval
+    severity: critical
+    pattern_type: call
+    language: python
+    description: "Code injection via eval()"
+    remediation: "Avoid eval(); use ast.literal_eval() for safe evaluation of literals"
+    targets:
+      - eval
+
+  - name: code_injection_exec
+    severity: critical
+    pattern_type: call
+    language: python
+    description: "Code injection via exec()"
+    remediation: "Avoid exec(); refactor to use safe alternatives"
+    targets:
+      - exec
+
+  # Path Traversal
+  - name: path_traversal_open
+    severity: high
+    pattern_type: call
+    language: python
+    description: "Potential path traversal via open() with user input"
+    remediation: "Validate and sanitize file paths; use os.path.abspath() and check against allowed directories"
+    targets:
+      - open
+
+  # Hardcoded Secrets
+  - name: hardcoded_password
+    severity: high
+    pattern_type: assignment
+    language: python
+    description: "Hardcoded password detected"
+    remediation: "Use environment variables or a secrets manager for credentials"
+    targets:
+      - password
+      - passwd
+      - pwd
+
+  - name: hardcoded_api_key
+    severity: high
+    pattern_type: assignment
+    language: python
+    description: "Hardcoded API key detected"
+    remediation: "Use environment variables or a secrets manager for API keys"
+    targets:
+      - api_key
+      - apikey
+      - api_secret
+
+  - name: hardcoded_token
+    severity: high
+    pattern_type: assignment
+    language: python
+    description: "Hardcoded token detected"
+    remediation: "Use environment variables or a secrets manager for tokens"
+    targets:
+      - token
+      - auth_token
+      - access_token
+
+  - name: hardcoded_secret
+    severity: high
+    pattern_type: assignment
+    language: python
+    description: "Hardcoded secret detected"
+    remediation: "Use environment variables or a secrets manager for secrets"
+    targets:
+      - secret
+      - private_key
+
+  # Dangerous Imports
+  - name: dangerous_import_pickle
+    severity: medium
+    pattern_type: import
+    language: python
+    description: "Import of pickle module (unsafe deserialization)"
+    remediation: "Use json or other safe serialization formats instead of pickle"
+    targets:
+      - pickle
+      - shelve
+
+  - name: dangerous_import_subprocess
+    severity: low
+    pattern_type: import
+    language: python
+    description: "Import of subprocess module"
+    remediation: "Ensure subprocess calls are properly sanitized and avoid shell=True"
+    targets:
+      - subprocess
+      - os

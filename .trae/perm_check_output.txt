@@ -1,0 +1,40 @@
+======================================================================
+Permission and Write Test
+======================================================================
+
+Target dir: C:\Users\46119\.openhands
+  exists: True
+  is_dir: True
+  os.access(R_OK): True
+  os.access(W_OK): True
+  os.access(X_OK): True
+
+[Write Test 1] Path.write_text()
+  FAILED: PermissionError: [Errno 13] Permission denied: 'C:\\Users\\46119\\.openhands\\_test1.tmp'
+
+[Write Test 2] open() with "w" mode
+  FAILED: PermissionError: [Errno 13] Permission denied: 'C:\\Users\\46119\\.openhands\\_test2.tmp'
+
+[Write Test 3] sqlite3 direct
+  db_path: C:\Users\46119\.openhands\_test3.db
+  db_path exists before: False
+  FAILED: OperationalError: unable to open database file
+Traceback (most recent call last):
+  File "C:\1AAA-PROJECT\HOS\HOS-Forge\.trae\check_perms.py", line 59, in <module>
+    conn = sqlite3.connect(str(db_path))
+sqlite3.OperationalError: unable to open database file
+
+
+[Existing DB] openhands.db
+  exists: False
+
+[Environment]
+  cwd: C:\1AAA-PROJECT\HOS\HOS-Forge
+  HOME: N/A
+  USERPROFILE: C:\Users\46119
+  Path.home(): C:\Users\46119
+
+[Fallback Test] Write to cwd
+  SUCCESS: wrote to C:\1AAA-PROJECT\HOS\HOS-Forge\_test_cwd.db
+
+=== DONE ===

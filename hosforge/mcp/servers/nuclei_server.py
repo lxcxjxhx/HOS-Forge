@@ -1,7 +1,11 @@
 """Nuclei MCP Server - Vulnerability scanning integration."""
 
+import logging
 from typing import Any, Dict
+
 from .base import BaseMCPServer
+
+logger = logging.getLogger(__name__)
 
 
 class NucleiServer(BaseMCPServer):
@@ -22,14 +26,48 @@ class NucleiServer(BaseMCPServer):
         Args:
             target: Target URL or IP to scan
             templates: Nuclei templates to use
+            **kwargs: Additional arguments (tags, severity, timeout, etc.)
 
         Returns:
-            Scan results
+            Scan results with findings
         """
-        # Placeholder implementation
-        # In real implementation, this would call nuclei CLI
-        return {
-            "status": "success",
-            "findings": [],
-            "message": f"Scanned {target} with Nuclei (placeholder)"
-        }
+        try:
+            from hosforge.security_tools.nuclei_tool import NucleiTool
+            
+            tool = NucleiTool()
+            
+            # Build tool arguments
+            tool_kwargs = {}
+            if templates:
+                tool_kwargs["templates"] = templates
+            if "tags" in kwargs:
+                tool_kwargs["tags"] = kwargs["tags"]
+            if "severity" in kwargs:
+                tool_kwargs["severity"] = kwargs["severity"]
+            if "timeout" in kwargs:
+                tool_kwargs["timeout"] = kwargs["timeout"]
+            
+            # Execute scan
+            result = await tool.run(target, **tool_kwargs)
+            
+            return {
+                "status": "success" if result.success else "failed",
+                "tool_name": result.tool_name,
+                "findings": result.raw_data.get("findings", []),
+                "output": result.output[:1000] if result.output else "",
+                "error": result.error if not result.success else None,
+                "exit_code": result.raw_data.get("exit_code"),
+            }
+            
+        except ImportError as e:
+            logger.error(f"Failed to import NucleiTool: {e}")
+            return {
+                "status": "error",
+                "message": f"Nuclei tool not available: {str(e)}"
+            }
+        except Exception as e:
+            logger.error(f"Nuclei scan failed: {e}", exc_info=True)
+            return {
+                "status": "error",
+                "message": f"Scan failed: {str(e)}"
+            }
