@@ -14,6 +14,7 @@ from hosforge.security_tools.burp_tool import BurpTool
 from hosforge.security_tools.nmap_tool import NmapTool
 from hosforge.security_tools.nuclei_tool import NucleiTool
 from hosforge.security_tools.semgrep_tool import SemgrepTool
+from hosforge.security_tools.trivy_tool import TrivyTool
 
 __all__ = [
     "BaseSecurityTool",
@@ -22,4 +23,5 @@ __all__ = [
     "SemgrepTool",
     "NucleiTool",
     "BurpTool",
+    "TrivyTool",
 ]

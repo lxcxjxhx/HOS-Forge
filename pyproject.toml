@@ -119,10 +119,7 @@ urls.Repository = "https://github.com/lxcxjxhx/HOS-Forge"
 
 # HOS-Forge CLI 入口
 scripts.hos = "hosforge.cli.main:main"
-scripts.hos-ci = "hosforge.ci.__main__:main"
-scripts.hos-dashboard = "hosforge.dashboard.cli:main"
 scripts.hos-mcp = "hosforge.mcp_server.server:main"
-scripts.hos-report = "hosforge.reporter.cli:main"
 
 [dependency-groups]
 dev = [
