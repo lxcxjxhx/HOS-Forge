@@ -95,7 +95,7 @@ class NucleiTool(BaseSecurityTool):
 
         # 输出格式
         if output_format == "json":
-            cmd.append("-json")
+            cmd.append("-jsonl")
 
         # 模板选择
         if templates:
