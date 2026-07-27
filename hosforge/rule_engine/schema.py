@@ -63,6 +63,7 @@ class SecurityRule:
     type: RuleType
     severity: Severity
     patterns: list[RulePattern]
+    description: str = ""
     conditions: list[RuleCondition] = field(default_factory=list)
     remediation: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
