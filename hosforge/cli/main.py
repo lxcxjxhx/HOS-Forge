@@ -32,9 +32,14 @@ def main():
     run_parser.add_argument("workflow", type=str, help="Path to workflow YAML file")
     run_parser.add_argument("--checkpoint", action="store_true", help="Enable checkpoint/resume")
     run_parser.add_argument("--resume", type=str, help="Resume from checkpoint ID")
+    run_parser.add_argument("--dry-run", action="store_true", help="Validate workflow without executing")
 
     # taskflow list
     taskflow_subparsers.add_parser("list", help="List available workflows")
+
+    # taskflow validate
+    validate_parser = taskflow_subparsers.add_parser("validate", help="Validate a workflow file")
+    validate_parser.add_argument("workflow", type=str, help="Path to workflow YAML file")
 
     # personality 子命令
     personality_parser = subparsers.add_parser("personality", help="Personality system commands")
@@ -60,9 +65,12 @@ def main():
     if args.command == "taskflow":
         cmd = TaskflowCommand()
         if args.subcommand == "run":
-            cmd.run(args.workflow, checkpoint=args.checkpoint, resume=args.resume)
+            dry_run = getattr(args, "dry_run", False)
+            cmd.run(args.workflow, checkpoint=args.checkpoint, resume=args.resume, dry_run=dry_run)
         elif args.subcommand == "list":
             cmd.list()
+        elif args.subcommand == "validate":
+            cmd.validate(args.workflow)
         else:
             taskflow_parser.print_help()
 

@@ -19,13 +19,14 @@ class TaskflowCommand:
     def __init__(self):
         self.console = Console()
 
-    def run(self, workflow_path: str, checkpoint: bool = False, resume: Optional[str] = None):
+    def run(self, workflow_path: str, checkpoint: bool = False, resume: Optional[str] = None, dry_run: bool = False):
         """运行工作流。
 
         Args:
             workflow_path: 工作流 YAML 文件路径
             checkpoint: 是否启用 checkpoint
             resume: 从指定 checkpoint 恢复
+            dry_run: 仅验证不执行
         """
         path = Path(workflow_path)
         if not path.exists():
@@ -48,6 +49,12 @@ class TaskflowCommand:
             self.console.print(f"[dim]{workflow.description}[/dim]")
             self.console.print(f"[blue]任务数量: {len(workflow.tasks)}[/blue]\n")
 
+            # 如果是 dry-run，只验证不执行
+            if dry_run:
+                self.console.print("[green]✓ 工作流验证通过[/green]")
+                self.console.print("[dim]Dry-run 模式，未实际执行[/dim]")
+                return
+
             # 执行工作流
             executor = WorkflowExecutor(workflow, enable_checkpoint=checkpoint)
 
@@ -65,6 +72,54 @@ class TaskflowCommand:
 
         except Exception as e:
             self.console.print(f"[red]执行失败: {e}[/red]")
+            sys.exit(1)
+
+    def validate(self, workflow_path: str):
+        """验证工作流文件。
+
+        Args:
+            workflow_path: 工作流 YAML 文件路径
+        """
+        path = Path(workflow_path)
+        if not path.exists():
+            self.console.print(f"[red]错误: 工作流文件不存在: {workflow_path}[/red]")
+            sys.exit(1)
+
+        if not path.suffix in (".yaml", ".yml"):
+            self.console.print(f"[red]错误: 工作流文件必须是 YAML 格式: {workflow_path}[/red]")
+            sys.exit(1)
+
+        try:
+            # 解析工作流
+            parser = WorkflowParser()
+            schema = parser.parse_file(str(path))
+            workflow = schema.workflow
+
+            # 验证成功
+            self.console.print(f"[green]✓ 工作流验证通过: {workflow_path}[/green]")
+            self.console.print(f"\n[green]工作流名称: {workflow.name}[/green]")
+            self.console.print(f"[dim]{workflow.description}[/dim]")
+            self.console.print(f"[blue]任务数量: {len(workflow.tasks)}[/blue]\n")
+
+            # 显示任务列表
+            table = Table(title="任务列表")
+            table.add_column("任务名称", style="cyan")
+            table.add_column("Agent", style="green")
+            table.add_column("Tools", style="yellow")
+            table.add_column("依赖", style="magenta")
+
+            for task in workflow.tasks:
+                table.add_row(
+                    task.name,
+                    ", ".join(task.agent) if task.agent else "-",
+                    ", ".join(task.tools) if task.tools else "-",
+                    ", ".join(task.depends_on) if task.depends_on else "-",
+                )
+
+            self.console.print(table)
+
+        except Exception as e:
+            self.console.print(f"[red]验证失败: {e}[/red]")
             sys.exit(1)
 
     def list(self):

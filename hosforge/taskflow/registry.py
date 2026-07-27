@@ -27,6 +27,8 @@ _AGENT_TYPE_MAP: Dict[str, str] = {
     "blueteam_agent": "DefenseAgent",
     "developer_agent": "DefenseAgent",
     "security_reviewer": "SecuritySupervisorAgent",
+    # DAST agent for dynamic analysis
+    "dast_agent": "AttackAgent",
 }
 
 
@@ -76,11 +78,13 @@ _TOOL_TYPE_MAP: Dict[str, str] = {
     "semgrep": "SemgrepTool",
     "nuclei": "NucleiTool",
     "burp": "BurpTool",
-    # Aliases used in some workflow files
+    # Aliases used in workflow files
+    "burp_suite": "BurpTool",
     "hos_ls": "SemgrepTool",   # fallback: treat as SAST
     "codeql": "SemgrepTool",   # fallback: treat as SAST
-    "exploit_db": "NucleiTool",  # fallback
-    "github": "SemgrepTool",   # placeholder
+    # Exploit/attack tools
+    "exploit_db": "NucleiTool",  # fallback to nuclei for PoC validation
+    "metasploit": "NucleiTool",  # fallback to nuclei for exploit validation
 }
 
 

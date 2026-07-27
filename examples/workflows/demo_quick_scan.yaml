@@ -1,0 +1,35 @@
+hos:
+  version: "1.0"
+
+workflow:
+  name: "Demo Quick Security Scan"
+  description: "快速安全扫描演示工作流 - 展示Taskflow Engine基础功能"
+
+  tasks:
+    - name: semgrep_scan
+      agent:
+        - sast_agent
+      tools:
+        - semgrep
+      depends_on: []
+      timeout: 120
+      description: "使用Semgrep进行静态代码分析"
+
+    - name: nuclei_scan
+      agent:
+        - dast_agent
+      tools:
+        - nuclei
+      depends_on: []
+      timeout: 120
+      description: "使用Nuclei进行漏洞扫描"
+
+    - name: generate_report
+      agent:
+        - security_reviewer
+      tools: []
+      depends_on:
+        - semgrep_scan
+        - nuclei_scan
+      timeout: 60
+      description: "汇总扫描结果并生成报告"
