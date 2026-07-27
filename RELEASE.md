@@ -101,10 +101,8 @@ docker pull ghcr.io/lxcxjxhx/hos-forge:latest
 
 | 命令 | 说明 |
 |------|------|
+| `hos` | HOS-Forge 主 CLI（taskflow/personality/mcp 命令） |
 | `hos-mcp` | 启动 HOS MCP Server |
-| `hos-ci` | CI/CD 安全检查工具 |
-| `hos-report` | 安全报告生成 |
-| `hos-dashboard` | 启动 Dashboard API |
 
 ### 模块组成
 

@@ -231,19 +231,23 @@ class NmapTool(BaseSecurityTool):
             if '<status state="up"' in xml_output:
                 result["host_status"] = "up"
 
-            # 提取端口信息
-            port_matches = re.findall(
-                r'<port protocol="(\w+)" portid="(\d+)">.*?<state state="(\w+)".*?'
-                r'(?:<service name="([^"]*)"|)',
+            # 提取端口信息 - 先提取每个 port 块
+            port_blocks = re.findall(
+                r'<port protocol="(\w+)" portid="(\d+)">(.*?)</port>',
                 xml_output,
                 re.DOTALL,
             )
-            for _protocol, port, state, service in port_matches:
-                if state == "open":
+            for protocol, port, port_content in port_blocks:
+                # 提取 state
+                state_match = re.search(r'<state state="(\w+)"', port_content)
+                if state_match and state_match.group(1) == "open":
                     port_num = int(port)
                     result["open_ports"].append(port_num)
-                    if service:
-                        result["services"][port_num] = service
+                    
+                    # 提取 service
+                    service_match = re.search(r'<service name="([^"]*)"', port_content)
+                    if service_match and service_match.group(1):
+                        result["services"][port_num] = service_match.group(1)
 
             # 提取操作系统信息
             os_matches = re.findall(
