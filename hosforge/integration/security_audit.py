@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Optional
 from hosforge.taskflow import WorkflowParser, TaskScheduler, CheckpointManager
 from hosforge.taskflow.schema import TaskStatus
 from hosforge.personalities import PersonalityLoader
-from hosforge.mcp import MCPServerRegistry, MCPConfig
-from hosforge.mcp.servers import (
+from hosforge.mcp_hub import MCPServerRegistry, MCPConfig
+from hosforge.mcp_hub.servers import (
     HOSLSServer, SemgrepServer, NucleiServer,
     CodeQLServer, GitHubServer,
 )
