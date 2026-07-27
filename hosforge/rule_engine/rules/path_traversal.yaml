@@ -11,23 +11,25 @@ patterns:
     constraints: {}
   - type: regex
     language: python
-    pattern: 'os\.path\.join\s*\(.*input\s*\('
+    pattern: 'os\.path\.join\s*\(.*\.\.'
     constraints: {}
   - type: regex
     language: python
-    pattern: 'send_file\s*\(.*\+'
+    pattern: 'send_file\s*\(.*\+.*\)'
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: '\.\./\.\.'
     constraints: {}
 
 conditions:
   - input_source: user_input
     not_sanitized_by:
       - os.path.basename
-      - werkzeug.utils.secure_filename
-      - pathlib.PurePosixPath
+      - sanitize_path
 
 remediation: |
-  Always validate and sanitize file paths from user input.
-  Use os.path.basename() or werkzeug.utils.secure_filename() to strip directory components.
+  Validate and sanitize file paths. Use os.path.basename to extract filename only.
   Example:
     filename = os.path.basename(user_input)
     filepath = os.path.join(SAFE_DIR, filename)
@@ -35,4 +37,4 @@ remediation: |
 metadata:
   cwe: "CWE-22"
   owasp: "A01:2021 - Broken Access Control"
-  category: "path"
+  category: "access_control"

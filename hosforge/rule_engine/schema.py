@@ -8,6 +8,8 @@ class PatternType(str, Enum):
     """Pattern matching type."""
     AST_MATCH = "ast_match"
     REGEX = "regex"
+    SEMANTIC = "semantic"  # Semantic pattern matching
+    TAINT_FLOW = "taint_flow"  # Taint analysis pattern
 
 
 class Severity(str, Enum):
@@ -24,6 +26,9 @@ class RuleType(str, Enum):
     VULNERABILITY = "vulnerability"
     MISCONFIGURATION = "misconfiguration"
     BEST_PRACTICE = "best_practice"
+    INJECTION = "injection"
+    AUTH = "authentication"
+    CRYPTO = "cryptography"
 
 
 class LogicOperator(str, Enum):
@@ -33,6 +38,20 @@ class LogicOperator(str, Enum):
     NOT = "NOT"
 
 
+class Language(str, Enum):
+    """Supported programming languages."""
+    PYTHON = "python"
+    JAVASCRIPT = "javascript"
+    TYPESCRIPT = "typescript"
+    JAVA = "java"
+    GO = "go"
+    RUST = "rust"
+    PHP = "php"
+    RUBY = "ruby"
+    CSHARP = "csharp"
+    CPP = "cpp"
+
+
 @dataclass
 class RulePattern:
     """Pattern definition for security rule matching."""
@@ -40,6 +59,48 @@ class RulePattern:
     language: str
     pattern: str
     constraints: dict[str, Any] = field(default_factory=dict)
+    # For taint analysis
+    is_source: bool = False  # Marks this pattern as a taint source
+    is_sink: bool = False  # Marks this pattern as a taint sink
+    is_sanitizer: bool = False  # Marks this pattern as a sanitizer
+
+
+@dataclass
+class TaintSource:
+    """Definition of a taint source (user input entry point)."""
+    name: str
+    pattern: str
+    language: str
+    description: str = ""
+
+
+@dataclass
+class TaintSink:
+    """Definition of a taint sink (dangerous operation)."""
+    name: str
+    pattern: str
+    language: str
+    description: str = ""
+    severity: Severity = Severity.HIGH
+
+
+@dataclass
+class Sanitizer:
+    """Definition of a sanitizer (cleanses tainted data)."""
+    name: str
+    pattern: str
+    language: str
+    description: str = ""
+
+
+@dataclass
+class DataFlowPattern:
+    """Pattern for data flow analysis."""
+    source_pattern: str
+    sink_pattern: str
+    sanitizers: list[str] = field(default_factory=list)
+    language: str = "python"
+    description: str = ""
 
 
 @dataclass
@@ -60,6 +121,22 @@ class SecurityRule:
     remediation: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
     logic_operator: LogicOperator = LogicOperator.OR
+    # Enhanced fields for taint analysis
+    taint_sources: list[TaintSource] = field(default_factory=list)
+    taint_sinks: list[TaintSink] = field(default_factory=list)
+    sanitizers: list[Sanitizer] = field(default_factory=list)
+    data_flow: Optional[DataFlowPattern] = None
+
+
+@dataclass
+class MatchLocation:
+    """Detailed location information for a match."""
+    line: int
+    column: int = 0
+    end_line: Optional[int] = None
+    end_column: Optional[int] = None
+    file_path: Optional[str] = None
+    code_snippet: Optional[str] = None
 
 
 @dataclass
@@ -72,3 +149,10 @@ class RuleMatchResult:
     description: Optional[str] = None
     remediation: Optional[str] = None
     matched_pattern: Optional[str] = None
+    # Enhanced fields
+    match_location: Optional[MatchLocation] = None
+    confidence: float = 1.0  # 0.0 to 1.0
+    cwe_ids: list[str] = field(default_factory=list)
+    owasp_category: Optional[str] = None
+    code_context: Optional[str] = None  # Surrounding code for context
+    suggestions: list[str] = field(default_factory=list)

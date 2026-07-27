@@ -1,40 +1,45 @@
 name: command_injection
 type: vulnerability
 severity: critical
-description: "Detects potential OS command injection vulnerabilities"
+description: "Detects potential command injection vulnerabilities"
 logic_operator: OR
 
 patterns:
   - type: regex
     language: python
-    pattern: 'os\.system\s*\(.*\+'
+    pattern: 'os\.system\s*\(.*\+.*\)'
     constraints: {}
   - type: regex
     language: python
-    pattern: 'os\.popen\s*\(.*\+'
+    pattern: 'os\.popen\s*\(.*\+.*\)'
     constraints: {}
   - type: regex
     language: python
-    pattern: 'subprocess\.(?:call|run|Popen)\s*\(.*shell\s*=\s*True'
+    pattern: 'subprocess\.call\s*\(.*\+.*\)'
     constraints: {}
   - type: regex
     language: python
-    pattern: 'subprocess\.(?:call|run|Popen)\s*\(.*\+'
+    pattern: 'subprocess\.run\s*\(.*\+.*\)'
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: 'subprocess\.Popen\s*\(.*\+.*\)'
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: 'shell=True'
     constraints: {}
 
 conditions:
   - input_source: user_input
     not_sanitized_by:
-      - shlex.quote
-      - shlex.escape
+      - shlex_quote
+      - shell_escape
 
 remediation: |
-  Avoid shell=True when using subprocess. Use list-based arguments instead.
+  Avoid shell=True and use subprocess with list arguments instead.
   Example:
-    # Vulnerable
-    subprocess.call("ls " + user_input, shell=True)
-    # Safe
-    subprocess.run(["ls", user_input], shell=False)
+    subprocess.run(['ls', '-l', user_input], shell=False)
 
 metadata:
   cwe: "CWE-78"
