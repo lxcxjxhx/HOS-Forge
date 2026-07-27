@@ -144,10 +144,10 @@ class RuleEngine:
             for node in ast.walk(tree):
                 if isinstance(node, ast.Call):
                     if isinstance(node.func, ast.Name):
-                        if node.func.id in ['exec', 'eval', 'system', 'popen']:
+                        if node.func.id in ['exec', 'eval']:
                             sinks.append(node.lineno)
                     elif isinstance(node.func, ast.Attribute):
-                        if node.func.attr in ['execute', 'query', 'run']:
+                        if node.func.attr in ['system', 'popen', 'execute', 'query', 'run']:
                             sinks.append(node.lineno)
             
             # Check if there's a path from source to sink

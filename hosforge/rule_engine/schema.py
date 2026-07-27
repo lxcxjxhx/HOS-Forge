@@ -4,6 +4,11 @@ from enum import Enum
 from typing import Any, Optional
 
 
+class RuleValidationError(Exception):
+    """Exception raised when rule validation fails."""
+    pass
+
+
 class PatternType(str, Enum):
     """Pattern matching type."""
     AST_MATCH = "ast_match"
