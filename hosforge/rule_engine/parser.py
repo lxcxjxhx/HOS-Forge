@@ -11,13 +11,10 @@ from hosforge.rule_engine.schema import (
     RuleCondition,
     RulePattern,
     RuleType,
+    RuleValidationError,
     SecurityRule,
     Severity,
 )
-
-
-class RuleValidationError(Exception):
-    """Raised when a rule fails validation."""
 
 
 class RuleParser:
