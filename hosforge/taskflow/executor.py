@@ -7,21 +7,23 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from .schema import Workflow, Task
+from .schema import Workflow, Task, TaskStatus
 from .registry import get_agent, get_tool
+from .scheduler import TaskScheduler
 
 
 logger = logging.getLogger(__name__)
 
 
 class WorkflowExecutor:
-    """Executor for running workflows."""
+    """Executor for running workflows with parallel task execution support."""
     
     def __init__(
         self,
         workflow: Workflow,
         enable_checkpoint: bool = False,
-        checkpoint_dir: str = ".hos_checkpoints"
+        checkpoint_dir: str = ".hos_checkpoints",
+        enable_parallel: bool = True
     ):
         """Initialize workflow executor.
         
@@ -29,12 +31,15 @@ class WorkflowExecutor:
             workflow: Workflow to execute
             enable_checkpoint: Enable checkpoint/resume functionality
             checkpoint_dir: Directory to store checkpoints
+            enable_parallel: Enable parallel task execution (default: True)
         """
         self.workflow = workflow
         self.enable_checkpoint = enable_checkpoint
         self.checkpoint_dir = Path(checkpoint_dir)
+        self.enable_parallel = enable_parallel
         self.execution_results: Dict[str, Any] = {}
         self.current_checkpoint_id: Optional[str] = None
+        self.scheduler = TaskScheduler(workflow)
         
         if enable_checkpoint:
             self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
@@ -46,11 +51,63 @@ class WorkflowExecutor:
             Dictionary containing execution results
         """
         logger.info(f"Starting workflow execution: {self.workflow.name}")
+        start_time = time.time()
         
-        # Get execution order
+        if self.enable_parallel:
+            # Use scheduler for parallel execution
+            await self._execute_with_scheduler()
+        else:
+            # Fallback to sequential execution
+            await self._execute_sequential()
+        
+        total_duration = time.time() - start_time
+        logger.info(f"Workflow execution completed: {self.workflow.name} in {total_duration:.2f}s")
+        
+        return {
+            "workflow_name": self.workflow.name,
+            "task_results": self.execution_results,
+            "total_duration": total_duration,
+            "checkpoint_id": self.current_checkpoint_id,
+            "summary": self._generate_summary()
+        }
+    
+    async def _execute_with_scheduler(self) -> None:
+        """Execute workflow using scheduler for parallel task execution."""
+        # Register task handlers
+        for task in self.workflow.tasks:
+            self.scheduler.register_handler(task.name, self._execute_task)
+        
+        # Execute workflow
+        try:
+            results = await self.scheduler.execute_workflow()
+            
+            # Update execution results
+            for task_name, result in results.items():
+                if isinstance(result, dict) and "error" in result:
+                    self.execution_results[task_name] = {
+                        "status": "failed",
+                        "error": result["error"],
+                        "duration": 0
+                    }
+                else:
+                    self.execution_results[task_name] = {
+                        "status": "completed",
+                        "result": result,
+                        "duration": result.get("duration", 0) if isinstance(result, dict) else 0
+                    }
+                    
+                    # Save checkpoint if enabled
+                    if self.enable_checkpoint:
+                        self._save_checkpoint(task_name)
+        
+        except RuntimeError as e:
+            logger.error(f"Workflow execution failed: {e}")
+            raise
+    
+    async def _execute_sequential(self) -> None:
+        """Execute workflow sequentially (fallback mode)."""
         execution_order = self.workflow.get_execution_order()
         
-        # Execute tasks in order
         for task_name in execution_order:
             task = self.workflow.get_task(task_name)
             if not task:
@@ -61,9 +118,10 @@ class WorkflowExecutor:
             if not self._check_dependencies(task):
                 logger.error(f"Dependencies not met for task: {task_name}")
                 self.execution_results[task_name] = {
-                    "status": "failed",
+                    "status": "skipped",
                     "error": "Dependencies not met"
                 }
+                task.status = TaskStatus.SKIPPED
                 continue
             
             # Execute task
@@ -77,6 +135,7 @@ class WorkflowExecutor:
                     "result": result,
                     "duration": time.time() - start_time
                 }
+                task.status = TaskStatus.SUCCESS
                 
                 # Save checkpoint if enabled
                 if self.enable_checkpoint:
@@ -89,25 +148,19 @@ class WorkflowExecutor:
                     "error": str(e),
                     "duration": time.time() - start_time
                 }
-        
-        logger.info(f"Workflow execution completed: {self.workflow.name}")
-        
-        return {
-            "workflow_name": self.workflow.name,
-            "task_results": self.execution_results,
-            "checkpoint_id": self.current_checkpoint_id
-        }
+                task.status = TaskStatus.FAILED
     
-    async def _execute_task(self, task: Task) -> Any:
+    async def _execute_task(self, task: Task) -> Dict[str, Any]:
         """Execute a single task with real agent and tool calls.
         
         Args:
             task: Task to execute
             
         Returns:
-            Task execution result
+            Task execution result dictionary
         """
         logger.info(f"Executing task '{task.name}' with agents: {task.agent}, tools: {task.tools}")
+        task_start = time.time()
         
         # Get target from task config or use workflow name
         target = task.config.get("target", self.workflow.name)
@@ -187,8 +240,52 @@ class WorkflowExecutor:
             "status": overall_status,
             "agents": agent_results,
             "tools": tool_results,
-            "target": target
+            "target": target,
+            "duration": time.time() - task_start
         }
+    
+    def _generate_summary(self) -> Dict[str, Any]:
+        """Generate execution summary.
+        
+        Returns:
+            Summary dictionary with statistics
+        """
+        total_tasks = len(self.workflow.tasks)
+        completed = sum(1 for r in self.execution_results.values() if r.get("status") == "completed")
+        failed = sum(1 for r in self.execution_results.values() if r.get("status") == "failed")
+        skipped = sum(1 for r in self.execution_results.values() if r.get("status") == "skipped")
+        
+        return {
+            "total_tasks": total_tasks,
+            "completed": completed,
+            "failed": failed,
+            "skipped": skipped,
+            "success_rate": (completed / total_tasks * 100) if total_tasks > 0 else 0
+        }
+    
+    def get_execution_plan(self) -> List[List[str]]:
+        """Get execution plan as list of parallel stages.
+        
+        Returns:
+            List of stages, where each stage is a list of task names
+        """
+        return self.scheduler.get_execution_plan()
+    
+    def print_execution_plan(self) -> None:
+        """Print execution plan in a human-readable format."""
+        stages = self.get_execution_plan()
+        print(f"\n{'='*60}")
+        print(f"Workflow: {self.workflow.name}")
+        print(f"{'='*60}")
+        print(f"Total tasks: {len(self.workflow.tasks)}")
+        print(f"Parallel stages: {len(stages)}")
+        print(f"{'='*60}\n")
+        
+        for i, stage in enumerate(stages, 1):
+            print(f"Stage {i}: {', '.join(stage)}")
+            if len(stage) > 1:
+                print(f"  → {len(stage)} tasks will run in parallel")
+        print()
     
     def _check_dependencies(self, task: Task) -> bool:
         """Check if task dependencies are met.
