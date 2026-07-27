@@ -1,0 +1,68 @@
+hos:
+  version: "1.0"
+
+workflow:
+  name: "Incident Response Workflow"
+  description: "Automated incident response workflow for security incidents"
+  
+  tasks:
+    - name: incident_detection
+      agent:
+        - blue_team
+      tools:
+        - siem
+        - log_analyzer
+      depends_on: []
+      timeout: 300
+    
+    - name: threat_analysis
+      agent:
+        - blue_team
+      tools:
+        - threat_intel
+        - log_analyzer
+      depends_on:
+        - incident_detection
+      timeout: 600
+    
+    - name: impact_assessment
+      agent:
+        - security_reviewer
+      tools: []
+      depends_on:
+        - threat_analysis
+      timeout: 300
+    
+    - name: containment
+      agent:
+        - blue_team
+      tools:
+        - ids_ips
+      depends_on:
+        - impact_assessment
+      timeout: 300
+    
+    - name: eradication
+      agent:
+        - developer_agent
+      tools:
+        - github
+      depends_on:
+        - containment
+      timeout: 600
+    
+    - name: recovery
+      agent:
+        - blue_team
+      tools: []
+      depends_on:
+        - eradication
+      timeout: 300
+    
+    - name: post_incident_review
+      agent:
+        - security_reviewer
+      tools: []
+      depends_on:
+        - recovery
+      timeout: 300

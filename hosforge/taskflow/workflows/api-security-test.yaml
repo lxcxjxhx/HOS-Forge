@@ -1,0 +1,53 @@
+hos:
+  version: "1.0"
+
+workflow:
+  name: "API Security Test Workflow"
+  description: "Comprehensive API security testing including authentication, authorization, and injection tests"
+  
+  tasks:
+    - name: api_discovery
+      agent:
+        - dast_agent
+      tools:
+        - nuclei
+      depends_on: []
+      timeout: 300
+    
+    - name: auth_testing
+      agent:
+        - redteam_agent
+      tools:
+        - nuclei
+        - burp_suite
+      depends_on:
+        - api_discovery
+      timeout: 600
+    
+    - name: injection_testing
+      agent:
+        - redteam_agent
+      tools:
+        - sqlmap
+        - nuclei
+      depends_on:
+        - api_discovery
+      timeout: 600
+    
+    - name: authorization_testing
+      agent:
+        - redteam_agent
+      tools:
+        - nuclei
+      depends_on:
+        - auth_testing
+        - injection_testing
+      timeout: 300
+    
+    - name: report_generation
+      agent:
+        - security_reviewer
+      tools: []
+      depends_on:
+        - authorization_testing
+      timeout: 180

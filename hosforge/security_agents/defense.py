@@ -137,7 +137,7 @@ class DefenseAgent(BaseSecurityAgent):
 import sqlite3  # or your DB library
 
 # ❌ Vulnerable pattern:
-# cursor.execute(f"SELECT * FROM users WHERE id = {user_input}")
+# cursor.execute(f"SELECT * FROM users WHERE id = {{user_input}}")
 
 # ✅ Fixed with parameterized query:
 cursor.execute(
@@ -155,10 +155,10 @@ cursor.execute(
 from markupsafe import escape
 
 # ❌ Vulnerable pattern:
-# template = f"<div>{user_input}</div>"
+# template = f"<div>{{user_input}}</div>"
 
 # ✅ Fixed:
-template = f"<div>{escape(user_input)}</div>"
+template = f"<div>{{escape(user_input)}}</div>"
 """
 
     @staticmethod
@@ -170,7 +170,7 @@ template = f"<div>{escape(user_input)}</div>"
 import subprocess
 
 # ❌ Vulnerable pattern:
-# subprocess.call(f"ping {user_input}", shell=True)
+# subprocess.call(f"ping {{user_input}}", shell=True)
 
 # ✅ Fixed:
 subprocess.call(
@@ -190,10 +190,10 @@ import os
 BASE_DIR = "/safe/base/path"
 
 # ❌ Vulnerable pattern:
-# path = os.path.join(BASE_DIR, user_input)
+# path = os.path.join(BASE_DIR, {{user_input}})
 
 # ✅ Fixed:
-user_path = os.path.normpath(user_input).lstrip("/")
+user_path = os.path.normpath({{user_input}}).lstrip("/")
 if user_path.startswith("..") or "/" in user_path:
     raise ValueError("Invalid path")
 safe_path = os.path.join(BASE_DIR, user_path)

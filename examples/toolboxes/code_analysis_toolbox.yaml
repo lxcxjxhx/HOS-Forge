@@ -1,0 +1,101 @@
+# Code Analysis Toolbox - 代码分析工具集配置
+# 专注于代码质量、安全审计和合规性检查
+
+servers:
+  # CodeQL 语义分析
+  - name: codeql
+    description: "CodeQL 语义代码分析"
+    tools:
+      - codeql_analyze
+      - codeql_query
+      - codeql_create_database
+      - codeql_custom_query
+    enabled: true
+    config:
+      languages:
+        - python
+        - javascript
+        - java
+        - cpp
+      query_suites:
+        - security-extended
+        - security-and-quality
+      threads: 4
+
+  # HOS-LS 安全知识库
+  - name: hos_ls
+    description: "HOS 安全知识库查询"
+    tools:
+      - query_cve
+      - search_exploit
+      - get_vulnerability_pattern
+      - check_kev
+    enabled: true
+    config:
+      databases:
+        - cve
+        - exploitdb
+        - kev
+        - cwe
+      cache_enabled: true
+
+  # Bandit Python 安全分析
+  - name: bandit
+    description: "Python 代码安全分析"
+    tools:
+      - bandit_scan
+      - bandit_custom_test
+      - bandit_baseline
+    enabled: true
+    config:
+      confidence_level: MEDIUM
+      severity_level: LOW
+      tests:
+        - injection
+        - cryptography
+        - file_operations
+
+  # ESLint 安全规则
+  - name: eslint_security
+    description: "JavaScript/TypeScript 安全规则"
+    tools:
+      - eslint_scan
+      - eslint_custom_rule
+      - eslint_fix
+    enabled: true
+    config:
+      extends:
+        - plugin:security/recommended
+        - plugin:react/recommended
+      rules:
+        - no-eval
+        - no-implied-eval
+        - react-no-danger
+
+  # 代码复杂度分析
+  - name: complexity_analyzer
+    description: "代码复杂度和可维护性分析"
+    tools:
+      - analyze_complexity
+      - detect_hotspots
+      - suggest_refactor
+    enabled: true
+    config:
+      metrics:
+        - cyclomatic_complexity
+        - cognitive_complexity
+        - maintainability_index
+      thresholds:
+        cyclomatic: 10
+        cognitive: 15
+
+global_config:
+  # 全局配置
+  parallel_analysis: 2
+  result_format: sarif
+  include_line_numbers: true
+  exclude_patterns:
+    - node_modules
+    - vendor
+    - __pycache__
+    - "*.min.js"

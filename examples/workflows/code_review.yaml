@@ -1,0 +1,56 @@
+hos:
+  version: "1.0"
+
+workflow:
+  name: "Code Review Workflow"
+  description: "Security-focused code review workflow"
+  
+  tasks:
+    - name: dependency_scan
+      agent:
+        - sast_agent
+      tools:
+        - dependency_check
+      depends_on: []
+      timeout: 300
+      description: "Scan dependencies for known vulnerabilities"
+    
+    - name: static_analysis
+      agent:
+        - sast_agent
+      tools:
+        - semgrep
+        - codeql
+      depends_on: []
+      timeout: 600
+      description: "Perform static code analysis"
+    
+    - name: secret_detection
+      agent:
+        - sast_agent
+      tools:
+        - trufflehog
+      depends_on: []
+      timeout: 300
+      description: "Detect hardcoded secrets and credentials"
+    
+    - name: code_review
+      agent:
+        - security_reviewer
+      tools:
+        - semgrep
+      depends_on:
+        - dependency_scan
+        - static_analysis
+        - secret_detection
+      timeout: 900
+      description: "Manual code review with AI assistance"
+    
+    - name: report_generation
+      agent:
+        - security_engineer
+      tools: []
+      depends_on:
+        - code_review
+      timeout: 300
+      description: "Generate code review report"
