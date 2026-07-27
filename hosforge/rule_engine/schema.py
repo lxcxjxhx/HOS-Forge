@@ -8,6 +8,8 @@ class PatternType(str, Enum):
     """Pattern matching type."""
     AST_MATCH = "ast_match"
     REGEX = "regex"
+    SEMANTIC = "semantic"
+    TAINT_FLOW = "taint_flow"
 
 
 class Severity(str, Enum):
@@ -72,3 +74,5 @@ class RuleMatchResult:
     description: Optional[str] = None
     remediation: Optional[str] = None
     matched_pattern: Optional[str] = None
+    cwe_ids: list[str] = field(default_factory=list)
+    owasp_category: Optional[str] = None

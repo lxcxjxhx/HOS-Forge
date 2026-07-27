@@ -7,20 +7,39 @@ logic_operator: OR
 patterns:
   - type: regex
     language: python
-    pattern: 'os\.system\s*\(.*\+'
+    pattern: "os\\.system\\s*\\(.*\\+"
     constraints: {}
   - type: regex
     language: python
-    pattern: 'os\.popen\s*\(.*\+'
+    pattern: "os\\.popen\\s*\\(.*\\+"
     constraints: {}
   - type: regex
     language: python
-    pattern: 'subprocess\.(?:call|run|Popen)\s*\(.*shell\s*=\s*True'
+    pattern: "subprocess\\.(?:call|run|Popen)\\s*\\(.*shell\\s*=\\s*True"
     constraints: {}
   - type: regex
     language: python
-    pattern: 'subprocess\.(?:call|run|Popen)\s*\(.*\+'
+    pattern: "subprocess\\.(?:call|run|Popen)\\s*\\(.*\\+"
     constraints: {}
+  - type: taint_flow
+    language: python
+    pattern: "os.system|os.popen|subprocess.call|subprocess.run|subprocess.Popen"
+    constraints:
+      sources:
+        - input
+        - request.args
+        - request.form
+        - request.get
+        - sys.argv
+      sinks:
+        - os.system
+        - os.popen
+        - subprocess.call
+        - subprocess.run
+        - subprocess.Popen
+      sanitizers:
+        - shlex.quote
+        - shlex.escape
 
 conditions:
   - input_source: user_input

@@ -199,16 +199,7 @@ class SecurityEngine:
                 code_context = "\n".join(lines[start:end])
             except (ValueError, IndexError):
                 pass
-        
-        # Get CWE description from knowledge base
-        cwe_description = None
-        if self.knowledge_base and result.cwe_ids:
-            try:
-                # Try to get CWE info (may not be available)
-                cwe_description = f"See {result.cwe_ids[0]} for details"
-            except Exception:
-                pass
-        
+
         return Finding(
             rule_name=result.rule_name,
             severity=result.severity,

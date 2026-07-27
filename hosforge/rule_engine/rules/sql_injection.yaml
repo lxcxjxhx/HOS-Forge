@@ -7,15 +7,15 @@ logic_operator: OR
 patterns:
   - type: regex
     language: python
-    pattern: '(?:execute|cursor\.execute)\s*\(\s*["\'].*%s'
+    pattern: "(?:execute|cursor\\.execute)\\s*\\(\\s*[\"'].*%s"
     constraints: {}
   - type: regex
     language: python
-    pattern: '(?:execute|cursor\.execute)\s*\(\s*f["\']'
+    pattern: "(?:execute|cursor\\.execute)\\s*\\(\\s*f[\"']"
     constraints: {}
   - type: regex
     language: python
-    pattern: '(?:execute|cursor\.execute)\s*\(.*\+.*\)'
+    pattern: "(?:execute|cursor\\.execute)\\s*\\(.*\\+.*\\)"
     constraints: {}
 
 conditions:
