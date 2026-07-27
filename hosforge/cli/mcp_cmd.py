@@ -5,7 +5,7 @@ from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
-from hosforge.mcp import MCPServerRegistry
+from hosforge.mcp_hub import MCPServerRegistry
 
 
 class MCPCommand:
@@ -19,7 +19,7 @@ class MCPCommand:
         registry = MCPServerRegistry()
 
         # 自动发现内置 MCP Server
-        builtin_dir = Path(__file__).parent.parent / "mcp" / "servers"
+        builtin_dir = Path(__file__).parent.parent / "mcp_hub" / "servers"
         if builtin_dir.exists():
             for server_file in builtin_dir.glob("*_server.py"):
                 server_name = server_file.stem.replace("_server", "")
