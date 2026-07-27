@@ -93,7 +93,7 @@ class NucleiTool(BaseSecurityTool):
 
         cmd = [self._nuclei_path]
 
-        # 输出格式
+        # 输出格式 - Nuclei 使用 -jsonl 输出 JSON Lines 格式
         if output_format == "json":
             cmd.append("-jsonl")
 
@@ -210,6 +210,8 @@ class NucleiTool(BaseSecurityTool):
         findings: list[dict[str, Any]] = []
         for line in output.strip().split("\n"):
             line = line.strip()
+            if not line:
+                continue
             if not line:
                 continue
             try:
