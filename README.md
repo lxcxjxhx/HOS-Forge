@@ -142,17 +142,58 @@ HOS-Forge提供了`hos`命令行工具来管理安全工作流：
 # 查看帮助
 hos --help
 
-# 运行安全审计工作流
-hos taskflow run hosforge/taskflow/workflows/security-audit.yaml
+# 查看版本
+hos --version
 
 # 列出可用工作流
 hos taskflow list
+
+# 验证工作流（不执行）
+hos taskflow validate examples/workflows/demo_quick_scan.yaml
+
+# Dry-run模式（验证但不执行）
+hos taskflow run examples/workflows/demo_quick_scan.yaml --dry-run
+
+# 运行安全审计工作流
+hos taskflow run examples/workflows/security_audit.yaml
+
+# 启用checkpoint的工作流
+hos taskflow run examples/workflows/security_audit.yaml --checkpoint
 
 # 列出可用Personality
 hos personality list
 
 # 列出可用MCP服务器
 hos mcp list
+```
+
+### 验证安装
+
+运行安装验证脚本，确保所有组件正常工作：
+
+```bash
+# 验证安装
+python verify_installation.py
+
+# 验证脚本会检查：
+# - Python版本和pip
+# - hos命令是否安装
+# - taskflow命令功能
+# - 核心模块导入
+```
+
+### 演示工作流
+
+运行演示脚本，体验Taskflow Engine和Agent/Tool Registry：
+
+```bash
+# 运行演示工作流
+python demo_workflow.py
+
+# 演示内容包括：
+# - Agent和Tool注册表
+# - 工作流解析和执行
+# - 任务依赖关系展示
 ```
 
 ### 示例工作流
