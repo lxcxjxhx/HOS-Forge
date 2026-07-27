@@ -6,14 +6,15 @@ HOS-Forge Burp Suite Tool — Burp Suite API 集成适配器。
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import httpx
 
+from hosforge.exceptions import MCPConnectionError, SecurityToolError
+from hosforge.logging_config import get_logger
 from hosforge.security_tools.base import BaseSecurityTool, SecurityToolResult
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class BurpTool(BaseSecurityTool):
@@ -110,17 +111,28 @@ class BurpTool(BaseSecurityTool):
                 )
 
         except httpx.RequestError as e:
+            error = MCPConnectionError(
+                f"Burp API request failed: {e}",
+                context={"tool_name": self.name, "base_url": self._base_url},
+                cause=e,
+            )
+            logger.error(str(error))
             return SecurityToolResult(
                 tool_name=self.name,
                 success=False,
-                error=f"Burp API request failed: {e}",
+                error=str(error),
             )
         except Exception as e:
-            logger.exception("Burp tool failed")
+            error = SecurityToolError(
+                "Burp tool failed",
+                context={"tool_name": self.name},
+                cause=e,
+            )
+            logger.exception(str(error))
             return SecurityToolResult(
                 tool_name=self.name,
                 success=False,
-                error=str(e),
+                error=str(error),
             )
 
     async def _start_scan(
@@ -147,7 +159,7 @@ class BurpTool(BaseSecurityTool):
             return SecurityToolResult(
                 tool_name=self.name,
                 success=True,
-                output=f'Scan created: {data.get("scan_id", "")}',
+                output=f"Scan created: {data.get('scan_id', '')}",
                 raw_data={"scan_id": data.get("scan_id", ""), "status": "created"},
             )
         else:

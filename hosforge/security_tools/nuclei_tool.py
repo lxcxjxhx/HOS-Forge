@@ -8,13 +8,14 @@ from __future__ import annotations
 
 import asyncio
 import json
-import logging
 import shutil
 from typing import Any
 
+from hosforge.exceptions import ToolExecutionError, ToolNotFoundError, ToolTimeoutError
+from hosforge.logging_config import get_logger
 from hosforge.security_tools.base import BaseSecurityTool, SecurityToolResult
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class NucleiTool(BaseSecurityTool):
@@ -139,12 +140,19 @@ class NucleiTool(BaseSecurityTool):
                     process.communicate(),
                     timeout=timeout,
                 )
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError as e:
                 process.kill()
+                error = ToolTimeoutError(
+                    f"Nuclei scan timed out after {timeout}s",
+                    timeout_seconds=timeout,
+                    tool_name=self.name,
+                    cause=e,
+                )
+                logger.error(str(error))
                 return SecurityToolResult(
                     tool_name=self.name,
                     success=False,
-                    error=f"Nuclei scan timed out after {timeout}s",
+                    error=str(error),
                 )
 
             output = stdout.decode()
@@ -172,18 +180,29 @@ class NucleiTool(BaseSecurityTool):
                 },
             )
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            error = ToolNotFoundError(
+                f"Nuclei not found at: {self._nuclei_path}",
+                tool_name=self.name,
+                cause=e,
+            )
+            logger.error(str(error))
             return SecurityToolResult(
                 tool_name=self.name,
                 success=False,
-                error=f"Nuclei not found at: {self._nuclei_path}",
+                error=str(error),
             )
         except Exception as e:
-            logger.exception("Nuclei execution failed")
+            error = ToolExecutionError(
+                "Nuclei execution failed",
+                tool_name=self.name,
+                cause=e,
+            )
+            logger.exception(str(error))
             return SecurityToolResult(
                 tool_name=self.name,
                 success=False,
-                error=str(e),
+                error=str(error),
             )
 
     def _parse_nuclei_output(self, output: str) -> list[dict[str, Any]]:

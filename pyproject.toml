@@ -15,12 +15,12 @@ authors = [
 ]
 requires-python = ">=3.12,<3.14"
 classifiers = [
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Topic :: Security",
-  "Intended Audience :: Developers",
-  "Intended Audience :: Information Technology",
 ]
 # Version is managed dynamically by poetry-dynamic-versioning
 dynamic = [ "version" ]
@@ -117,12 +117,11 @@ dependencies = [
 urls.Homepage = "https://github.com/lxcxjxhx/HOS-Forge"
 urls.Repository = "https://github.com/lxcxjxhx/HOS-Forge"
 
-[project.scripts]
 # HOS-Forge CLI 入口
-hos-mcp = "hosforge.mcp_server.server:main"
-hos-ci = "hosforge.ci.__main__:main"
-hos-report = "hosforge.reporter.cli:main"
-hos-dashboard = "hosforge.dashboard.cli:main"
+scripts.hos-ci = "hosforge.ci.__main__:main"
+scripts.hos-dashboard = "hosforge.dashboard.cli:main"
+scripts.hos-mcp = "hosforge.mcp_server.server:main"
+scripts.hos-report = "hosforge.reporter.cli:main"
 
 [dependency-groups]
 dev = [
@@ -161,15 +160,11 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/lxcxjxhx/HOS-Forge"
 packages = [
-  { include = "openhands/**/*" },
-  { include = "hosforge/**/*" },
-  { include = "pyproject.toml", to = "openhands" },
-  { include = "poetry.lock", to = "openhands" },
+  { include = "openhands" },
+  { include = "hosforge" },
 ]
 include = [
   "skills/**/*",
-  "hosforge/rules/*.yaml",
-  "hosforge/reporter/templates/*.html",
   ".agents/skills/**/*.md",
 ]
 
@@ -359,6 +354,7 @@ lint.flake8-bugbear.extend-immutable-calls = [
 ]
 lint.flake8-quotes.docstring-quotes = "double"
 lint.flake8-quotes.inline-quotes = "single"
+lint.isort.known-first-party = [ "openhands" ]
 
 [tool.coverage.run]
 concurrency = [ "gevent" ]

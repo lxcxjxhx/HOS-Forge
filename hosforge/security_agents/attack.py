@@ -358,7 +358,7 @@ class AttackAgent(BaseSecurityAgent):
             if not recon_data["open_ports"]:
                 logger.info("[Recon] No tool available, using AI-guided recon")
                 recon_data["notes"] = (
-                    "AI-guided reconnaissance. " "Use Nmap MCP for detailed port/service discovery."
+                    "AI-guided reconnaissance. Use Nmap MCP for detailed port/service discovery."
                 )
 
             recon_data["technologies"] = target.technologies
@@ -648,8 +648,7 @@ class AttackAgent(BaseSecurityAgent):
 
         if not report.authorized:
             summary_parts.append(
-                "\n⚠ **注意**: 本次测试为未授权评估模式，"
-                "利用验证阶段已跳过。请获得授权后重新测试。"
+                "\n⚠ **注意**: 本次测试为未授权评估模式，利用验证阶段已跳过。请获得授权后重新测试。"
             )
 
         return "\n\n".join(summary_parts)
@@ -719,9 +718,9 @@ class AttackAgent(BaseSecurityAgent):
                     </span>
                 </td>
                 <td style="padding:12px;border-bottom:1px solid #3C3E42;font-weight:500;">{v.name}</td>
-                <td style="padding:12px;border-bottom:1px solid #3C3E42;color:#B49BC4;">{v.cwe_id or '-'}</td>
+                <td style="padding:12px;border-bottom:1px solid #3C3E42;color:#B49BC4;">{v.cwe_id or "-"}</td>
                 <td style="padding:12px;border-bottom:1px solid #3C3E42;color:#B49BC4;font-size:13px;">
-                    {v.description[:120] + '...' if len(v.description) > 120 else v.description}
+                    {v.description[:120] + "..." if len(v.description) > 120 else v.description}
                 </td>
             </tr>"""
 
@@ -729,7 +728,9 @@ class AttackAgent(BaseSecurityAgent):
         risk_color = (
             "#B33F4E"
             if report.risk_score >= 70
-            else "#D4A040" if report.risk_score >= 40 else "#6CCB4C"
+            else "#D4A040"
+            if report.risk_score >= 40
+            else "#6CCB4C"
         )
 
         html = f"""<!DOCTYPE html>
@@ -813,8 +814,8 @@ class AttackAgent(BaseSecurityAgent):
       <span>日期: {report.completed_at[:10]}</span>
     </div>
     <div class="meta" style="margin-top:4px;">
-      <span class="badge" style="background:{'#6CCB4C22;color:#6CCB4C' if report.authorized else '#D4A04022;color:#D4A040'};border:1px solid {'#6CCB4C' if report.authorized else '#D4A040'}">
-        {'✅ 已授权测试' if report.authorized else '⚠ 未授权评估'}
+      <span class="badge" style="background:{"#6CCB4C22;color:#6CCB4C" if report.authorized else "#D4A04022;color:#D4A040"};border:1px solid {"#6CCB4C" if report.authorized else "#D4A040"}">
+        {"✅ 已授权测试" if report.authorized else "⚠ 未授权评估"}
       </span>
     </div>
   </div>
@@ -856,7 +857,7 @@ class AttackAgent(BaseSecurityAgent):
             html += f"""
       <div class="phase-card">
         <div class="icon">{icon}</div>
-        <div class="name">{phase.phase.value.replace('_', ' ').title()}</div>
+        <div class="name">{phase.phase.value.replace("_", " ").title()}</div>
         <div class="status" style="color:{color};">{phase.status.upper()}</div>
       </div>"""
 
@@ -922,7 +923,7 @@ class AttackAgent(BaseSecurityAgent):
             f"- **报告编号**: {report.report_id}",
             f"- **目标**: {report.target.host}",
             f"- **风险评分**: {report.risk_score}/100",
-            f'- **测试模式**: {"✅ 已授权" if report.authorized else "⚠ 未授权评估"}',
+            f"- **测试模式**: {'✅ 已授权' if report.authorized else '⚠ 未授权评估'}",
             f"- **日期**: {report.completed_at[:10]}",
             "",
             "---",
@@ -938,7 +939,7 @@ class AttackAgent(BaseSecurityAgent):
         ]
 
         for i, v in enumerate(report.vulnerabilities, 1):
-            lines.append(f'| {i} | {v.severity.value.upper()} | {v.name} | {v.cwe_id or "-"} |')
+            lines.append(f"| {i} | {v.severity.value.upper()} | {v.name} | {v.cwe_id or '-'} |")
 
         lines.extend(["", "## 修复建议", ""])
         for rec in report.recommendations:

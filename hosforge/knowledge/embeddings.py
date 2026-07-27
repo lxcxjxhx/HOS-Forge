@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-logger = logging.getLogger(__name__)
+from hosforge.exceptions import KnowledgeBaseError
+from hosforge.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class EmbeddingGenerator:
@@ -64,7 +66,7 @@ class EmbeddingGenerator:
             np.ndarray: shape (len(texts), embedding_dim) float array
         """
         if not texts:
-            raise ValueError("texts list cannot be empty")
+            raise KnowledgeBaseError("texts list cannot be empty")
 
         processed_texts = [t if t.strip() else " " for t in texts]
 

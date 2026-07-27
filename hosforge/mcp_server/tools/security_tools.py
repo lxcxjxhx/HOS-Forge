@@ -41,7 +41,6 @@ def register_tools(app: FastMCP) -> None:
 
 
 def _register_scan_tools(app: FastMCP) -> None:
-
     @app.tool(description="Nmap port scan - scan target host for open ports and services")
     async def hos_nmap_scan(
         target: str,
@@ -114,7 +113,6 @@ def _register_scan_tools(app: FastMCP) -> None:
 
 
 def _register_knowledge_tools(app: FastMCP) -> None:
-
     @app.tool(description="CVE query - query vulnerability details, CVSS score, CWE mapping")
     async def hos_cve_query(
         cve_id: str = "",
@@ -183,7 +181,6 @@ def _register_knowledge_tools(app: FastMCP) -> None:
 
 
 def _register_pentest_tools(app: FastMCP) -> None:
-
     @app.tool(description="Pentest execution - start full PTES workflow penetration test")
     async def hos_pentest_run(
         target: str,
@@ -236,7 +233,6 @@ def _register_pentest_tools(app: FastMCP) -> None:
 
 
 def _register_report_tools(app: FastMCP) -> None:
-
     @app.tool(description="Security report generation - generate fixed-format HTML security report")
     async def hos_report_generate(
         title: str = "HOS-Forge Security Report",
@@ -260,7 +256,6 @@ def _register_report_tools(app: FastMCP) -> None:
 
 
 def _register_bridge_tools(app: FastMCP) -> None:
-
     @app.tool(
         description="MCP service discovery - auto-detect external security MCP services on system"
     )
@@ -338,7 +333,6 @@ def _register_bridge_tools(app: FastMCP) -> None:
 
 
 def _register_orchestrator_tools(app: FastMCP) -> None:
-
     @app.tool(description="Workflow template list - list available pentest workflow templates")
     async def hos_workflow_templates() -> dict[str, Any]:
         """列出所有预定义的工作流模板"""

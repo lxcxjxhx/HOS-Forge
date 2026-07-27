@@ -7,11 +7,12 @@ HOS-Forge Security Tool Base — 安全工具基类。
 from __future__ import annotations
 
 import abc
-import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from hosforge.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -45,7 +46,7 @@ class BaseSecurityTool(abc.ABC):
     """
 
     def __init__(self):
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
 
     @property
     @abc.abstractmethod

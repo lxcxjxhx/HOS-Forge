@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "poetry.core.masonry.api"
-requires = ["poetry-core"]
+requires = [ "poetry-core" ]
 
 [project]
 name = "hosforge"
@@ -12,67 +12,65 @@ authors = [
 ]
 requires-python = ">=3.12,<3.14"
 classifiers = [
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Topic :: Security",
-  "Intended Audience :: Developers",
-  "Intended Audience :: Information Technology",
 ]
-dynamic = ["version"]
+dynamic = [ "version" ]
 
 # 运行时依赖
 dependencies = [
-  # MCP 服务器框架
-  "fastmcp>=3.2,<4",
-  
-  # Web 框架
-  "fastapi>=0.115.0",
-  
-  # HTTP 客户端
-  "requests>=2.31.0",
-  
-  # 系统监控
-  "psutil>=5.9.0",
-  
-  # YAML 解析
-  "pyyaml>=6.0.1",
-  
-  # 机器学习框架（可选，用于模型优化）
-  "torch>=2.0.0",
-  
-  # 进度条
-  "tqdm>=4.66.0",
-  
-  # Hugging Face 生态
-  "transformers>=4.36.0",
-  "peft>=0.7.0",
   "datasets>=2.16.0",
-  "huggingface-hub>=0.20.0",
-  
   # 向量搜索和嵌入
   "faiss-cpu>=1.7.4",
-  "sentence-transformers>=2.2.0",
+  # Web 框架
+  "fastapi>=0.115.0",
+
+  # MCP 服务器框架
+  "fastmcp>=3.2,<4",
+
+  "huggingface-hub>=0.20.0",
+
   "numpy>=1.24.0",
+  "peft>=0.7.0",
+  # 系统监控
+  "psutil>=5.9.0",
+
+  # YAML 解析
+  "pyyaml>=6.0.1",
+
+  # HTTP 客户端
+  "requests>=2.31.0",
+
+  "sentence-transformers>=2.2.0",
+  # 机器学习框架（可选，用于模型优化）
+  "torch>=2.0.0",
+
+  # 进度条
+  "tqdm>=4.66.0",
+
+  # Hugging Face 生态
+  "transformers>=4.36.0",
 ]
 
-[project.optional-dependencies]
 # 开发依赖
-dev = [
+optional-dependencies.dev = [
+  "black>=23.12.0",
+  "isort>=5.13.0",
+  "mypy>=1.8.0",
   "pytest>=7.4.0",
   "pytest-asyncio>=0.21.0",
   "pytest-cov>=4.1.0",
-  "mypy>=1.8.0",
   "ruff>=0.1.0",
-  "black>=23.12.0",
-  "isort>=5.13.0",
 ]
-
 # 文档依赖
-docs = [
+optional-dependencies.docs = [
+  "myst-parser>=2.0.0",
   "sphinx>=7.0.0",
   "sphinx-rtd-theme>=2.0.0",
-  "myst-parser>=2.0.0",
 ]
 
 [tool.poetry]
@@ -106,43 +104,42 @@ sphinx = ">=7.0.0"
 sphinx-rtd-theme = ">=2.0.0"
 myst-parser = ">=2.0.0"
 
-[tool.mypy]
-python_version = "3.12"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-
-[tool.ruff]
-line-length = 100
-target-version = "py312"
-
-[tool.ruff.lint]
-select = [
-  "E",  # pycodestyle errors
-  "W",  # pycodestyle warnings
-  "F",  # pyflakes
-  "I",  # isort
-  "B",  # flake8-bugbear
-  "C4", # flake8-comprehensions
-]
-ignore = [
-  "E501", # line too long (handled by black)
-  "B008", # do not perform function calls in argument defaults
-]
-
 [tool.black]
 line-length = 100
-target-version = ["py312"]
+target-version = [ "py312" ]
+
+[tool.ruff]
+target-version = "py312"
+
+line-length = 100
+lint.select = [
+  "B",  # flake8-bugbear
+  "C4", # flake8-comprehensions
+  "E",  # pycodestyle errors
+  "F",  # pyflakes
+  "I",  # isort
+  "W",  # pycodestyle warnings
+]
+lint.ignore = [
+  "B008", # do not perform function calls in argument defaults
+  "E501", # line too long (handled by black)
+]
 
 [tool.isort]
 profile = "black"
 line_length = 100
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
+testpaths = [ "tests" ]
+python_files = [ "test_*.py" ]
+python_classes = [ "Test*" ]
+python_functions = [ "test_*" ]
 addopts = "-v --cov=hosforge --cov-report=term-missing"
 asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false

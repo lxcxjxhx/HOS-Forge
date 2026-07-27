@@ -4,7 +4,6 @@ import logging
 import uuid
 from dataclasses import dataclass
 
-from openhands.agent_server.utils import utc_now
 from sqlalchemy import (
     Column,
     DateTime,
@@ -13,6 +12,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from openhands.agent_server.utils import utc_now
 from openhands.app_server.recaptcha.recaptcha_models import RecaptchaLog
 from openhands.app_server.user.user_context import UserContext
 from openhands.app_server.utils.sql_utils import Base

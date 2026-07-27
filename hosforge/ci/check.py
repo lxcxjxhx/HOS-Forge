@@ -6,6 +6,7 @@ HOS-Forge CI Check — 本地安全检查工具。
 
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
 from pathlib import Path
@@ -88,8 +89,6 @@ async def run_sast_scan(path: str = ".") -> dict[str, Any]:
             text=True,
             timeout=120,
         )
-        import json
-
         data = json.loads(result.stdout) if result.stdout else {}
         findings = len(data.get("results", []))
     except (FileNotFoundError, json.JSONDecodeError, subprocess.TimeoutExpired) as e:

@@ -9,13 +9,14 @@ from __future__ import annotations
 
 import abc
 import json
-import logging
 import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
+from hosforge.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 @dataclass
@@ -108,7 +109,7 @@ class SecurityKnowledgeBase(abc.ABC):
     def __init__(self, db_path: str = ""):
         self._db_path = db_path
         self._db: sqlite3.Connection | None = None
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger = get_logger(self.__class__.__name__)
 
     @abc.abstractmethod
     async def query(self, question: str, top_k: int = 5) -> list[KnowledgeEntry]:
@@ -207,15 +208,15 @@ class SecurityKnowledgeBase(abc.ABC):
                     f"## {cve.cve_id}\n\n"
                     f"- **严重程度**: {cve.severity} (CVSS: {cve.cvss_score})\n"
                     f"- **描述**: {cve.description}\n"
-                    f'- **CWE**: {", ".join(cve.cwe_ids) if cve.cwe_ids else "N/A"}\n'
-                    f'- **可利用**: {"是" if cve.exploit_available else "否"}\n'
-                    f'- **KEV**: {"是" if cve.kev else "否"}\n'
+                    f"- **CWE**: {', '.join(cve.cwe_ids) if cve.cwe_ids else 'N/A'}\n"
+                    f"- **可利用**: {'是' if cve.exploit_available else '否'}\n"
+                    f"- **KEV**: {'是' if cve.kev else '否'}\n"
                 )
 
         if cwe_id:
             cwe = await self.get_cwe(cwe_id)
             if cwe:
-                parts.append(f"## {cwe.cwe_id}: {cwe.name}\n\n" f"{cwe.description}\n\n")
+                parts.append(f"## {cwe.cwe_id}: {cwe.name}\n\n{cwe.description}\n\n")
                 if cwe.mitigations:
                     parts.append("### 缓解措施\n")
                     for m in cwe.mitigations:
@@ -562,7 +563,7 @@ class LocalKnowledgeBase(SecurityKnowledgeBase):
             results.append(
                 KnowledgeEntry(
                     id=row["cwe_id"],
-                    title=f'CWE: {row["cwe_id"]} - {row["name"]}',
+                    title=f"CWE: {row['cwe_id']} - {row['name']}",
                     content=row["description"] or "",
                     source="cwe",
                     tags=["weakness"],
@@ -579,7 +580,7 @@ class LocalKnowledgeBase(SecurityKnowledgeBase):
             (cve_id.upper(),),
         ).fetchone()
         if row and row["code"]:
-            return f'# PoC for {cve_id}\n\n{row["code"]}'
+            return f"# PoC for {cve_id}\n\n{row['code']}"
         return ""
 
     async def check_kev(self, cve_id: str) -> bool:

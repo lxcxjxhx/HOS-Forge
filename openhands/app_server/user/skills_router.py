@@ -9,7 +9,6 @@ from typing import Annotated, cast
 
 import yaml
 from fastapi import APIRouter, HTTPException, Query
-from openhands.sdk.marketplace import Marketplace
 from pydantic import BaseModel
 
 import openhands
@@ -28,6 +27,7 @@ from openhands.app_server.settings.settings_models import MarketplaceRegistratio
 from openhands.app_server.user.user_context import UserContext
 from openhands.app_server.utils.dependencies import get_dependencies
 from openhands.app_server.utils.logger import openhands_logger as logger
+from openhands.sdk.marketplace import Marketplace
 
 router = APIRouter(prefix='/skills', tags=['Skills'], dependencies=get_dependencies())
 user_context_dependency = depends_user_context()

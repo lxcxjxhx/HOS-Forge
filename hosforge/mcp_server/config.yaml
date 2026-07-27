@@ -8,12 +8,12 @@ services:
     name: "security-hub"
     env_var: "HOSFORGE_SERVICE_SECURITY_HUB"
     description: "安全中心服务 - 集成 nmap, nuclei, sqlmap 等工具"
-    
+
   burp:
     name: "burp"
     env_var: "HOSFORGE_SERVICE_BURP"
     description: "Burp Suite 服务 - Web 应用安全测试"
-    
+
   hos_forge:
     name: "hos-forge"
     env_var: "HOSFORGE_SERVICE_HOS_FORGE"
@@ -26,7 +26,7 @@ services:
 workflows:
   default_timeout: 120
   max_retries: 3
-  
+
 # 连接器配置
 connectors:
   auto_discover: true

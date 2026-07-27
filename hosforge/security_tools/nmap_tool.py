@@ -8,14 +8,15 @@ HOS-Forge Nmap Tool — 网络扫描工具适配器。
 from __future__ import annotations
 
 import asyncio
-import logging
 import re
 import shutil
 from typing import Any
 
+from hosforge.exceptions import ToolExecutionError, ToolNotFoundError, ToolTimeoutError
+from hosforge.logging_config import get_logger
 from hosforge.security_tools.base import BaseSecurityTool, SecurityToolResult
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class NmapTool(BaseSecurityTool):
@@ -171,18 +172,42 @@ class NmapTool(BaseSecurityTool):
                 raw_data=result,
             )
 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            error = ToolNotFoundError(
+                f"Nmap not found at: {self._nmap_path}",
+                tool_name=self.name,
+                cause=e,
+            )
+            logger.error(str(error))
             return SecurityToolResult(
                 tool_name=self.name,
                 success=False,
-                error=f"Nmap not found at: {self._nmap_path}",
+                error=str(error),
+            )
+        except asyncio.TimeoutError as e:
+            error = ToolTimeoutError(
+                f"Nmap scan timed out after {timeout}s",
+                timeout_seconds=timeout,
+                tool_name=self.name,
+                cause=e,
+            )
+            logger.error(str(error))
+            return SecurityToolResult(
+                tool_name=self.name,
+                success=False,
+                error=str(error),
             )
         except Exception as e:
-            logger.exception("Nmap execution failed")
+            error = ToolExecutionError(
+                "Nmap execution failed",
+                tool_name=self.name,
+                cause=e,
+            )
+            logger.exception(str(error))
             return SecurityToolResult(
                 tool_name=self.name,
                 success=False,
-                error=str(e),
+                error=str(error),
             )
 
     def _parse_nmap_output(self, xml_output: str) -> dict[str, Any]:

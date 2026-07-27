@@ -121,6 +121,7 @@ export function setConversationState(
       );
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn("Failed to set conversation localStorage", err);
   }
 }
@@ -138,6 +139,7 @@ export function clearConversationLocalStorage(conversationId: string) {
       );
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.warn(
       "Failed to clear conversation localStorage",
       conversationId,
