@@ -45,7 +45,7 @@ class WorkflowExecutor:
             self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
     
     async def execute(self) -> Dict[str, Any]:
-        """Execute the workflow.
+        """Execute the workflow with parallel task support.
         
         Returns:
             Dictionary containing execution results
@@ -212,8 +212,11 @@ class WorkflowExecutor:
                 tool = get_tool(tool_name)
                 logger.info(f"Running tool: {tool_name}")
                 
-                # Run tool
-                tool_result = await tool.run(target)
+                # Prepare tool kwargs from task config
+                tool_kwargs = self._prepare_tool_kwargs(tool_name, task.config)
+                
+                # Run tool with kwargs
+                tool_result = await tool.run(target, **tool_kwargs)
                 
                 tool_results.append({
                     "tool": tool_name,
@@ -286,6 +289,63 @@ class WorkflowExecutor:
             if len(stage) > 1:
                 print(f"  → {len(stage)} tasks will run in parallel")
         print()
+    
+    def _prepare_tool_kwargs(self, tool_name: str, task_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Prepare tool-specific kwargs from task config.
+        
+        Args:
+            tool_name: Name of the tool
+            task_config: Task configuration dictionary
+            
+        Returns:
+            Dictionary of kwargs to pass to tool.run()
+        """
+        kwargs: Dict[str, Any] = {}
+        
+        # Generic config keys that apply to all tools
+        if "timeout" in task_config:
+            kwargs["timeout"] = task_config["timeout"]
+        
+        # Tool-specific config mappings
+        if tool_name == "trivy":
+            if "scan_type" in task_config:
+                kwargs["scan_type"] = task_config["scan_type"]
+            if "severity" in task_config:
+                kwargs["severity"] = task_config["severity"]
+            if "ignore_unfixed" in task_config:
+                kwargs["ignore_unfixed"] = task_config["ignore_unfixed"]
+            if "exit_code" in task_config:
+                kwargs["exit_code"] = task_config["exit_code"]
+            if "output_format" in task_config:
+                kwargs["output_format"] = task_config["output_format"]
+        
+        elif tool_name == "nmap":
+            if "ports" in task_config:
+                kwargs["ports"] = task_config["ports"]
+            if "scan_type" in task_config:
+                kwargs["scan_type"] = task_config["scan_type"]
+            if "service_detection" in task_config:
+                kwargs["service_detection"] = task_config["service_detection"]
+            if "os_detection" in task_config:
+                kwargs["os_detection"] = task_config["os_detection"]
+        
+        elif tool_name == "semgrep":
+            if "config" in task_config:
+                kwargs["config"] = task_config["config"]
+            if "languages" in task_config:
+                kwargs["languages"] = task_config["languages"]
+            if "severity" in task_config:
+                kwargs["severity"] = task_config["severity"]
+        
+        elif tool_name == "nuclei":
+            if "templates" in task_config:
+                kwargs["templates"] = task_config["templates"]
+            if "severity" in task_config:
+                kwargs["severity"] = task_config["severity"]
+            if "rate_limit" in task_config:
+                kwargs["rate_limit"] = task_config["rate_limit"]
+        
+        return kwargs
     
     def _check_dependencies(self, task: Task) -> bool:
         """Check if task dependencies are met.

@@ -77,6 +77,7 @@ _TOOL_TYPE_MAP: Dict[str, str] = {
     "nmap": "NmapTool",
     "semgrep": "SemgrepTool",
     "nuclei": "NucleiTool",
+    "trivy": "TrivyTool",
     "burp": "BurpTool",
     # Aliases used in workflow files
     "burp_suite": "BurpTool",
@@ -102,6 +103,9 @@ def _lazy_import_tool(class_name: str) -> type:
     if class_name == "BurpTool":
         from hosforge.security_tools.burp_tool import BurpTool
         return BurpTool
+    if class_name == "TrivyTool":
+        from hosforge.security_tools.trivy_tool import TrivyTool
+        return TrivyTool
     raise ValueError(f"Unknown tool class: {class_name}")
 
 
