@@ -1,0 +1,49 @@
+name: weak_crypto
+type: vulnerability
+severity: medium
+description: "Detects use of weak cryptographic algorithms"
+logic_operator: OR
+
+patterns:
+  - type: regex
+    language: python
+    pattern: "hashlib\\.md5\\("
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "hashlib\\.sha1\\("
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "DES\\.new\\("
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "ARC4\\.new\\("
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "Blowfish\\.new\\("
+    constraints: {}
+
+conditions:
+  - input_source: source_code
+    not_sanitized_by: []
+
+remediation: |
+  Use strong cryptographic algorithms:
+  - For hashing: Use SHA-256, SHA-3, or bcrypt for passwords
+  - For encryption: Use AES-256-GCM or ChaCha20-Poly1305
+  Example:
+    # Vulnerable
+    hashlib.md5(password.encode())
+    # Safe
+    hashlib.sha256(password.encode())
+    # For passwords
+    import bcrypt
+    bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+
+metadata:
+  cwe: "CWE-327"
+  owasp: "A02:2021 - Cryptographic Failures"
+  category: "crypto"

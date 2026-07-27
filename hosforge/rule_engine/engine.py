@@ -141,56 +141,109 @@ class RuleEngine:
             if not sources or not sinks:
                 return False, None
             
-            # Track tainted variables
-            tainted_vars: set[str] = set()
-            tainted_lines: dict[str, int] = {}
+            # Track tainted variables with their line numbers
+            tainted_vars: dict[str, int] = {}
             
-            # Find sources (user input)
+            # First pass: identify initial taint sources
             for node in ast.walk(tree):
-                if isinstance(node, ast.Assign):
-                    # Check if assignment comes from a source
-                    if self._is_source(node.value, sources):
+                # Function parameters are potential sources
+                if isinstance(node, ast.FunctionDef):
+                    for arg in node.args.args:
+                        tainted_vars[arg.arg] = arg.lineno
+                
+                # Direct assignments from sources
+                elif isinstance(node, ast.Assign):
+                    if self._expr_is_tainted(node.value, sources, tainted_vars):
                         for target in node.targets:
                             if isinstance(target, ast.Name):
-                                tainted_vars.add(target.id)
-                                tainted_lines[target.id] = target.lineno
-                
-                # Check function arguments
-                elif isinstance(node, ast.FunctionDef):
-                    for arg in node.args.args:
-                        # Function parameters are potential sources
-                        tainted_vars.add(arg.arg)
-                        tainted_lines[arg.arg] = arg.lineno
+                                tainted_vars[target.id] = target.lineno
             
-            # Find sinks (dangerous operations)
+            # Second pass: propagate taint through operations
+            changed = True
+            while changed:
+                changed = False
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.Assign):
+                        if self._expr_is_tainted(node.value, sources, tainted_vars):
+                            for target in node.targets:
+                                if isinstance(target, ast.Name):
+                                    if target.id not in tainted_vars:
+                                        tainted_vars[target.id] = target.lineno
+                                        changed = True
+            
+            # Third pass: check for tainted data reaching sinks
             for node in ast.walk(tree):
                 if isinstance(node, ast.Call):
-                    # Check if calling a sink function
                     if self._is_sink_call(node, sinks):
-                        # Check if any argument is tainted
+                        # Check all arguments
                         for arg in node.args:
-                            if isinstance(arg, ast.Name) and arg.id in tainted_vars:
+                            if self._expr_is_tainted(arg, sources, tainted_vars):
                                 # Check if sanitized
-                                if not self._is_sanitized(arg.id, sanitizers, tree):
+                                if not self._is_sanitized_call(node, sanitizers):
                                     return True, f"line {node.lineno}"
-                            
-                            # Check attribute access on tainted vars
-                            elif isinstance(arg, ast.Attribute):
-                                if isinstance(arg.value, ast.Name):
-                                    if arg.value.id in tainted_vars:
-                                        if not self._is_sanitized(arg.value.id, sanitizers, tree):
-                                            return True, f"line {node.lineno}"
                         
                         # Check keyword arguments
                         for kw in node.keywords:
-                            if isinstance(kw.value, ast.Name) and kw.value.id in tainted_vars:
-                                if not self._is_sanitized(kw.value.id, sanitizers, tree):
+                            if self._expr_is_tainted(kw.value, sources, tainted_vars):
+                                if not self._is_sanitized_call(node, sanitizers):
                                     return True, f"line {node.lineno}"
         
         except SyntaxError:
             pass
         
         return False, None
+    
+    def _expr_is_tainted(
+        self, node: ast.expr, sources: list[str], tainted_vars: dict[str, int]
+    ) -> bool:
+        """Check if an expression contains tainted data."""
+        if isinstance(node, ast.Name):
+            return node.id in tainted_vars
+        
+        elif isinstance(node, ast.BinOp):
+            # String concatenation: "..." + tainted_var
+            return (self._expr_is_tainted(node.left, sources, tainted_vars) or
+                    self._expr_is_tainted(node.right, sources, tainted_vars))
+        
+        elif isinstance(node, ast.Call):
+            # Direct call to source function
+            if self._is_source(node, sources):
+                return True
+            # Check if any argument is tainted
+            for arg in node.args:
+                if self._expr_is_tainted(arg, sources, tainted_vars):
+                    return True
+        
+        elif isinstance(node, ast.JoinedStr):
+            # f-string: f"...{tainted_var}..."
+            for value in node.values:
+                if isinstance(value, ast.FormattedValue):
+                    if self._expr_is_tainted(value.value, sources, tainted_vars):
+                        return True
+        
+        elif isinstance(node, ast.Attribute):
+            # Attribute access on tainted object
+            if isinstance(node.value, ast.Name):
+                return node.value.id in tainted_vars
+        
+        return False
+    
+    def _is_sanitized_call(self, node: ast.Call, sanitizers: list[str]) -> bool:
+        """Check if a call is sanitized."""
+        if not sanitizers:
+            return False
+        
+        # Check if the call itself is a sanitizer
+        if isinstance(node.func, ast.Name):
+            if node.func.id in sanitizers:
+                return True
+        elif isinstance(node.func, ast.Attribute):
+            if isinstance(node.func.value, ast.Name):
+                full_name = f"{node.func.value.id}.{node.func.attr}"
+                if full_name in sanitizers:
+                    return True
+        
+        return False
     
     def _is_source(self, node: ast.expr, sources: list[str]) -> bool:
         """Check if a node represents a taint source."""

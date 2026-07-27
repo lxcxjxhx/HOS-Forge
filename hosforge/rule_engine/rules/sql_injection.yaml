@@ -17,6 +17,23 @@ patterns:
     language: python
     pattern: "(?:execute|cursor\\.execute)\\s*\\(.*\\+.*\\)"
     constraints: {}
+  - type: taint_flow
+    language: python
+    pattern: "cursor.execute|execute"
+    constraints:
+      sources:
+        - input
+        - request.args
+        - request.form
+        - request.get
+        - sys.argv
+      sinks:
+        - cursor.execute
+        - execute
+        - db.execute
+      sanitizers:
+        - parameterize
+        - escape_string
 
 conditions:
   - input_source: user_input

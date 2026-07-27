@@ -1,0 +1,76 @@
+name: ssrf
+type: vulnerability
+severity: high
+description: "Detects Server-Side Request Forgery (SSRF) vulnerabilities"
+logic_operator: OR
+
+patterns:
+  - type: regex
+    language: python
+    pattern: "requests\\.get\\(.*\\+"
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "requests\\.post\\(.*\\+"
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "urllib\\.request\\.urlopen\\(.*\\+"
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "http\\.client\\.HTTPConnection\\(.*\\+"
+    constraints: {}
+  - type: taint_flow
+    language: python
+    pattern: "requests|urllib|http.client"
+    constraints:
+      sources:
+        - request.args
+        - request.form
+        - request.get
+        - input
+      sinks:
+        - requests.get
+        - requests.post
+        - requests.put
+        - requests.delete
+        - requests.request
+        - urllib.request.urlopen
+        - http.client.HTTPConnection
+      sanitizers:
+        - validate_url
+        - is_safe_url
+        - urlparse
+
+conditions:
+  - input_source: user_input
+    not_sanitized_by:
+      - validate_url
+      - is_safe_url
+      - urlparse
+
+remediation: |
+  Validate and sanitize URLs before making requests.
+  Example:
+    from urllib.parse import urlparse
+    import ipaddress
+    
+    def is_safe_url(url):
+        parsed = urlparse(url)
+        # Block internal IPs
+        try:
+            ip = ipaddress.ip_address(parsed.hostname)
+            if ip.is_private or ip.is_loopback:
+                return False
+        except ValueError:
+            pass
+        # Block dangerous schemes
+        if parsed.scheme not in ['http', 'https']:
+            return False
+        return True
+
+metadata:
+  cwe: "CWE-918"
+  owasp: "A10:2021 - Server-Side Request Forgery"
+  category: "ssrf"

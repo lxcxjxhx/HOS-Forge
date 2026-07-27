@@ -1,0 +1,66 @@
+name: insecure_deserialization
+type: vulnerability
+severity: critical
+description: "Detects insecure deserialization vulnerabilities"
+logic_operator: OR
+
+patterns:
+  - type: regex
+    language: python
+    pattern: "pickle\\.loads?\\("
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "yaml\\.load\\("
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "yaml\\.unsafe_load\\("
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "marshal\\.loads?\\("
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "shelve\\.open\\("
+    constraints: {}
+  - type: taint_flow
+    language: python
+    pattern: "pickle|yaml|marshal"
+    constraints:
+      sources:
+        - request.data
+        - request.get_data
+        - request.form
+        - input
+        - open
+      sinks:
+        - pickle.loads
+        - pickle.load
+        - yaml.load
+        - yaml.unsafe_load
+        - marshal.loads
+        - marshal.load
+      sanitizers: []
+
+conditions:
+  - input_source: user_input
+    not_sanitized_by:
+      - yaml.safe_load
+
+remediation: |
+  Avoid deserializing untrusted data. Use safe alternatives:
+  - Use yaml.safe_load() instead of yaml.load()
+  - Use json for data interchange instead of pickle
+  - Validate and sanitize data before deserialization
+  Example:
+    # Vulnerable
+    data = pickle.loads(user_input)
+    # Safe
+    data = json.loads(user_input)
+
+metadata:
+  cwe: "CWE-502"
+  owasp: "A08:2021 - Software and Data Integrity Failures"
+  category: "deserialization"

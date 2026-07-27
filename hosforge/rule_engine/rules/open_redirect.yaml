@@ -1,0 +1,67 @@
+name: open_redirect
+type: vulnerability
+severity: medium
+description: "Detects open redirect vulnerabilities"
+logic_operator: OR
+
+patterns:
+  - type: regex
+    language: python
+    pattern: "redirect\\(.*\\+"
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "redirect\\(request\\."
+    constraints: {}
+  - type: regex
+    language: python
+    pattern: "return.*302.*Location.*\\+"
+    constraints: {}
+  - type: taint_flow
+    language: python
+    pattern: "redirect|url_for"
+    constraints:
+      sources:
+        - request.args
+        - request.form
+        - request.get
+        - input
+      sinks:
+        - redirect
+        - flask.redirect
+        - django.shortcuts.redirect
+      sanitizers:
+        - url_for
+        - is_safe_url
+        - validate_redirect
+
+conditions:
+  - input_source: user_input
+    not_sanitized_by:
+      - url_for
+      - is_safe_url
+      - validate_redirect
+
+remediation: |
+  Validate redirect URLs to prevent open redirect attacks.
+  Example (Flask):
+    from flask import url_for, redirect, request
+    from urllib.parse import urlparse
+    
+    def is_safe_url(target):
+        ref_url = urlparse(request.host_url)
+        test_url = urlparse(target)
+        return ref_url.scheme == test_url.scheme and \
+               ref_url.netloc == test_url.netloc
+    
+    @app.route('/login')
+    def login():
+        next_url = request.args.get('next')
+        if next_url and is_safe_url(next_url):
+            return redirect(next_url)
+        return redirect(url_for('index'))
+
+metadata:
+  cwe: "CWE-601"
+  owasp: "A01:2021 - Broken Access Control"
+  category: "redirect"

@@ -21,6 +21,27 @@ patterns:
     language: python
     pattern: 'render_template_string\s*\(.*%s'
     constraints: {}
+  - type: taint_flow
+    language: python
+    pattern: "Markup|render_template_string|render_template"
+    constraints:
+      sources:
+        - input
+        - request.args
+        - request.form
+        - request.get
+        - request.data
+      sinks:
+        - Markup
+        - render_template_string
+        - render_template
+        - flask.render_template
+      sanitizers:
+        - escape
+        - escape_html
+        - sanitize
+        - bleach.clean
+        - markupsafe.escape
 
 conditions:
   - input_source: user_input
