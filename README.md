@@ -101,6 +101,9 @@ HOS-Forge 需要以下外部工具（根据使用的 skill 不同）：
 | [Nuclei](https://github.com/projectdiscovery/nuclei) | 漏洞扫描 | `go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest` |
 | [Semgrep](https://semgrep.dev/) | 静态代码分析 | `pip install semgrep` |
 | [GitHub CLI](https://cli.github.com/) | GitHub 集成 | 参考 [官方文档](https://cli.github.com/manual/installation) |
+| [HOS-LS](https://github.com/lxcxjxhx/HOS-LS) | 安全扫描引擎 | 参考 [HOS-LS 文档](https://github.com/lxcxjxhx/HOS-LS#installation) |
+| [CodeQL](https://codeql.github.com/) | 代码安全分析 | 参考 [官方文档](https://docs.github.com/en/code-security/codeql-cli/using-the-codeql-cli/getting-started-with-the-codeql-cli) |
+| [Trivy](https://github.com/aquasecurity/trivy) | 容器/文件系统扫描 | `go install github.com/aquasecurity/trivy/cmd/trivy@latest` |
 
 ## 📚 使用指南
 
