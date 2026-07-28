@@ -1,0 +1,101 @@
+[
+  {
+    "name": "hos-scan",
+    "description": "Run a security scan on the target using HOS-Forge scanning engine",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Target URL or IP address to scan"
+        },
+        "profile": {
+          "type": "string",
+          "description": "Scan profile name (e.g. quick, full, custom)",
+          "default": "quick"
+        }
+      },
+      "required": ["target"]
+    },
+    "handler": "hosforge.skills.scan.ScanSkill"
+  },
+  {
+    "name": "hos-nuclei",
+    "description": "Run Nuclei vulnerability scan against the target",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Target URL or IP address to scan"
+        },
+        "templates": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of Nuclei template tags or paths to use"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "low", "medium", "high", "critical"],
+          "description": "Minimum severity level to report"
+        }
+      },
+      "required": ["target"]
+    },
+    "handler": "hosforge.skills.security.nuclei_skill.NucleiSkill"
+  },
+  {
+    "name": "hos-semgrep",
+    "description": "Run Semgrep static analysis scan on source code",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to the source code directory or file to scan"
+        },
+        "rules": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of Semgrep rule IDs or config paths"
+        },
+        "language": {
+          "type": "string",
+          "description": "Target programming language (e.g. python, javascript, go)"
+        }
+      },
+      "required": ["path"]
+    },
+    "handler": "hosforge.skills.security.semgrep_skill.SemgrepSkill"
+  },
+  {
+    "name": "hos-skill-list",
+    "description": "List all available HOS-Forge skills with their descriptions",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string",
+          "description": "Filter skills by category (e.g. security, scanning, analysis)"
+        }
+      },
+      "required": []
+    },
+    "handler": "hosforge.skills.registry.SkillRegistry.list_skills"
+  },
+  {
+    "name": "hos-skill-info",
+    "description": "Show detailed information about a specific HOS-Forge skill",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "skill_name": {
+          "type": "string",
+          "description": "Name of the skill to get information about"
+        }
+      },
+      "required": ["skill_name"]
+    },
+    "handler": "hosforge.skills.registry.SkillRegistry.skill_info"
+  }
+]

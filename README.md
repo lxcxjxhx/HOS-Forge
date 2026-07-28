@@ -1,424 +1,384 @@
-<a name="readme-top"></a>
-<div align="center">
-  <h1>🔐 HOS-Forge</h1>
-  <p align="center">
-    <strong>AI Native Security Platform</strong>
-  </p>
-  <p align="center">
-    Security Runtime + Rule Engine + Knowledge Base
-  </p>
-  <p align="center">
-    <em>跨 IDE 的 AI 安全运行时平台 — 统一安全检测、规则引擎与知识库</em>
-  </p>
-</div>
+# HOS-Forge
 
----
+**AI Native Security Platform** - 面向 AI 原生开发环境的安全工具集成平台
 
-## 🚀 项目简介
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**HOS-Forge（Hyacinth Of Security Forge）** 是 AI 原生安全平台，提供**安全运行时（Security Runtime）**、**规则引擎（Rule Engine）**、**知识库（Knowledge Base）**和**检测能力（Detection Capabilities）**。
+## 📖 项目简介
 
-### 核心定位
+HOS-Forge 是一个模块化的安全工具集成平台，通过 **Skill 系统** 封装各类安全扫描工具（Nuclei、Semgrep 等），并通过 **IDE 适配器** 将这些能力无缝集成到主流 AI 原生开发环境中（VSCode、Cursor、Claude Code）。
 
-> **不是另一个 AI IDE**
-> **而是 AI Native Security Platform**
+### 核心特性
 
-HOS-Forge 的核心资产是**安全运行时、规则体系、检测引擎和知识库**，这些能力可以服务任何 IDE、CLI 和 CI/CD 系统：
+- 🔧 **Skill 系统**: 模块化封装安全工具，支持动态加载和自动注册
+- 🔌 **IDE 适配器**: 统一接口适配多种 IDE，提供一致的用户体验
+- 🌐 **MCP Server**: 基于 HTTP 的 Model Context Protocol 服务，支持远程调用
+- ⚡ **CLI 工具**: 命令行界面快速执行安全扫描
+- 🎯 **类型安全**: 完整的类型注解和参数验证
 
-- ✅ **HOS Security Runtime** — 统一安全执行引擎
-- ✅ **Security Engine** — 漏洞检测与分析引擎
-- ✅ **Rule Engine** — 安全规则定义与执行
-- ✅ **Knowledge Base** — CVE/CWE/漏洞模式知识库
-- ✅ **Detection Capabilities** — 多维度安全检测能力
-
-### 多入口架构
-
-IDE 只是入口之一。HOS Security Runtime 支持多种接入方式：
+## 🏗️ 架构概览
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        HOS Security Runtime                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────┐│
-│  │Security Engine│  │ Rule Engine  │  │Knowledge Base│  │Detection ││
-│  │              │  │              │  │              │  │Capabilities│
-│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────┘│
-└─────────────────────────────────────────────────────────────────────┘
-                                ▲
-        ┌───────────────────────┼───────────────────────┐
-        │                       │                       │
-   ┌────┴────┐             ┌────┴────┐             ┌────┴────┐
-   │IDE Plugin│             │   CLI   │             │REST API │
-   └─────────┘             └─────────┘             └─────────┘
-        │                       │                       │
-   ┌────┴────┐             ┌────┴────┐             ┌────┴────┐
-   │ VSCode  │             │   hos   │             │GitHub   │
-   │ Cursor  │             │ 命令    │             │ Action  │
-   │ Claude  │             │         │             │         │
-   │OpenHands│             │         │             │         │
-   └─────────┘             └─────────┘             └─────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      IDE / AI Agent                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │   VSCode     │  │    Cursor    │  │ Claude Code  │       │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘       │
+└─────────┼──────────────────┼──────────────────┼──────────────┘
+          │                  │                  │
+          ▼                  ▼                  ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    IDE Adapter Layer                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │VSCodeAdapter │  │CursorAdapter │  │ClaudeAdapter │       │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘       │
+└─────────┼──────────────────┼──────────────────┼──────────────┘
+          │                  │                  │
+          └──────────────────┼──────────────────┘
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      MCP Server                             │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │  FastAPI HTTP Server  |  Skill Bridge  |  Tools    │     │
+│  └────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Skill Layer                           │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │NucleiSkill   │  │SemgrepSkill  │  │ GitHubSkill  │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │ Custom Skill │  │ Custom Skill │  │     ...      │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+└─────────────────────────────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    External Tools                           │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│  │  Nuclei  │  │ Semgrep  │  │  gh CLI  │  │   ...    │    │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-**入口列表：**
-- 🔌 **IDE Plugin** — VSCode、Cursor、Claude Code、OpenHands
-- 💻 **CLI** — `hos` 命令行工具
-- 🌐 **REST API** — 供其他系统集成
-- ⚙️ **GitHub Action** — CI/CD 集成
-
-### 核心组件
-
-| 组件 | 职责 |
-|------|------|
-| **Security Runtime** | 统一安全执行引擎，协调所有安全能力 |
-| **Security Engine** | 漏洞检测与分析引擎，支持 SAST/DAST/IAST |
-| **Rule Engine** | 安全规则定义与执行，支持自定义规则 |
-| **Knowledge Base** | CVE/CWE/漏洞模式知识库，支持 RAG 检索 |
-| **Detection Capabilities** | 多维度安全检测能力，覆盖 OWASP Top 10 |
-| **Taskflow Engine** | YAML 声明式工作流编排，支持多 Agent 协作 |
-| **MCP Hub** | 统一安全工具生态，封装各类安全工具为 MCP Server |
-
----
-
-## ✨ 核心能力
-
-### 🔒 Security Engine（安全引擎）
-- **SAST 静态分析**：代码级漏洞检测，支持 CWE/OWASP Top 10
-- **DAST 动态测试**：运行时漏洞扫描，集成 Nuclei、Nmap
-- **依赖安全扫描**：第三方组件漏洞检测，CVE 关联分析
-- **代码审计**：AI 驱动的安全代码审查，自动识别风险模式
-
-### 📋 Rule Engine（规则引擎）
-- **声明式规则定义**：YAML 格式，易于编写和维护
-- **规则组合与继承**：支持规则模板和参数化
-- **实时规则执行**：毫秒级规则匹配和触发
-- **自定义规则扩展**：Python/JavaScript 规则插件
-
-### 🧠 Knowledge Base（知识库）
-- **CVE 漏洞库**：实时同步最新 CVE 数据
-- **CWE 弱点分类**：完整的弱点分类体系
-- **修复方案库**：经过验证的漏洞修复建议
-- **误报学习**：基于历史数据的误报识别
-
-### 🔧 Detection Capabilities（检测能力）
-- **多语言支持**：Python、JavaScript、Java、Go、Rust 等
-- **框架感知**：React、Vue、Spring、Django 等主流框架
-- **上下文理解**：AI 辅助的漏洞上下文分析
-- **优先级排序**：基于 CVSS 和业务影响的漏洞排序
-
-### 🔄 Taskflow Engine（任务流引擎）
-- **YAML 声明式编排**：可视化工作流定义
-- **多 Agent 协作**：支持并行和串行任务执行
-- **状态管理**：Checkpoint/Resume 机制
-- **结果聚合**：统一的执行结果收集
-
-### 🔌 MCP Hub（MCP 工具中心）
-- **标准协议**：基于 MCP 协议的工具集成
-- **工具市场**：预置安全工具插件
-- **动态加载**：运行时工具热插拔
-- **统一接口**：标准化的工具调用 API
-
----
-
-## 📦 快速开始
+## 🚀 快速开始
 
 ### 安装
 
+#### 从源码安装
+
 ```bash
 # 克隆仓库
-git clone https://github.com/lxcxjxhx/HOS-Forge.git
-cd HOS-Forge
+git clone https://github.com/your-org/hos-forge.git
+cd hos-forge
 
-# 安装依赖（使用Poetry）
-poetry install
-
-# 或者使用pip
+# 安装依赖
 pip install -e .
+
+# 或使用 uv (推荐)
+uv pip install -e .
 ```
 
-### 使用CLI工具
-
-HOS-Forge提供了`hos`命令行工具来管理安全工作流：
+#### 验证安装
 
 ```bash
-# 查看帮助
-hos --help
-
-# 查看版本
+# 检查 CLI 是否可用
 hos --version
 
-# 列出可用工作流
-hos taskflow list
-
-# 验证工作流（不执行）
-hos taskflow validate examples/workflows/demo_quick_scan.yaml
-
-# Dry-run模式（验证但不执行）
-hos taskflow run examples/workflows/demo_quick_scan.yaml --dry-run
-
-# 运行安全审计工作流
-hos taskflow run examples/workflows/security_audit.yaml
-
-# 启用checkpoint的工作流
-hos taskflow run examples/workflows/security_audit.yaml --checkpoint
-
-# 列出可用Personality
-hos personality list
-
-# 列出可用MCP服务器
-hos mcp list
+# 列出可用的 skills
+hos skill list
 ```
 
-### 验证安装
+### 前置依赖
 
-运行安装验证脚本，确保所有组件正常工作：
+HOS-Forge 需要以下外部工具（根据使用的 skill 不同）：
+
+| 工具 | 用途 | 安装方式 |
+|------|------|----------|
+| [Nuclei](https://github.com/projectdiscovery/nuclei) | 漏洞扫描 | `go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest` |
+| [Semgrep](https://semgrep.dev/) | 静态代码分析 | `pip install semgrep` |
+| [GitHub CLI](https://cli.github.com/) | GitHub 集成 | 参考 [官方文档](https://cli.github.com/manual/installation) |
+| [HOS-LS](https://github.com/lxcxjxhx/HOS-LS) | 安全扫描引擎 | 参考 [HOS-LS 文档](https://github.com/lxcxjxhx/HOS-LS#installation) |
+| [CodeQL](https://codeql.github.com/) | 代码安全分析 | 参考 [官方文档](https://docs.github.com/en/code-security/codeql-cli/using-the-codeql-cli/getting-started-with-the-codeql-cli) |
+| [Trivy](https://github.com/aquasecurity/trivy) | 容器/文件系统扫描 | `go install github.com/aquasecurity/trivy/cmd/trivy@latest` |
+
+## 📚 使用指南
+
+### CLI 使用
+
+#### 列出所有 Skills
 
 ```bash
-# 验证安装
-python verify_installation.py
+# 表格格式输出
+hos skill list
 
-# 验证脚本会检查：
-# - Python版本和pip
-# - hos命令是否安装
-# - taskflow命令功能
-# - 核心模块导入
+# JSON 格式输出
+hos skill list --format json
 ```
 
-### 演示工作流
-
-运行演示脚本，体验Taskflow Engine和Agent/Tool Registry：
+#### 查看 Skill 详情
 
 ```bash
-# 运行演示工作流
-python demo_workflow.py
+# 查看 nuclei_scan skill 的详细信息
+hos skill info nuclei_scan
 
-# 演示内容包括：
-# - Agent和Tool注册表
-# - 工作流解析和执行
-# - 任务依赖关系展示
+# JSON 格式输出
+hos skill info nuclei_scan --format json
 ```
 
-### 示例工作流
-
-```yaml
-# security-audit.yaml
-version: "1.0"
-name: "Security Audit"
-description: "Complete security audit workflow"
-
-tasks:
-  - name: static_scan
-    agent: [sast_agent]
-    tools: [hos_ls, semgrep]
-  
-  - name: exploit_verify
-    agent: [redteam_agent]
-    tools: [nuclei]
-    depends_on: [static_scan]
-  
-  - name: patch_generation
-    agent: [developer_agent]
-    depends_on: [exploit_verify]
-  
-  - name: security_review
-    agent: [security_reviewer]
-    depends_on: [patch_generation]
-```
-
-### 通过 IDE 使用
-
-安装对应的 IDE 插件后，HOS Security Runtime 会自动激活：
-
-1. **VSCode**：安装 HOS Security 插件，打开项目即可自动检测
-2. **Cursor**：在 Cursor 中启用 HOS MCP Server
-3. **Claude Code**：配置 HOS MCP Hub 集成
-4. **OpenHands**：HOS-Forge 本身就是基于 OpenHands 的 Reference IDE
-
-### 通过 REST API 使用
-
-启动 HOS Security Runtime 服务：
+#### 执行 Skill
 
 ```bash
-# 启动服务
-hos server start --port 8000
+# 执行 Nuclei 扫描
+hos skill run nuclei_scan target=https://example.com
+
+# 指定严重级别过滤
+hos skill run nuclei_scan target=https://example.com severity=high
+
+# 执行 Semgrep 扫描
+hos skill run semgrep_scan path=./src
+
+# 指定语言和配置
+hos skill run semgrep_scan path=./src language=python config=auto
+
+# GitHub 操作
+hos skill run github_integration action=list_issues repo=owner/repo state=open
+```
+
+### MCP Server 使用
+
+启动 MCP Server：
+
+```bash
+# 启动服务（默认端口 8000）
+python -m hosforge.mcp_server.server
+
+# 或使用 uvicorn
+uvicorn hosforge.mcp_server.server:app --host 0.0.0.0 --port 8000
+```
+
+#### API 端点
+
+| 端点 | 方法 | 描述 |
+|------|------|------|
+| `/health` | GET | 健康检查 |
+| `/skills` | GET | 列出所有已注册的 skills |
+| `/tools` | GET | 列出所有可用的 MCP tools |
+| `/tools/{tool_name}/execute` | POST | 执行指定的 MCP tool |
+
+#### 示例请求
+
+```bash
+# 健康检查
+curl http://localhost:8000/health
+
+# 列出 skills
+curl http://localhost:8000/skills
 
 # 执行扫描
-curl -X POST http://localhost:8000/api/v1/scan \
+curl -X POST http://localhost:8000/tools/nuclei_scan/execute \
   -H "Content-Type: application/json" \
-  -d '{"target": "./code", "rules": ["sql_injection", "xss"]}'
-
-# 查询知识库
-curl http://localhost:8000/api/v1/knowledge/CVE-2024-1234
+  -d '{"arguments": {"target": "https://example.com"}}'
 ```
 
-### 📖 快速入门
+## 🔌 IDE 适配器配置
 
-详细的快速入门指南请参考 [Quick Start Guide](docs/getting-started.md)。
+### VSCode 适配器
 
----
+VSCode 适配器将 HOS-Forge 的功能映射为 VSCode 命令，可在 `package.json` 中注册：
 
-## 💡 Use Cases
+```json
+{
+  "contributes": {
+    "commands": [
+      {
+        "command": "hos.skill.run",
+        "title": "HOS: Run Skill",
+        "category": "HOS"
+      },
+      {
+        "command": "hos.scan.nuclei",
+        "title": "HOS: Run Nuclei Scan",
+        "category": "HOS"
+      }
+    ]
+  }
+}
+```
 
-### 场景 1：IDE 内实时安全检测
-**入口**：VSCode / Cursor / Claude Code / OpenHands 插件
+支持的命令：
+- `hos.skill.run` - 执行 Skill
+- `hos.skill.list` - 列出 Skills
+- `hos.skill.info` - Skill 详情
+- `hos.scan.nuclei` - Nuclei 扫描
+- `hos.scan.semgrep` - Semgrep 扫描
 
-开发者在 IDE 中编写代码时，HOS Security Runtime 实时检测安全漏洞：
-- 自动识别 SQL 注入、XSS、命令注入等风险模式
-- 提供修复建议和代码示例
-- 与代码审查流程无缝集成
+### Cursor 适配器
 
-### 场景 2：CLI 批量安全扫描
-**入口**：`hos` 命令行工具
+Cursor 适配器支持 `@mention` 命令格式：
 
-安全工程师对代码库进行批量扫描：
+```
+@hos scan          # 运行安全扫描
+@hos nuclei        # 运行 Nuclei 扫描
+@hos semgrep       # 运行 Semgrep 分析
+@hos skill list    # 列出可用 skills
+@hos skill info    # 查看 skill 详情
+```
+
+输出格式为 Markdown，适合在 Cursor 聊天界面展示。
+
+### Claude Code 适配器
+
+Claude Code 适配器支持 `/hos-xxx` 斜杠命令：
+
+```
+/hos-scan          # 运行安全扫描
+/hos-nuclei        # 运行 Nuclei 扫描
+/hos-semgrep       # 运行 Semgrep 分析
+/hos-skill-list    # 列出可用 skills
+/hos-skill-info    # 查看 skill 详情
+```
+
+详细配置指南请参考 [适配器文档](docs/adapters/README.md)。
+
+## 🛠️ Skill 系统
+
+### 内置 Skills
+
+| Skill 名称 | 描述 | 参数 |
+|------------|------|------|
+| `nuclei_scan` | 使用 Nuclei 进行漏洞扫描 | `target` (必填), `templates`, `severity` |
+| `semgrep_scan` | 使用 Semgrep 进行静态代码分析 | `path` (必填), `language`, `config` |
+| `github_integration` | GitHub 集成操作 | `action` (必填), `repo` (必填), 其他可选参数 |
+
+### 创建自定义 Skill
+
+继承 `Skill` 基类并实现 `execute` 方法：
+
+```python
+from hosforge.skills.base_skill import Skill, SkillResult
+
+class MyCustomSkill(Skill):
+    def __init__(self) -> None:
+        super().__init__(
+            name="my_custom_skill",
+            description="我的自定义 Skill",
+            parameters={
+                "type": "object",
+                "properties": {
+                    "param1": {
+                        "type": "string",
+                        "description": "参数1 的描述",
+                    },
+                    "param2": {
+                        "type": "integer",
+                        "description": "参数2 的描述",
+                    },
+                },
+                "required": ["param1"],
+            },
+        )
+
+    def execute(self, **kwargs) -> dict:
+        param1 = kwargs["param1"]
+        param2 = kwargs.get("param2", 10)
+        
+        # 实现你的逻辑
+        result = do_something(param1, param2)
+        
+        return {
+            "success": True,
+            "data": result,
+        }
+```
+
+详细开发指南请参考 [Skill 开发文档](docs/skills/README.md)。
+
+## 📁 项目结构
+
+```
+hos-forge/
+├── hosforge/
+│   ├── adapters/           # IDE 适配器
+│   │   ├── base_adapter.py
+│   │   ├── vscode_adapter.py
+│   │   ├── cursor_adapter.py
+│   │   ├── claude_code_adapter.py
+│   │   └── templates/      # 适配器配置模板
+│   ├── cli/                # 命令行界面
+│   │   └── main.py
+│   ├── mcp_server/         # MCP Server
+│   │   ├── server.py
+│   │   └── skill_bridge.py
+│   ├── skills/             # Skill 系统
+│   │   ├── base_skill.py
+│   │   ├── registry.py
+│   │   ├── loader.py
+│   │   └── security/       # 安全相关 skills
+│   │       ├── nuclei_skill.py
+│   │       ├── semgrep_skill.py
+│   │       └── github_skill.py
+│   └── tests/              # 测试
+├── docs/                   # 文档
+│   ├── skills/             # Skill 文档
+│   └── adapters/           # 适配器文档
+└── README.md
+```
+
+## 🧪 开发
+
+### 运行测试
+
 ```bash
-# 扫描整个项目
-hos scan --target ./my-project
+# 运行所有测试
+pytest
 
-# 执行特定安全工作流
-hos taskflow run hosforge/taskflow/workflows/security-audit.yaml
+# 运行特定测试
+pytest tests/unit/test_skills.py
 
-# 生成安全报告
-hos report generate --format html --output ./security-report.html
+# 带覆盖率报告
+pytest --cov=hosforge
 ```
 
-### 场景 3：CI/CD 集成
-**入口**：GitHub Action
+### 代码质量
 
-在 CI/CD 流程中自动执行安全检查：
-```yaml
-# .github/workflows/security-check.yml
-name: Security Check
-on: [push, pull_request]
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run HOS Security Scan
-        uses: lxcxjxhx/hos-security-action@v1
-        with:
-          workflow: security-audit
-          fail-on: high,critical
-```
-
-### 场景 4：REST API 集成
-**入口**：REST API
-
-其他系统通过 API 调用 HOS 安全能力：
 ```bash
-# 执行代码扫描
-curl -X POST http://localhost:8000/api/v1/scan \
-  -H "Content-Type: application/json" \
-  -d '{"target": "./code", "rules": ["sql_injection", "xss"]}'
+# 格式化代码
+ruff format hosforge/
 
-# 查询漏洞知识库
-curl http://localhost:8000/api/v1/knowledge/CVE-2024-1234
+# 检查代码
+ruff check hosforge/
+
+# 类型检查
+mypy hosforge/
 ```
 
-### 场景 5：自定义安全工作流
-**入口**：Taskflow Engine
+## 📖 文档
 
-定义和执行复杂的安全工作流：
-```yaml
-# custom-security-workflow.yaml
-version: "1.0"
-name: "Custom Security Audit"
-tasks:
-  - name: dependency_scan
-    agent: [dependency_agent]
-    tools: [npm_audit, pip_audit]
-  
-  - name: code_audit
-    agent: [audit_agent]
-    tools: [semgrep, hos_ls]
-    depends_on: [dependency_scan]
-  
-  - name: vulnerability_verify
-    agent: [redteam_agent]
-    tools: [nuclei]
-    depends_on: [code_audit]
-```
+- [Skill 系统文档](docs/skills/README.md)
+  - [Nuclei Scan Skill](docs/skills/nuclei_skill.md)
+  - [Semgrep Scan Skill](docs/skills/semgrep_skill.md)
+  - [GitHub Integration Skill](docs/skills/github_skill.md)
+  - [自定义 Skill 开发指南](docs/skills/custom_skill.md)
+- [适配器文档](docs/adapters/README.md)
+  - [VSCode 适配器](docs/adapters/vscode_adapter.md)
+  - [Cursor 适配器](docs/adapters/cursor_adapter.md)
+  - [Claude Code 适配器](docs/adapters/claude_code_adapter.md)
 
----
+## 🤝 贡献
 
-## 🗺️ 版本规划
+欢迎贡献！请参考 [贡献指南](CONTRIBUTING.md) 了解详情。
 
-| 版本 | 定位 | 目标 |
-|------|------|------|
-| **v1.0** | AI Coding Agent | 基础安全编码助手 |
-| **v2.0** | Security Agent Framework | Taskflow + Personality + MCP Hub + Verification Loop |
-| **v3.0** | AI Security Engineer | 自动化安全工程全流程（输入 GitHub Repo → 输出安全报告 + PR） |
+## 📄 许可证
 
-### v2.0 核心特性（当前开发中）
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
 
-- ✅ HOS Taskflow Engine — YAML 声明式安全工作流编排
-- ✅ Security Personality System — 安全专家角色定义
-- ✅ HOS MCP Hub — 统一安全工具生态
-- ✅ Security Memory — 安全知识库与误报学习
-- ✅ Agent Verification Loop — 漏洞发现→验证→修复→审查闭环
-- ✅ CLI 工具 (`hos` 命令行)
-- ✅ 端到端工作流集成测试
-- 🔄 文档完善与发布准备
+## 🔗 相关链接
 
----
-
-## 📚 文档
-
-### 核心文档
-
-- [快速入门指南](docs/getting-started.md) — 从零开始使用 HOS-Forge
-- [Taskflow Engine 使用指南](docs/taskflow-guide.md) — YAML 声明式安全工作流编排
-- [Personality 定义指南](docs/personality-guide.md) — 安全专家角色定义系统
-- [MCP Server 开发指南](docs/mcp-server-guide.md) — 统一安全工具生态
-- [Security Memory 使用指南](docs/security-memory-guide.md) — 安全知识库与误报学习
-- [Verification Loop 使用指南](docs/verification-loop.md) — 漏洞发现→验证→修复→审查闭环
-
-### 示例工作流
-
-HOS-Forge 提供了多个预定义的安全工作流：
-
-| 工作流 | 说明 | 文件 |
-|--------|------|------|
-| Security Audit | 完整安全审计流程 | `hosforge/taskflow/workflows/security-audit.yaml` |
-| CVE Research | CVE 漏洞研究工作流 | `hosforge/taskflow/workflows/cve-research.yaml` |
-| Code Review | 代码安全审查流程 | `hosforge/taskflow/workflows/code-review.yaml` |
-| API Security Test | API 安全测试流程 | `hosforge/taskflow/workflows/api-security-test.yaml` |
-| Container Security | 容器安全检查流程 | `hosforge/taskflow/workflows/container-security.yaml` |
-| Dependency Scan | 依赖漏洞扫描流程 | `hosforge/taskflow/workflows/dependency-scan.yaml` |
-| Incident Response | 安全事件响应流程 | `hosforge/taskflow/workflows/incident-response.yaml` |
-
-### 预定义 Personality
-
-HOS-Forge 提供了多个预定义的安全专家角色：
-
-| Personality | 职责 | 文件 |
-|-------------|------|------|
-| CVE Researcher | CVE 漏洞研究 | `hosforge/personalities/definitions/cve_researcher.yaml` |
-| Red Team | 红队攻击验证 | `hosforge/personalities/definitions/red_team.yaml` |
-| Blue Team | 蓝队防御检测 | `hosforge/personalities/definitions/blue_team.yaml` |
-| Code Reviewer | 代码安全审查 | `hosforge/personalities/definitions/code_reviewer.yaml` |
-| Exploit Validator | 漏洞利用验证 | `hosforge/personalities/definitions/exploit_validator.yaml` |
-| Senior Security Engineer | 高级安全工程师 | `hosforge/personalities/definitions/senior_security_engineer.yaml` |
-
----
-
-## 🤝 贡献指南
-
-HOS-Forge 基于 OpenHands 二次开发，我们的开发策略：
-
-1. **不修改 OpenHands 核心代码** — 所有安全扩展放在 `hosforge/` 目录
-2. **定期同步 upstream** — 保持社区最新能力
-3. **扩展优先** — 通过 Agent 和 Tool 体系扩展，而非 fork 魔改
-
----
-
-## 📄 开源协议
-
-本项目基于 [MIT License](LICENSE) 开源。
-
-OpenHands 部分遵循其原始 [MIT License](https://github.com/OpenHands/OpenHands/blob/main/LICENSE)。
-
----
-
-<div align="center">
-  <sub>Built with ❤️ by HOS-Forge Team | 基于 OpenHands 构建</sub>
-</div>
+- [Nuclei](https://github.com/projectdiscovery/nuclei) - 快速可定制的漏洞扫描器
+- [Semgrep](https://semgrep.dev/) - 静态代码分析工具
+- [GitHub CLI](https://cli.github.com/) - GitHub 命令行工具
+- [Model Context Protocol](https://modelcontextprotocol.io/) - MCP 协议规范

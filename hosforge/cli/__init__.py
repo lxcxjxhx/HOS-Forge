@@ -1,3 +1,3 @@
-"""HOS-Forge CLI - Command line interface for HOS-Forge platform."""
+"""CLI 模块，提供命令行接口。"""
 
-__version__ = "2.0.0"
+__version__ = "0.1.0"
