@@ -152,6 +152,9 @@ HOS-Forge 提供以下内置 Skills：
 |-------|------|------|
 | **NucleiScanSkill** | 使用 Nuclei 进行漏洞扫描 | [nuclei_skill.md](nuclei_skill.md) |
 | **SemgrepScanSkill** | 使用 Semgrep 进行静态代码分析 | [semgrep_skill.md](semgrep_skill.md) |
+| **TrivyScanSkill** | 使用 Trivy 进行漏洞扫描 | [trivy_skill.md](trivy_skill.md) |
+| **CodeQLScanSkill** | 使用 CodeQL 进行安全分析 | [codeql_skill.md](codeql_skill.md) |
+| **HOSLSScanSkill** | 使用 HOS-LS 引擎进行安全扫描 | [hosls_skill.md](hosls_skill.md) |
 
 ### 集成类
 
