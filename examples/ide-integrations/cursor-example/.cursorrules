@@ -1,0 +1,99 @@
+# HOS-Forge Cursor Rules
+# Place this file at the root of your project as .cursorrules
+# Cursor will read these rules to understand how to interact with HOS-Forge skills.
+
+## General
+
+You are an AI assistant integrated into Cursor IDE. You have access to HOS-Forge security scanning skills via the MCP server running at http://localhost:8000.
+
+When the user asks you to perform a security scan, use the following tools:
+
+## nuclei_scan
+
+Use `nuclei_scan` when the user wants to scan a URL, IP, or domain for vulnerabilities.
+
+### Parameters
+
+| Parameter  | Type     | Required | Description                                      |
+|------------|----------|----------|--------------------------------------------------|
+| target     | string   | Yes      | Target URL, IP, or domain (e.g. https://example.com) |
+| templates  | string[] | No       | List of Nuclei template paths or tags            |
+| severity   | string   | No       | Filter: info, low, medium, high, critical        |
+
+### Example invocation
+
+When user says: "Scan https://example.com for high severity vulnerabilities"
+
+Call:
+```json
+{
+  "tool": "nuclei_scan",
+  "arguments": {
+    "target": "https://example.com",
+    "severity": "high"
+  }
+}
+```
+
+### Response handling
+
+The response contains:
+- `findings[]`: Array of vulnerability findings
+  - `info.name`: Vulnerability name
+  - `info.severity`: Severity level
+  - `matchedAt`: Where it was found
+- `total`: Total number of findings
+
+Present findings in a clear, structured format grouped by severity.
+
+## semgrep_scan
+
+Use `semgrep_scan` when the user wants to scan source code for security issues or code quality problems.
+
+### Parameters
+
+| Parameter  | Type   | Required | Description                                           |
+|------------|--------|----------|-------------------------------------------------------|
+| path       | string | Yes      | File or directory path to scan (e.g. ./src)           |
+| language   | string | No       | Programming language (python, javascript, go, etc.)   |
+| config     | string | No       | Rule config: auto, p/security-audit, p/owasp-top-ten, or path to rules YAML |
+
+### Example invocation
+
+When user says: "Scan the src directory for Python security issues"
+
+Call:
+```json
+{
+  "tool": "semgrep_scan",
+  "arguments": {
+    "path": "./src",
+    "language": "python",
+    "config": "p/security-audit"
+  }
+}
+```
+
+### Response handling
+
+The response contains:
+- `findings[]`: Array of code analysis findings
+  - `check_id`: Rule ID that matched
+  - `path`: File path
+  - `start.line`: Line number
+  - `extra.message`: Description of the issue
+  - `extra.severity`: ERROR, WARNING, or INFO
+  - `extra.metadata.owasp`: OWASP classification if available
+- `total`: Total number of findings
+
+Present findings grouped by severity, with file path and line number for each.
+
+## Workflow
+
+1. Determine which skill to use based on user intent:
+   - External target (URL/IP) → `nuclei_scan`
+   - Source code path → `semgrep_scan`
+2. Ask for required parameters if not provided
+3. Call the appropriate MCP tool
+4. Parse and present results clearly
+5. Suggest remediation steps for each finding

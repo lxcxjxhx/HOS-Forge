@@ -1,0 +1,36 @@
+# Test configuration for integration tests
+# This file simulates a skill configuration used in tests.
+
+skills:
+  - name: example_integration
+    enabled: true
+    description: Example skill for integration testing
+    parameters:
+      message:
+        type: string
+        required: true
+      count:
+        type: integer
+        required: false
+        default: 1
+
+  - name: mock_skill
+    enabled: true
+    description: Mock skill for testing
+    parameters:
+      input:
+        type: string
+        required: true
+
+server:
+  host: localhost
+  port: 8000
+  timeout: 30
+
+adapters:
+  vscode:
+    enabled: true
+  cursor:
+    enabled: true
+  claude_code:
+    enabled: true

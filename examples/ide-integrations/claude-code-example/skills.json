@@ -1,0 +1,115 @@
+{
+  "version": "1.0.0",
+  "description": "Claude Code skill definitions for HOS-Forge security scanning",
+  "skills": [
+    {
+      "name": "nuclei_scan",
+      "description": "Run Nuclei vulnerability scan against a target URL, IP, or domain. Nuclei uses templates to detect various security vulnerabilities including CVEs, misconfigurations, and exposed services.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "Target URL, IP address, or domain to scan (e.g. https://example.com, 192.168.1.1)"
+          },
+          "templates": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Optional list of Nuclei template paths or tags to use (e.g. [\"cves/2021/CVE-2021-44228.yaml\"])"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "low", "medium", "high", "critical"],
+            "description": "Optional minimum severity level to report"
+          }
+        },
+        "required": ["target"]
+      },
+      "mcp_endpoint": {
+        "url": "http://localhost:8000/tools/nuclei_scan/execute",
+        "method": "POST",
+        "content_type": "application/json",
+        "request_body": {
+          "arguments": {
+            "target": "$.parameters.target",
+            "templates": "$.parameters.templates",
+            "severity": "$.parameters.severity"
+          }
+        }
+      },
+      "response_mapping": {
+        "findings": "$.findings",
+        "total": "$.total",
+        "target": "$.target"
+      },
+      "usage_examples": [
+        {
+          "description": "Basic scan",
+          "command": "hos skill run nuclei_scan target=https://example.com"
+        },
+        {
+          "description": "High severity only",
+          "command": "hos skill run nuclei_scan target=https://example.com severity=high"
+        },
+        {
+          "description": "Specific template",
+          "command": "hos skill run nuclei_scan target=https://example.com templates='[\"cves/2021/CVE-2021-44228.yaml\"]'"
+        }
+      ]
+    },
+    {
+      "name": "semgrep_scan",
+      "description": "Run Semgrep static analysis on source code files or directories. Semgrep detects security vulnerabilities, code quality issues, and anti-patterns across 30+ programming languages.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File or directory path to scan (e.g. ./src, ./main.py)"
+          },
+          "language": {
+            "type": "string",
+            "description": "Optional programming language filter (python, javascript, typescript, java, go, rust, ruby, php, etc.)"
+          },
+          "config": {
+            "type": "string",
+            "description": "Optional Semgrep rule config: 'auto' (default), 'p/security-audit', 'p/owasp-top-ten', 'p/default', or path to custom rules YAML"
+          }
+        },
+        "required": ["path"]
+      },
+      "mcp_endpoint": {
+        "url": "http://localhost:8000/tools/semgrep_scan/execute",
+        "method": "POST",
+        "content_type": "application/json",
+        "request_body": {
+          "arguments": {
+            "path": "$.parameters.path",
+            "language": "$.parameters.language",
+            "config": "$.parameters.config"
+          }
+        }
+      },
+      "response_mapping": {
+        "findings": "$.findings",
+        "total": "$.total",
+        "errors": "$.errors",
+        "path": "$.path"
+      },
+      "usage_examples": [
+        {
+          "description": "Auto-detect scan",
+          "command": "hos skill run semgrep_scan path=./src"
+        },
+        {
+          "description": "Python security audit",
+          "command": "hos skill run semgrep_scan path=./src language=python config=p/security-audit"
+        },
+        {
+          "description": "OWASP Top 10",
+          "command": "hos skill run semgrep_scan path=./src config=p/owasp-top-ten"
+        }
+      ]
+    }
+  ]
+}

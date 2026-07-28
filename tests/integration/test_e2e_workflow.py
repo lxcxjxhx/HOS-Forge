@@ -1,342 +1,697 @@
-"""端到端工作流集成测试。"""
+"""End-to-end integration tests for HOS-Forge workflow.
 
-import asyncio
-import tempfile
-from pathlib import Path
+This module tests complete workflows from CLI → Skill Registry → MCP Server → IDE Adapter,
+verifying the entire system integration and error handling across all components.
+"""
 
 import pytest
+import json
+from unittest.mock import Mock, patch, MagicMock
+from pathlib import Path
+from typing import Dict, Any
 
-from hosforge.taskflow import WorkflowParser, WorkflowExecutor
-from hosforge.personality import PersonalityLoader
-from hosforge.mcp import MCPServerRegistry
-from hosforge.memory import SecurityMemoryStore
-from hosforge.verification import VerificationPipeline
+from hosforge.cli.main import (
+    main as cli_main,
+    create_default_registry,
+    parse_skill_args,
+    cmd_skill_list,
+    cmd_skill_info,
+    cmd_skill_run,
+)
+from hosforge.skills.base_skill import Skill, SkillResult
+from hosforge.skills.registry import SkillRegistry
+from hosforge.skills.loader import SkillLoader
+from hosforge.mcp_server.server import create_app
+from hosforge.mcp_server.skill_bridge import SkillToMCPTool, MCPToolExecutor
+from hosforge.adapters.vscode_adapter import VSCodeAdapter
+from hosforge.adapters.cursor_adapter import CursorAdapter
+from hosforge.adapters.claude_code_adapter import ClaudeCodeAdapter
+from hosforge.adapters.adapter_registry import AdapterRegistry
+from hosforge.adapters.adapter_mcp_bridge import AdapterMCPBridge
+from hosforge.adapters.mcp_client import MCPClient
 
 
-class TestE2EWorkflow:
-    """端到端工作流测试。"""
+class TestCLIToSkillExecution:
+    """Test CLI → Skill execution workflow."""
 
-    @pytest.fixture
-    def sample_workflow_yaml(self):
-        """示例工作流 YAML。"""
-        return """
-hos:
-  version: "1.0"
-
-workflow:
-  name: "Test Security Audit"
-  description: "Test workflow for E2E testing"
-  
-  tasks:
-    - name: static_scan
-      agent:
-        - sast_agent
-      tools:
-        - hos_ls
-      depends_on: []
-      timeout: 60
-    
-    - name: exploit_verify
-      agent:
-        - redteam_agent
-      tools:
-        - nuclei
-      depends_on:
-        - static_scan
-      timeout: 120
-    
-    - name: patch_generation
-      agent:
-        - developer_agent
-      tools: []
-      depends_on:
-        - exploit_verify
-      timeout: 60
-"""
-
-    @pytest.fixture
-    def temp_workflow_file(self, sample_workflow_yaml):
-        """创建临时工作流文件。"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            f.write(sample_workflow_yaml)
-            f.flush()
-            yield f.name
-        Path(f.name).unlink(missing_ok=True)
-
-    def test_workflow_parsing(self, temp_workflow_file):
-        """测试工作流解析。"""
-        parser = WorkflowParser()
-        workflow = parser.parse_file(temp_workflow_file)
-
-        assert workflow.name == "Test Security Audit"
-        assert workflow.version == "1.0"
-        assert len(workflow.tasks) == 3
-
-        # 验证任务依赖关系
-        static_scan = workflow.get_task("static_scan")
-        assert static_scan is not None
-        assert len(static_scan.depends_on) == 0
-
-        exploit_verify = workflow.get_task("exploit_verify")
-        assert exploit_verify is not None
-        assert "static_scan" in exploit_verify.depends_on
-
-        patch_gen = workflow.get_task("patch_generation")
-        assert patch_gen is not None
-        assert "exploit_verify" in patch_gen.depends_on
-
-    def test_workflow_execution_order(self, temp_workflow_file):
-        """测试工作流执行顺序。"""
-        parser = WorkflowParser()
-        workflow = parser.parse_file(temp_workflow_file)
-
-        # 获取执行顺序
-        execution_order = workflow.get_execution_order()
-
-        # 验证执行顺序正确
-        assert len(execution_order) == 3
-        assert execution_order[0] == "static_scan"
-        assert execution_order[1] == "exploit_verify"
-        assert execution_order[2] == "patch_generation"
-
-    @pytest.mark.asyncio
-    async def test_workflow_executor_initialization(self, temp_workflow_file):
-        """测试工作流执行器初始化。"""
-        parser = WorkflowParser()
-        workflow = parser.parse_file(temp_workflow_file)
-
-        executor = WorkflowExecutor(workflow, enable_checkpoint=False)
-
-        assert executor.workflow == workflow
-        assert executor.enable_checkpoint is False
-
-    def test_personality_loading(self):
-        """测试 Personality 加载。"""
-        # 创建临时 personality 文件
-        personality_yaml = """
-name: test_security_engineer
-role: Security testing engineer
-description: Test security engineer for E2E testing
-skills:
-  - vulnerability scanning
-  - code review
-  - penetration testing
-rules:
-  - verify all findings
-  - provide evidence
-tools:
-  - nuclei
-  - semgrep
-"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            f.write(personality_yaml)
-            f.flush()
-            personality_file = f.name
-
-        try:
-            loader = PersonalityLoader()
-            personality = loader.load(personality_file)
-
-            assert personality.name == "test_security_engineer"
-            assert personality.role == "Security testing engineer"
-            assert len(personality.skills) == 3
-            assert len(personality.tools) == 2
-            assert "nuclei" in personality.tools
-        finally:
-            Path(personality_file).unlink(missing_ok=True)
-
-    def test_mcp_server_registry(self):
-        """测试 MCP Server 注册。"""
-        registry = MCPServerRegistry()
-
-        # 注册一个模拟的 MCP Server
-        registry.register_server(
-            name="test_server",
-            description="Test MCP Server",
-            tools=["tool1", "tool2"],
-        )
-
-        servers = registry.list_servers()
-        assert len(servers) == 1
-        assert servers[0]["name"] == "test_server"
-        assert servers[0]["tool_count"] == 2
-
-    def test_security_memory_store(self):
-        """测试 Security Memory 存储。"""
-        from hosforge.memory.schema import VulnerabilityFinding
+    def test_cli_skill_list_command(self, capsys):
+        """Test CLI skill list command executes successfully."""
+        exit_code = cli_main(["skill", "list"])
+        captured = capsys.readouterr()
         
-        store = SecurityMemoryStore()
+        assert exit_code == 0
+        assert "github_integration" in captured.out or "No skills registered" in captured.out
 
-        # 添加漏洞发现
-        finding = VulnerabilityFinding(
-            id="TEST-001",
-            title="SQL Injection",
-            severity="high",
-            cwe_id="CWE-89",
-            file_path="test.py",
-            line_number=42,
-            description="SQL Injection vulnerability",
+    def test_cli_skill_list_json_format(self, capsys):
+        """Test CLI skill list with JSON output format."""
+        exit_code = cli_main(["skill", "list", "--format", "json"])
+        captured = capsys.readouterr()
+        
+        assert exit_code == 0
+        # Should be valid JSON
+        data = json.loads(captured.out)
+        assert isinstance(data, list)
+
+    def test_cli_skill_info_command(self, capsys):
+        """Test CLI skill info command for existing skill."""
+        exit_code = cli_main(["skill", "info", "github_integration"])
+        captured = capsys.readouterr()
+        
+        assert exit_code == 0
+        assert "github_integration" in captured.out
+
+    def test_cli_skill_info_nonexistent(self, capsys):
+        """Test CLI skill info for non-existent skill returns error."""
+        exit_code = cli_main(["skill", "info", "nonexistent_skill"])
+        captured = capsys.readouterr()
+        
+        assert exit_code == 1
+        assert "not found" in captured.err.lower()
+
+    def test_cli_skill_run_with_mock(self, mock_skill, capsys):
+        """Test CLI skill run command with mocked skill execution."""
+        with patch("hosforge.cli.main.create_default_registry") as mock_create:
+            mock_registry = Mock(spec=SkillRegistry)
+            mock_registry.execute_skill.return_value = SkillResult(
+                success=True,
+                data={"result": "test output"},
+            )
+            mock_create.return_value = mock_registry
+            
+            exit_code = cli_main(["skill", "run", "mock_skill", "input=test"])
+            captured = capsys.readouterr()
+            
+            assert exit_code == 0
+            assert "Success" in captured.out
+            mock_registry.execute_skill.assert_called_once()
+
+    def test_cli_skill_run_failure(self, capsys):
+        """Test CLI skill run command handles execution failure."""
+        with patch("hosforge.cli.main.create_default_registry") as mock_create:
+            mock_registry = Mock(spec=SkillRegistry)
+            mock_registry.execute_skill.return_value = SkillResult(
+                success=False,
+                error="Execution failed",
+            )
+            mock_create.return_value = mock_registry
+            
+            exit_code = cli_main(["skill", "run", "test_skill", "param=value"])
+            captured = capsys.readouterr()
+            
+            assert exit_code == 1
+            assert "Error" in captured.err
+
+    def test_parse_skill_args_valid(self):
+        """Test parsing valid skill arguments."""
+        args = ["key1=value1", "key2=value2", "key3=123"]
+        result = parse_skill_args(args)
+        
+        assert result["key1"] == "value1"
+        assert result["key2"] == "value2"
+        assert result["key3"] == 123  # Should parse as int
+
+    def test_parse_skill_args_json_array(self):
+        """Test parsing skill arguments with JSON array."""
+        args = ['labels=["bug", "urgent"]']
+        result = parse_skill_args(args)
+        
+        assert result["labels"] == ["bug", "urgent"]
+
+    def test_parse_skill_args_invalid_format(self):
+        """Test parsing invalid skill argument format raises error."""
+        args = ["invalid_arg_no_equals"]
+        
+        with pytest.raises(ValueError, match="Invalid argument format"):
+            parse_skill_args(args)
+
+
+class TestMCPServerIntegration:
+    """Test MCP Server startup and tool invocation."""
+
+    def test_mcp_server_health_check(self, mcp_app):
+        """Test MCP Server health check endpoint."""
+        from fastapi.testclient import TestClient
+        
+        client = TestClient(mcp_app)
+        response = client.get("/health")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+        assert "skills_count" in data
+
+    def test_mcp_server_list_skills(self, mcp_app):
+        """Test MCP Server list skills endpoint."""
+        from fastapi.testclient import TestClient
+        
+        client = TestClient(mcp_app)
+        response = client.get("/skills")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert "skills" in data
+        assert isinstance(data["skills"], list)
+
+    def test_mcp_server_list_tools(self, mcp_app):
+        """Test MCP Server list tools endpoint."""
+        from fastapi.testclient import TestClient
+        
+        client = TestClient(mcp_app)
+        response = client.get("/tools")
+        
+        assert response.status_code == 200
+        data = response.json()
+        assert "tools" in data
+        assert isinstance(data["tools"], list)
+        
+        # Each tool should have name, description, inputSchema
+        if data["tools"]:
+            tool = data["tools"][0]
+            assert "name" in tool
+            assert "description" in tool
+            assert "inputSchema" in tool
+
+    def test_mcp_server_execute_tool_success(self, mcp_app):
+        """Test MCP Server tool execution success."""
+        from fastapi.testclient import TestClient
+        
+        client = TestClient(mcp_app)
+        
+        # Execute nuclei_scan with valid parameters
+        response = client.post(
+            "/tools/nuclei_scan/execute",
+            json={"arguments": {"target": "https://example.com"}}
         )
+        
+        assert response.status_code == 200
+        data = response.json()
+        # Should return MCP format result
+        assert "content" in data or "isError" in data
 
-        store.add_finding(finding)
+    def test_mcp_server_execute_tool_not_found(self, mcp_app):
+        """Test MCP Server tool execution with non-existent tool."""
+        from fastapi.testclient import TestClient
+        
+        client = TestClient(mcp_app)
+        
+        response = client.post(
+            "/tools/nonexistent_tool/execute",
+            json={"arguments": {}}
+        )
+        
+        assert response.status_code == 404
 
-        # 查询发现
-        findings = store.search_findings(cwe_id="CWE-89")
-        assert len(findings) == 1
-        assert findings[0].id == "TEST-001"
+    def test_mcp_tool_conversion(self, github_skill):
+        """Test Skill to MCP tool conversion."""
+        mcp_tool = SkillToMCPTool.convert(github_skill)
+        
+        assert mcp_tool["name"] == "github_integration"
+        assert "description" in mcp_tool
+        assert "inputSchema" in mcp_tool
+        assert mcp_tool["inputSchema"]["type"] == "object"
 
-    @pytest.mark.asyncio
-    async def test_verification_pipeline(self):
-        """测试验证流水线。"""
-        store = SecurityMemoryStore()
-        pipeline = VerificationPipeline(memory_store=store)
+    def test_mcp_tool_executor_success(self, skill_registry):
+        """Test MCP tool executor with successful execution."""
+        executor = MCPToolExecutor(skill_registry)
+        
+        result = executor.execute("mock_skill", {"input": "test"})
+        
+        assert result["isError"] is False
+        assert "content" in result
+        assert len(result["content"]) > 0
+        assert result["content"][0]["type"] == "text"
 
-        # 创建测试发现
-        finding = {
-            "id": "TEST-001",
-            "cwe_id": "CWE-89",
-            "severity": "high",
-            "file_path": "test.py",
-            "line_number": 42,
-            "description": "SQL Injection vulnerability",
-            "code_snippet": "cursor.execute(f'SELECT * FROM users WHERE id = {user_id}')",
+    def test_mcp_tool_executor_error(self, skill_registry):
+        """Test MCP tool executor with error handling."""
+        executor = MCPToolExecutor(skill_registry)
+        
+        result = executor.execute("error_skill", {"error_type": "value_error"})
+        
+        assert result["isError"] is True
+        assert "content" in result
+        assert "error" in result["content"][0]["text"].lower()
+
+    def test_mcp_tool_executor_not_found(self, skill_registry):
+        """Test MCP tool executor with non-existent skill."""
+        executor = MCPToolExecutor(skill_registry)
+        
+        result = executor.execute("nonexistent_skill", {})
+        
+        assert result["isError"] is True
+        assert "not found" in result["content"][0]["text"].lower()
+
+
+class TestIDEAdapterIntegration:
+    """Test IDE Adapter integration through MCP."""
+
+    def test_vscode_adapter_command_formatting(self, vscode_adapter):
+        """Test VSCode adapter formats commands correctly."""
+        formatted = vscode_adapter.format_input(
+            "hos.skill.run",
+            {"skill_name": "nuclei_scan", "target": "example.com"}
+        )
+        
+        assert formatted["command"] == "hos.skill.run"
+        assert "args" in formatted
+        assert formatted["args"]["skill_name"] == "nuclei_scan"
+
+    def test_vscode_adapter_output_formatting(self, vscode_adapter):
+        """Test VSCode adapter formats output correctly."""
+        result = {
+            "status": "success",
+            "message": "Scan completed",
+            "data": {"findings": 5}
         }
+        
+        formatted = vscode_adapter.format_output(result)
+        
+        assert formatted["status"] == "success"
+        assert "data" in formatted
 
-        # 运行流水线
-        result = await pipeline.run(finding)
+    def test_cursor_adapter_command_formatting(self, cursor_adapter):
+        """Test Cursor adapter formats @mention commands correctly."""
+        formatted = cursor_adapter.format_input(
+            "@hos nuclei",
+            {"target": "example.com"}
+        )
+        
+        assert "command" in formatted
+        assert "args" in formatted
 
-        # 验证结果结构
-        assert "finding_id" in result
-        assert "final_state" in result
-        assert "stages" in result
-
-        # 验证阶段结果
-        assert "verification" in result["stages"]
-        assert "exploit" in result["stages"]
-        assert "patch" in result["stages"]
-        assert "review" in result["stages"]
-
-    def test_checkpoint_mechanism(self, temp_workflow_file):
-        """测试 checkpoint 机制。"""
-        parser = WorkflowParser()
-        workflow = parser.parse_file(temp_workflow_file)
-
-        executor = WorkflowExecutor(workflow, enable_checkpoint=True)
-
-        # 模拟保存 checkpoint
-        checkpoint_data = {
-            "workflow_name": workflow.name,
-            "completed_tasks": ["static_scan"],
-            "current_task": "exploit_verify",
+    def test_cursor_adapter_output_formatting(self, cursor_adapter):
+        """Test Cursor adapter formats output as Markdown."""
+        result = {
+            "status": "success",
+            "message": "Scan completed",
+            "data": {"findings": 5}
         }
+        
+        formatted = cursor_adapter.format_output(result)
+        
+        assert "content" in formatted
+        assert "metadata" in formatted
+        assert formatted["metadata"]["format"] == "markdown"
+        assert "Success" in formatted["content"]
 
-        checkpoint_id = executor.save_checkpoint(checkpoint_data)
-        assert checkpoint_id is not None
+    def test_claude_adapter_command_formatting(self, claude_adapter):
+        """Test Claude Code adapter formats slash commands correctly."""
+        formatted = claude_adapter.format_input(
+            "/hos-nuclei",
+            {"target": "example.com"}
+        )
+        
+        assert formatted["command"] == "nuclei"
+        assert "args" in formatted
 
-        # 模拟加载 checkpoint
-        loaded_data = executor.load_checkpoint(checkpoint_id)
-        assert loaded_data is not None
-        assert loaded_data["current_task"] == "exploit_verify"
+    def test_claude_adapter_output_formatting(self, claude_adapter):
+        """Test Claude Code adapter formats output correctly."""
+        result = {
+            "status": "success",
+            "message": "Scan completed",
+            "data": {"findings": 5}
+        }
+        
+        formatted = claude_adapter.format_output(result)
+        
+        assert "response" in formatted
+        assert "tool_results" in formatted
+        assert "data" in formatted
+
+    def test_adapter_registry_routing(self, adapter_registry):
+        """Test adapter registry routes commands to correct adapter."""
+        # VSCode command
+        vscode = adapter_registry.get_adapter_for_command("hos.skill.run")
+        assert vscode is not None
+        assert vscode.name == "vscode"
+        
+        # Cursor command
+        cursor = adapter_registry.get_adapter_for_command("@hos nuclei")
+        assert cursor is not None
+        assert cursor.name == "cursor"
+        
+        # Claude command
+        claude = adapter_registry.get_adapter_for_command("/hos-nuclei")
+        assert claude is not None
+        assert claude.name == "claude_code"
+
+    def test_adapter_mcp_bridge_execution(self, adapter_mcp_bridge, vscode_adapter):
+        """Test adapter MCP bridge executes commands through MCP."""
+        adapter_mcp_bridge.mcp_client.call_tool.return_value = {
+            "content": [{"type": "text", "text": '{"result": "success"}'}],
+            "isError": False
+        }
+        
+        result = adapter_mcp_bridge.execute_via_mcp(
+            vscode_adapter,
+            "hos.skill.run",
+            {"skill_name": "test"}
+        )
+        
+        assert result["status"] == "success"
+        assert "data" in result
+
+    def test_adapter_mcp_bridge_error_handling(self, adapter_mcp_bridge, vscode_adapter):
+        """Test adapter MCP bridge handles MCP errors correctly."""
+        adapter_mcp_bridge.mcp_client.call_tool.return_value = {
+            "content": [{"type": "text", "text": "Tool execution failed"}],
+            "isError": True
+        }
+        
+        result = adapter_mcp_bridge.execute_via_mcp(
+            vscode_adapter,
+            "hos.skill.run",
+            {"skill_name": "test"}
+        )
+        
+        assert result["status"] == "error"
+        assert "error" in result["data"]
 
 
-class TestMultiAgentCollaboration:
-    """多 Agent 协作测试。"""
+class TestSkillDynamicLoading:
+    """Test dynamic skill loading from directories."""
 
-    @pytest.fixture
-    def multi_agent_workflow(self):
-        """多 Agent 协作工作流。"""
-        return """
-hos:
-  version: "1.0"
+    def test_skill_loader_from_directory(self, skill_loader, sample_skills_dir):
+        """Test loading skills from directory."""
+        # Create a sample skill file
+        sample_skill_code = '''
+from hosforge.skills.base_skill import Skill
+from typing import Dict, Any
 
-workflow:
-  name: "Multi-Agent Collaboration Test"
-  description: "Test multi-agent collaboration"
-  
-  tasks:
-    - name: parallel_scan
-      agent:
-        - sast_agent
-        - dast_agent
-      tools:
-        - semgrep
-        - nuclei
-      depends_on: []
-      timeout: 120
+class SampleTestSkill(Skill):
+    def __init__(self):
+        super().__init__(
+            name="sample_test",
+            description="Sample test skill",
+            parameters={"type": "object", "properties": {}}
+        )
     
-    - name: verification
-      agent:
-        - redteam_agent
-      tools:
-        - exploit_db
-      depends_on:
-        - parallel_scan
-      timeout: 180
-    
-    - name: remediation
-      agent:
-        - developer_agent
-        - security_reviewer
-      tools: []
-      depends_on:
-        - verification
-      timeout: 120
-"""
-
-    def test_parallel_task_parsing(self, multi_agent_workflow):
-        """测试并行任务解析。"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            f.write(multi_agent_workflow)
-            f.flush()
-            workflow_file = f.name
-
+    def execute(self, **kwargs) -> Dict[str, Any]:
+        return {"result": "sample"}
+'''
+        sample_file = sample_skills_dir / "sample_skill.py"
+        sample_file.write_text(sample_skill_code, encoding="utf-8")
+        
         try:
-            parser = WorkflowParser()
-            workflow = parser.parse_file(workflow_file)
-
-            parallel_scan = workflow.get_task("parallel_scan")
-            assert parallel_scan is not None
-            assert len(parallel_scan.agent) == 2
-            assert "sast_agent" in parallel_scan.agent
-            assert "dast_agent" in parallel_scan.agent
-
-            remediation = workflow.get_task("remediation")
-            assert remediation is not None
-            assert len(remediation.agent) == 2
+            skills = skill_loader.load_from_directory(str(sample_skills_dir))
+            
+            assert len(skills) > 0
+            skill_names = [s.name for s in skills]
+            assert "sample_test" in skill_names
         finally:
-            Path(workflow_file).unlink(missing_ok=True)
+            # Cleanup
+            if sample_file.exists():
+                sample_file.unlink()
+
+    def test_skill_loader_nonexistent_directory(self, skill_loader):
+        """Test loading from non-existent directory returns empty list."""
+        skills = skill_loader.load_from_directory("/nonexistent/path")
+        
+        assert len(skills) == 0
+
+    def test_skill_loader_from_module(self, skill_loader):
+        """Test loading skills from Python module."""
+        skills = skill_loader.load_from_module("hosforge.skills.security")
+        
+        assert len(skills) > 0
+        skill_names = [s.name for s in skills]
+        assert "github_integration" in skill_names
+        assert "nuclei_scan" in skill_names
+        assert "semgrep_scan" in skill_names
+
+    def test_skill_loader_invalid_module(self, skill_loader):
+        """Test loading from invalid module returns empty list."""
+        skills = skill_loader.load_from_module("nonexistent.module")
+        
+        assert len(skills) == 0
+
+    def test_skill_registry_integration(self, skill_loader):
+        """Test loaded skills can be registered and executed."""
+        skills = skill_loader.load_from_module("hosforge.skills.security")
+        
+        registry = SkillRegistry()
+        for skill in skills:
+            registry.register(skill)
+        
+        # Verify skills are registered
+        registered = registry.list_skills()
+        assert len(registered) == len(skills)
+        
+        # Verify can get specific skill
+        github = registry.get("github_integration")
+        assert github is not None
+        assert github.name == "github_integration"
 
 
-class TestToolIntegration:
-    """工具集成测试。"""
+class TestErrorHandlingChain:
+    """Test error handling across all components."""
 
-    def test_mcp_tool_invocation(self):
-        """测试 MCP 工具调用。"""
-        registry = MCPServerRegistry()
+    def test_skill_execution_error_propagation(self, skill_registry):
+        """Test skill execution errors propagate correctly."""
+        result = skill_registry.execute_skill("error_skill", error_type="value_error")
+        
+        assert result.success is False
+        assert result.error is not None
+        assert "value error" in result.error.lower()
 
-        # 注册模拟工具
-        registry.register_server(
-            name="test_scanner",
-            description="Test Scanner",
-            tools=["scan_file", "scan_directory"],
+    def test_skill_not_found_error(self, skill_registry):
+        """Test non-existent skill returns error result."""
+        result = skill_registry.execute_skill("nonexistent_skill")
+        
+        assert result.success is False
+        assert "not found" in result.error.lower()
+
+    def test_mcp_executor_error_handling(self, skill_registry):
+        """Test MCP executor handles skill errors correctly."""
+        executor = MCPToolExecutor(skill_registry)
+        
+        result = executor.execute("error_skill", {"error_type": "runtime_error"})
+        
+        assert result["isError"] is True
+        assert "error" in result["content"][0]["text"].lower()
+
+    def test_adapter_bridge_error_propagation(self, adapter_mcp_bridge, vscode_adapter):
+        """Test adapter bridge propagates errors correctly."""
+        adapter_mcp_bridge.mcp_client.call_tool.return_value = {
+            "content": [{"type": "text", "text": "Internal error"}],
+            "isError": True
+        }
+        
+        result = adapter_mcp_bridge.execute_via_mcp(
+            vscode_adapter,
+            "hos.skill.run",
+            {"skill_name": "error_skill"}
         )
+        
+        assert result["status"] == "error"
 
-        # 获取工具列表
-        tools = registry.get_tools_for_server("test_scanner")
-        assert len(tools) == 2
-        assert "scan_file" in tools
-        assert "scan_directory" in tools
+    def test_mcp_client_connection_error(self):
+        """Test MCP client handles connection errors."""
+        client = MCPClient()
+        
+        # Not connected, should raise error
+        with pytest.raises(RuntimeError, match="Not connected"):
+            client.call_tool("test", {})
 
-    def test_tool_availability_check(self):
-        """测试工具可用性检查。"""
-        registry = MCPServerRegistry()
+    def test_cli_invalid_skill_args(self, capsys):
+        """Test CLI handles invalid skill arguments."""
+        exit_code = cli_main(["skill", "run", "test_skill", "invalid_arg"])
+        captured = capsys.readouterr()
+        
+        assert exit_code == 1
+        assert "Error" in captured.err
 
-        registry.register_server(
-            name="tool_server",
-            description="Tool Server",
-            tools=["available_tool"],
+    def test_adapter_unsupported_command(self, vscode_adapter):
+        """Test adapter rejects unsupported commands."""
+        with pytest.raises(ValueError, match="Unsupported command"):
+            vscode_adapter.format_input("unsupported.command", {})
+
+
+class TestCompleteWorkflow:
+    """Test complete end-to-end workflows."""
+
+    def test_cli_to_skill_execution_workflow(self, capsys):
+        """Test complete workflow: CLI → Registry → Skill execution."""
+        # List skills
+        exit_code = cli_main(["skill", "list", "--format", "json"])
+        assert exit_code == 0
+        
+        captured = capsys.readouterr()
+        skills = json.loads(captured.out)
+        assert isinstance(skills, list)
+
+    def test_mcp_server_workflow(self, mcp_app):
+        """Test complete workflow: MCP Server → Tool listing → Execution."""
+        from fastapi.testclient import TestClient
+        
+        client = TestClient(mcp_app)
+        
+        # Health check
+        response = client.get("/health")
+        assert response.status_code == 200
+        
+        # List tools
+        response = client.get("/tools")
+        assert response.status_code == 200
+        tools = response.json()["tools"]
+        
+        # Execute a tool if available
+        if tools:
+            tool_name = tools[0]["name"]
+            response = client.post(
+                f"/tools/{tool_name}/execute",
+                json={"arguments": {}}
+            )
+            # Should return 200 or 404 (if tool requires specific args)
+            assert response.status_code in [200, 404, 422]
+
+    def test_adapter_to_mcp_workflow(self, adapter_mcp_bridge, vscode_adapter):
+        """Test complete workflow: Adapter → MCP Bridge → Tool execution."""
+        # Mock successful MCP response
+        adapter_mcp_bridge.mcp_client.call_tool.return_value = {
+            "content": [{"type": "text", "text": '{"status": "completed"}'}],
+            "isError": False
+        }
+        
+        # Execute through adapter
+        result = adapter_mcp_bridge.execute_via_mcp(
+            vscode_adapter,
+            "hos.skill.run",
+            {"skill_name": "test"}
         )
+        
+        assert result["status"] == "success"
+        assert "data" in result
 
-        # 检查工具是否可用
-        assert registry.is_tool_available("available_tool") is True
-        assert registry.is_tool_available("unavailable_tool") is False
+    def test_multi_adapter_workflow(self, adapter_registry):
+        """Test workflow with multiple adapters handling same command type."""
+        # All adapters should handle skill-related commands
+        adapters = adapter_registry.list_adapters()
+        
+        assert len(adapters) >= 3
+        
+        # Each adapter should have supported commands
+        for adapter in adapters:
+            assert len(adapter.supported_commands) > 0
+
+    def test_skill_loading_and_registration_workflow(self, skill_loader):
+        """Test workflow: Load skills → Register → Execute."""
+        # Load skills
+        skills = skill_loader.load_from_module("hosforge.skills.security")
+        assert len(skills) > 0
+        
+        # Register skills
+        registry = SkillRegistry()
+        for skill in skills:
+            registry.register(skill)
+        
+        # Verify registration
+        registered = registry.list_skills()
+        assert len(registered) == len(skills)
+        
+        # Get specific skill
+        github = registry.get("github_integration")
+        assert github is not None
+        
+        # Verify skill metadata
+        assert github.name == "github_integration"
+        assert github.description
+        assert github.parameters
+
+
+class TestEdgeCases:
+    """Test edge cases and boundary conditions."""
+
+    def test_empty_skill_registry(self):
+        """Test operations on empty skill registry."""
+        registry = SkillRegistry()
+        
+        assert len(registry.list_skills()) == 0
+        assert registry.get("any_skill") is None
+        
+        result = registry.execute_skill("any_skill")
+        assert result.success is False
+
+    def test_skill_with_no_parameters(self):
+        """Test skill with no parameters defined."""
+        class NoParamSkill(Skill):
+            def __init__(self):
+                super().__init__(
+                    name="no_param",
+                    description="No parameters",
+                    parameters=None
+                )
+            
+            def execute(self, **kwargs):
+                return {"result": "ok"}
+        
+        skill = NoParamSkill()
+        registry = SkillRegistry()
+        registry.register(skill)
+        
+        result = registry.execute_skill("no_param")
+        assert result.success is True
+
+    def test_mcp_tool_conversion_with_complex_schema(self):
+        """Test MCP tool conversion with complex parameter schema."""
+        class ComplexSkill(Skill):
+            def __init__(self):
+                super().__init__(
+                    name="complex",
+                    description="Complex parameters",
+                    parameters={
+                        "type": "object",
+                        "properties": {
+                            "string_param": {"type": "string"},
+                            "int_param": {"type": "integer"},
+                            "array_param": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            },
+                            "object_param": {
+                                "type": "object",
+                                "properties": {
+                                    "nested": {"type": "string"}
+                                }
+                            }
+                        },
+                        "required": ["string_param"]
+                    }
+                )
+            
+            def execute(self, **kwargs):
+                return {"result": "complex"}
+        
+        skill = ComplexSkill()
+        mcp_tool = SkillToMCPTool.convert(skill)
+        
+        assert mcp_tool["name"] == "complex"
+        assert "inputSchema" in mcp_tool
+        assert mcp_tool["inputSchema"]["type"] == "object"
+        assert "properties" in mcp_tool["inputSchema"]
+
+    def test_adapter_with_empty_result(self, vscode_adapter):
+        """Test adapter handles empty result correctly."""
+        result = vscode_adapter.format_output({})
+        
+        assert "status" in result
+        assert "data" in result
+
+    def test_concurrent_skill_execution(self, skill_registry):
+        """Test concurrent skill execution (basic test)."""
+        import threading
+        
+        results = []
+        
+        def execute_skill():
+            result = skill_registry.execute_skill("mock_skill", input="test")
+            results.append(result)
+        
+        threads = [threading.Thread(target=execute_skill) for _ in range(3)]
+        
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        
+        assert len(results) == 3
+        assert all(r.success for r in results)

@@ -1,0 +1,38 @@
+# Skill 注册表配置文件
+# 定义 skill 加载路径、启用的 skills 和默认参数
+
+# Skill 加载路径列表
+# 支持本地目录路径和 Python 模块路径
+skill_paths:
+  - ./hosforge/skills/security
+  - hosforge.skills.security.github_skill
+  - hosforge.skills.security.semgrep_skill
+  - hosforge.skills.security.nuclei_skill
+
+# 启用的 skills 列表
+# 如果为空或不存在，则启用所有发现的 skills
+enabled_skills:
+  - github_integration
+  - semgrep_scan
+  - nuclei_scan
+
+# Skill 参数默认值
+# 这些默认值会应用到所有 skills（除非 skill 自身覆盖了这些参数）
+skill_defaults:
+  timeout: 60
+  retry_count: 3
+  verbose: false
+  log_level: INFO
+
+# Skill 特定配置
+# 为特定 skill 提供自定义配置
+skill_configs:
+  github_integration:
+    default_repo: ""
+    auto_detect_repo: true
+  semgrep_scan:
+    config_file: null
+    severity: "WARNING"
+  nuclei_scan:
+    templates_dir: null
+    rate_limit: 100

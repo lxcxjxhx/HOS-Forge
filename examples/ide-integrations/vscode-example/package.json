@@ -1,0 +1,50 @@
+{
+  "name": "hos-forge-vscode-example",
+  "displayName": "HOS Forge (VSCode Example)",
+  "description": "Example VSCode extension demonstrating HOS-Forge nuclei_scan and semgrep_scan skill integration",
+  "version": "1.0.0",
+  "publisher": "hos-forge",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other", "Linters", "Testing"],
+  "activationEvents": [
+    "onCommand:hos.scan.nuclei",
+    "onCommand:hos.scan.semgrep"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "hos.scan.nuclei",
+        "title": "HOS: Run Nuclei Scan",
+        "category": "HOS"
+      },
+      {
+        "command": "hos.scan.semgrep",
+        "title": "HOS: Run Semgrep Scan",
+        "category": "HOS"
+      }
+    ],
+    "configuration": {
+      "title": "HOS Forge",
+      "properties": {
+        "hos.forge.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "HOS-Forge MCP server URL"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "version": "1.0.0",
+  "adapter": "cursor",
+  "rules": [
+    {
+      "id": "hos-scan",
+      "trigger": "@hos scan",
+      "pattern": "^@hos\\s+scan(?:\\s+(.*))?$",
+      "description": "Run security scan on the codebase",
+      "handler": "handle_scan",
+      "examples": [
+        "@hos scan",
+        "@hos scan --target src/",
+        "@hos scan --severity high"
+      ]
+    },
+    {
+      "id": "hos-nuclei",
+      "trigger": "@hos nuclei",
+      "pattern": "^@hos\\s+nuclei(?:\\s+(.*))?$",
+      "description": "Run Nuclei security scanner",
+      "handler": "handle_nuclei",
+      "examples": [
+        "@hos nuclei",
+        "@hos nuclei --templates cves",
+        "@hos nuclei --url https://example.com"
+      ]
+    },
+    {
+      "id": "hos-semgrep",
+      "trigger": "@hos semgrep",
+      "pattern": "^@hos\\s+semgrep(?:\\s+(.*))?$",
+      "description": "Run Semgrep static analysis",
+      "handler": "handle_semgrep",
+      "examples": [
+        "@hos semgrep",
+        "@hos semgrep --config auto",
+        "@hos semgrep --lang python"
+      ]
+    },
+    {
+      "id": "hos-skill-list",
+      "trigger": "@hos skill list",
+      "pattern": "^@hos\\s+skill\\s+list(?:\\s+(.*))?$",
+      "description": "List available security skills",
+      "handler": "handle_skill_list",
+      "examples": [
+        "@hos skill list",
+        "@hos skill list --category web",
+        "@hos skill list --format json"
+      ]
+    },
+    {
+      "id": "hos-skill-info",
+      "trigger": "@hos skill info",
+      "pattern": "^@hos\\s+skill\\s+info(?:\\s+(.*))?$",
+      "description": "Get information about a specific skill",
+      "handler": "handle_skill_info",
+      "examples": [
+        "@hos skill info sql-injection",
+        "@hos skill info xss --verbose"
+      ]
+    }
+  ],
+  "output_format": {
+    "type": "markdown",
+    "features": [
+      "status_icons",
+      "key_value_pairs",
+      "bullet_lists",
+      "code_blocks"
+    ]
+  },
+  "metadata": {
+    "author": "HOS-Forge",
+    "description": "Cursor Rules configuration for HOS security commands",
+    "documentation": "https://github.com/hos-forge/hos-forge/docs/cursor-integration.md"
+  }
+}

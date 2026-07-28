@@ -1,0 +1,43 @@
+# Skill 市场配置文件
+# 定义远程 skill 源和缓存策略
+
+# 远程 skill 源列表
+# 按优先级排列，靠前的源优先查询
+sources:
+  - name: official
+    url: https://marketplace.hos-forge.dev/api/skills
+    enabled: true
+    priority: 1
+  - name: community
+    url: https://community.hos-forge.dev/api/skills
+    enabled: false
+    priority: 2
+
+# 缓存策略
+cache:
+  # 缓存文件路径（相对于 ~/.hos/cache/）
+  file: remote_skills.json
+  # 缓存有效期（秒），默认 1 小时
+  ttl: 3600
+  # 是否在启动时自动加载缓存
+  auto_load: true
+  # 是否在列表操作后自动保存缓存
+  auto_save: true
+
+# 安装配置
+install:
+  # skill 安装目录（相对于 ~/.hos/skills/）
+  dir: skills
+  # 安装前是否验证签名
+  verify_signature: false
+  # 安装失败时是否自动回滚
+  auto_rollback: true
+
+# 更新策略
+update:
+  # 是否自动检查更新
+  auto_check: true
+  # 检查更新的间隔（秒），默认 24 小时
+  check_interval: 86400
+  # 是否只检查稳定版本（忽略 pre-release）
+  stable_only: true

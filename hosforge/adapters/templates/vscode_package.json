@@ -1,0 +1,79 @@
+{
+  "name": "hos-forge",
+  "displayName": "HOS Forge",
+  "description": "HOS security skill orchestration for VSCode",
+  "version": "1.0.0",
+  "publisher": "hos-forge",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Linters",
+    "Testing"
+  ],
+  "activationEvents": [
+    "onCommand:hos.skill.run",
+    "onCommand:hos.skill.list",
+    "onCommand:hos.skill.info",
+    "onCommand:hos.scan.nuclei",
+    "onCommand:hos.scan.semgrep"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "hos.skill.run",
+        "title": "HOS: Run Skill",
+        "category": "HOS"
+      },
+      {
+        "command": "hos.skill.list",
+        "title": "HOS: List Skills",
+        "category": "HOS"
+      },
+      {
+        "command": "hos.skill.info",
+        "title": "HOS: Skill Info",
+        "category": "HOS"
+      },
+      {
+        "command": "hos.scan.nuclei",
+        "title": "HOS: Run Nuclei Scan",
+        "category": "HOS"
+      },
+      {
+        "command": "hos.scan.semgrep",
+        "title": "HOS: Run Semgrep Scan",
+        "category": "HOS"
+      }
+    ],
+    "configuration": {
+      "title": "HOS Forge",
+      "properties": {
+        "hos.forge.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:8000",
+          "description": "HOS Forge server URL"
+        },
+        "hos.forge.autoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically refresh skill list on changes"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "eslint": "^8.0.0"
+  }
+}

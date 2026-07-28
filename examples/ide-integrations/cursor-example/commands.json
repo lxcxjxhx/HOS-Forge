@@ -1,0 +1,115 @@
+{
+  "version": "1.0.0",
+  "description": "Cursor slash commands for HOS-Forge security skills",
+  "commands": [
+    {
+      "name": "nuclei-scan",
+      "description": "Run Nuclei vulnerability scan against a target URL or IP",
+      "arguments": {
+        "target": {
+          "type": "string",
+          "required": true,
+          "description": "Target URL, IP, or domain"
+        },
+        "severity": {
+          "type": "string",
+          "required": false,
+          "enum": ["info", "low", "medium", "high", "critical"],
+          "description": "Minimum severity level to report"
+        },
+        "templates": {
+          "type": "array",
+          "required": false,
+          "description": "Nuclei template paths or tags"
+        }
+      },
+      "mcp_call": {
+        "server_url": "http://localhost:8000",
+        "tool": "nuclei_scan",
+        "method": "POST",
+        "path_template": "/tools/nuclei_scan/execute",
+        "body_template": {
+          "arguments": {
+            "target": "{{target}}",
+            "severity": "{{severity}}",
+            "templates": "{{templates}}"
+          }
+        }
+      },
+      "examples": [
+        "/nuclei-scan https://example.com",
+        "/nuclei-scan https://example.com --severity high",
+        "/nuclei-scan 192.168.1.1 --severity critical"
+      ]
+    },
+    {
+      "name": "semgrep-scan",
+      "description": "Run Semgrep static analysis on source code",
+      "arguments": {
+        "path": {
+          "type": "string",
+          "required": true,
+          "description": "File or directory path to scan"
+        },
+        "language": {
+          "type": "string",
+          "required": false,
+          "description": "Programming language (python, javascript, typescript, java, go, rust, etc.)"
+        },
+        "config": {
+          "type": "string",
+          "required": false,
+          "description": "Semgrep config: auto, p/security-audit, p/owasp-top-ten, or rules file path"
+        }
+      },
+      "mcp_call": {
+        "server_url": "http://localhost:8000",
+        "tool": "semgrep_scan",
+        "method": "POST",
+        "path_template": "/tools/semgrep_scan/execute",
+        "body_template": {
+          "arguments": {
+            "path": "{{path}}",
+            "language": "{{language}}",
+            "config": "{{config}}"
+          }
+        }
+      },
+      "examples": [
+        "/semgrep-scan ./src",
+        "/semgrep-scan ./src --language python",
+        "/semgrep-scan ./src --config p/security-audit",
+        "/semgrep-scan ./src --language javascript --config p/owasp-top-ten"
+      ]
+    },
+    {
+      "name": "full-scan",
+      "description": "Run both Nuclei and Semgrep scans for comprehensive security analysis",
+      "arguments": {
+        "target": {
+          "type": "string",
+          "required": true,
+          "description": "Target URL for Nuclei scan"
+        },
+        "code_path": {
+          "type": "string",
+          "required": true,
+          "description": "Source code path for Semgrep scan"
+        }
+      },
+      "steps": [
+        {
+          "command": "nuclei-scan",
+          "args": { "target": "{{target}}" }
+        },
+        {
+          "command": "semgrep-scan",
+          "args": { "path": "{{code_path}}", "config": "auto" }
+        }
+      ],
+      "examples": [
+        "/full-scan --target https://example.com --code-path ./src"
+      ]
+    }
+  ]
+}
