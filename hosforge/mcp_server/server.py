@@ -3,7 +3,7 @@
 提供动态加载 Skills、转换为 MCP tools 以及健康检查端点。
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
@@ -50,12 +50,7 @@ def create_app(registry: SkillRegistry | None = None) -> FastAPI:
             包含 skills 列表的字典
         """
         skills = registry.list_skills()
-        return {
-            "skills": [
-                {"name": s.name, "description": s.description}
-                for s in skills
-            ]
-        }
+        return {"skills": [{"name": s.name, "description": s.description} for s in skills]}
 
     @app.get("/tools")
     async def list_tools() -> Dict[str, Any]:
@@ -69,9 +64,7 @@ def create_app(registry: SkillRegistry | None = None) -> FastAPI:
         return {"tools": tools}
 
     @app.post("/tools/{tool_name}/execute")
-    async def execute_tool(
-        tool_name: str, arguments: Dict[str, Any] | None = None
-    ) -> JSONResponse:
+    async def execute_tool(tool_name: str, arguments: Dict[str, Any] | None = None) -> JSONResponse:
         """执行指定的 MCP tool。
 
         Args:
@@ -109,8 +102,8 @@ def _create_default_registry() -> SkillRegistry:
 
 def main() -> None:
     """CLI 入口 — 启动 HOS MCP Server"""
-    import sys
     import logging
+    import sys
 
     # 配置日志
     logging.basicConfig(
@@ -144,6 +137,7 @@ def main() -> None:
     # 注册工具
     try:
         from hosforge.mcp_server.tools import register_tools
+
         register_tools(app)
         logger.info("All HOS-Forge MCP tools registered successfully")
     except Exception as e:
@@ -153,10 +147,12 @@ def main() -> None:
     # 验证模式
     if "--verify" in sys.argv:
         import asyncio
+
         async def verify():
             tools = await app.list_tools()
             print(f"✓ {len(tools)} tools registered successfully")
             return True
+
         success = asyncio.run(verify())
         sys.exit(0 if success else 1)
 
@@ -172,6 +168,7 @@ def main() -> None:
                     port = int(sys.argv[i + 1])
             logger.info("HOS MCP Server starting on port %s", port)
             import asyncio
+
             asyncio.run(app.run_http_async(host="0.0.0.0", port=port))
     except KeyboardInterrupt:
         logger.info("Server stopped by user")

@@ -3,13 +3,14 @@
 测试 VSCode、Cursor、Claude Code 适配器的输入输出格式转换和命令注册。
 """
 
-import pytest
 from unittest.mock import Mock
 
-from hosforge.adapters.base_adapter import IDEAdapter, AdapterConfig
-from hosforge.adapters.vscode_adapter import VSCodeAdapter
-from hosforge.adapters.cursor_adapter import CursorAdapter
+import pytest
+
+from hosforge.adapters.base_adapter import AdapterConfig, IDEAdapter
 from hosforge.adapters.claude_code_adapter import ClaudeCodeAdapter
+from hosforge.adapters.cursor_adapter import CursorAdapter
+from hosforge.adapters.vscode_adapter import VSCodeAdapter
 
 
 class TestVSCodeAdapter:
@@ -33,12 +34,12 @@ class TestVSCodeAdapter:
             config={},
         )
         adapter = VSCodeAdapter(config)
-        
+
         result = adapter.format_input(
             command="hos.skill.run",
             args={"skill_name": "test_skill", "param1": "value1"},
         )
-        
+
         assert isinstance(result, dict)
         assert "command" in result
         assert result["command"] == "hos.skill.run"
@@ -51,12 +52,14 @@ class TestVSCodeAdapter:
             config={},
         )
         adapter = VSCodeAdapter(config)
-        
-        result = adapter.format_output({
-            "success": True,
-            "data": {"findings": []},
-        })
-        
+
+        result = adapter.format_output(
+            {
+                "success": True,
+                "data": {"findings": []},
+            }
+        )
+
         assert isinstance(result, dict)
 
     def test_format_output_error(self):
@@ -67,12 +70,14 @@ class TestVSCodeAdapter:
             config={},
         )
         adapter = VSCodeAdapter(config)
-        
-        result = adapter.format_output({
-            "success": False,
-            "error": "Something went wrong",
-        })
-        
+
+        result = adapter.format_output(
+            {
+                "success": False,
+                "error": "Something went wrong",
+            }
+        )
+
         assert isinstance(result, dict)
 
     def test_register_commands(self):
@@ -83,7 +88,7 @@ class TestVSCodeAdapter:
             config={},
         )
         adapter = VSCodeAdapter(config)
-        
+
         commands = adapter.register_commands()
         assert isinstance(commands, list)
 
@@ -109,12 +114,12 @@ class TestCursorAdapter:
             config={},
         )
         adapter = CursorAdapter(config)
-        
+
         result = adapter.format_input(
             command="@hos skill list",
             args={},
         )
-        
+
         assert isinstance(result, dict)
         assert "command" in result
 
@@ -126,12 +131,14 @@ class TestCursorAdapter:
             config={},
         )
         adapter = CursorAdapter(config)
-        
-        result = adapter.format_output({
-            "success": True,
-            "data": {"skills": []},
-        })
-        
+
+        result = adapter.format_output(
+            {
+                "success": True,
+                "data": {"skills": []},
+            }
+        )
+
         assert isinstance(result, dict)
 
     def test_register_commands(self):
@@ -142,7 +149,7 @@ class TestCursorAdapter:
             config={},
         )
         adapter = CursorAdapter(config)
-        
+
         commands = adapter.register_commands()
         assert isinstance(commands, list)
 
@@ -168,12 +175,12 @@ class TestClaudeCodeAdapter:
             config={},
         )
         adapter = ClaudeCodeAdapter(config)
-        
+
         result = adapter.format_input(
             command="/hos-skill-info",
             args={"skill_name": "github_integration"},
         )
-        
+
         assert isinstance(result, dict)
         assert "command" in result
 
@@ -185,12 +192,14 @@ class TestClaudeCodeAdapter:
             config={},
         )
         adapter = ClaudeCodeAdapter(config)
-        
-        result = adapter.format_output({
-            "success": True,
-            "data": {"name": "test_skill"},
-        })
-        
+
+        result = adapter.format_output(
+            {
+                "success": True,
+                "data": {"name": "test_skill"},
+            }
+        )
+
         assert isinstance(result, dict)
 
     def test_register_commands(self):
@@ -201,7 +210,7 @@ class TestClaudeCodeAdapter:
             config={},
         )
         adapter = ClaudeCodeAdapter(config)
-        
+
         commands = adapter.register_commands()
         assert isinstance(commands, list)
 
@@ -216,7 +225,7 @@ class TestAdapterConfig:
             version="2.0.0",
             config={"key": "value"},
         )
-        
+
         assert config.adapter_name == "test_adapter"
         assert config.version == "2.0.0"
         assert config.config["key"] == "value"
@@ -228,5 +237,5 @@ class TestAdapterConfig:
             version="1.0.0",
             config={},
         )
-        
+
         assert config.config == {}

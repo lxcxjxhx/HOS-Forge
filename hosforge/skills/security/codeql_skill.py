@@ -4,7 +4,7 @@ import json
 import subprocess
 from typing import Any, Dict, List, Optional
 
-from hosforge.skills.base_skill import Skill, SkillResult
+from hosforge.skills.base_skill import Skill
 
 
 class CodeQLScanSkill(Skill):
@@ -56,9 +56,13 @@ class CodeQLScanSkill(Skill):
         language: Optional[str] = kwargs.get("language")
 
         cmd: List[str] = [
-            "codeql", "database", "analyze",
-            "--format", "sarif-latest",
-            "--output", "-",
+            "codeql",
+            "database",
+            "analyze",
+            "--format",
+            "sarif-latest",
+            "--output",
+            "-",
         ]
 
         if query_suite:
@@ -77,14 +81,10 @@ class CodeQLScanSkill(Skill):
                 check=False,
             )
         except FileNotFoundError as exc:
-            raise FileNotFoundError(
-                "codeql 命令未找到，请确认已安装 codeql 并加入 PATH"
-            ) from exc
+            raise FileNotFoundError("codeql 命令未找到，请确认已安装 codeql 并加入 PATH") from exc
 
         if proc.returncode not in (0, 1):
-            raise subprocess.CalledProcessError(
-                proc.returncode, cmd, proc.stdout, proc.stderr
-            )
+            raise subprocess.CalledProcessError(proc.returncode, cmd, proc.stdout, proc.stderr)
 
         try:
             sarif = json.loads(proc.stdout)

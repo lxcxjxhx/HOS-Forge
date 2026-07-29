@@ -6,7 +6,7 @@ import inspect
 import logging
 import os
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List
 
 from hosforge.skills.base_skill import Skill
 

@@ -3,17 +3,15 @@
 Tests MCPClient, AdapterMCPBridge, and integration with IDE adapters.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-from typing import Any, Dict
+from unittest.mock import MagicMock, patch
 
 import httpx
+import pytest
 
-from hosforge.adapters.mcp_client import MCPClient
 from hosforge.adapters.adapter_mcp_bridge import AdapterMCPBridge
-from hosforge.adapters.base_adapter import IDEAdapter, AdapterConfig
-from hosforge.adapters.vscode_adapter import VSCodeAdapter
 from hosforge.adapters.cursor_adapter import CursorAdapter
+from hosforge.adapters.mcp_client import MCPClient
+from hosforge.adapters.vscode_adapter import VSCodeAdapter
 
 
 class TestMCPClient:
@@ -177,9 +175,7 @@ class TestAdapterMCPBridge:
         bridge = AdapterMCPBridge(mock_client)
         adapter = VSCodeAdapter()
 
-        result = bridge.execute_via_mcp(
-            adapter, "hos.skill.run", {"skill_name": "test"}
-        )
+        result = bridge.execute_via_mcp(adapter, "hos.skill.run", {"skill_name": "test"})
 
         assert result["status"] == "success"
         assert "data" in result
@@ -196,9 +192,7 @@ class TestAdapterMCPBridge:
         bridge = AdapterMCPBridge(mock_client)
         adapter = VSCodeAdapter()
 
-        result = bridge.execute_via_mcp(
-            adapter, "hos.skill.run", {"skill_name": "nonexistent"}
-        )
+        result = bridge.execute_via_mcp(adapter, "hos.skill.run", {"skill_name": "nonexistent"})
 
         assert result["status"] == "error"
         assert "error" in result["data"]
@@ -291,9 +285,7 @@ class TestIntegrationWithDifferentAdapters:
         bridge = AdapterMCPBridge(mock_client)
         adapter = VSCodeAdapter()
 
-        result = bridge.execute_via_mcp(
-            adapter, "hos.skill.list", {}
-        )
+        result = bridge.execute_via_mcp(adapter, "hos.skill.list", {})
 
         assert result["status"] == "success"
         assert "data" in result
@@ -309,9 +301,7 @@ class TestIntegrationWithDifferentAdapters:
         bridge = AdapterMCPBridge(mock_client)
         adapter = CursorAdapter()
 
-        result = bridge.execute_via_mcp(
-            adapter, "@hos nuclei", {"target": "/path"}
-        )
+        result = bridge.execute_via_mcp(adapter, "@hos nuclei", {"target": "/path"})
 
         assert "content" in result
         assert "metadata" in result

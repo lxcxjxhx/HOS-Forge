@@ -61,10 +61,7 @@ class VSCodeAdapter(IDEAdapter):
             ValueError: If *command* is not in :attr:`supported_commands`.
         """
         if command not in self._supported_commands:
-            raise ValueError(
-                f"Unsupported command '{command}'. "
-                f"Supported: {self._supported_commands}"
-            )
+            raise ValueError(f"Unsupported command '{command}'. " f"Supported: {self._supported_commands}")
         return {"command": command, "args": args}
 
     def format_output(self, result: dict[str, Any]) -> dict[str, Any]:
@@ -106,9 +103,11 @@ class VSCodeAdapter(IDEAdapter):
         commands: list[dict[str, Any]] = []
         for cmd in self._supported_commands:
             title = self._COMMAND_TITLES.get(cmd, cmd)
-            commands.append({
-                "command": cmd,
-                "title": title,
-                "category": "HOS",
-            })
+            commands.append(
+                {
+                    "command": cmd,
+                    "title": title,
+                    "category": "HOS",
+                }
+            )
         return commands

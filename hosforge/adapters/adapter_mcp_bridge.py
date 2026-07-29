@@ -36,9 +36,7 @@ class AdapterMCPBridge:
         """Get the MCP client instance."""
         return self._mcp_client
 
-    def execute_via_mcp(
-        self, adapter: IDEAdapter, command: str, args: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def execute_via_mcp(self, adapter: IDEAdapter, command: str, args: Dict[str, Any]) -> Dict[str, Any]:
         """Execute command through MCP Server using adapter formatting.
 
         Flow:
@@ -104,6 +102,7 @@ class AdapterMCPBridge:
         else:
             # Try to parse JSON if possible
             import json
+
             try:
                 data = json.loads(text) if text else {}
             except (json.JSONDecodeError, ValueError):
@@ -115,9 +114,7 @@ class AdapterMCPBridge:
                 "data": data,
             }
 
-    def start_mcp_server_for_adapter(
-        self, adapter: IDEAdapter, port: int = 8000
-    ) -> subprocess.Popen:
+    def start_mcp_server_for_adapter(self, adapter: IDEAdapter, port: int = 8000) -> subprocess.Popen:
         """Start MCP Server instance for the specified adapter.
 
         Launches a subprocess running the MCP Server on the given port.

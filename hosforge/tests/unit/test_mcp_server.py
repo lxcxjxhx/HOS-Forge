@@ -10,13 +10,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
-
 # 获取项目根目录（hosforge/ 的父目录）
 PROJECT_ROOT = str(Path(__file__).parent.parent.parent.parent)
 
-MCP_VERIFY_SCRIPT = '''
+MCP_VERIFY_SCRIPT = """
 import sys
 import asyncio
 sys.path.insert(0, "{project_root}")
@@ -32,7 +29,7 @@ async def verify():
         print(f"TOOL={{t.name}}")
 
 asyncio.run(verify())
-'''
+"""
 
 
 class TestMCPServerStartup:
@@ -43,7 +40,7 @@ class TestMCPServerStartup:
         script = MCP_VERIFY_SCRIPT.format(project_root=PROJECT_ROOT)
         env = os.environ.copy()
         env["PYTHONPATH"] = PROJECT_ROOT + os.pathsep + env.get("PYTHONPATH", "")
-        
+
         result = subprocess.run(
             [sys.executable, "-c", script],
             capture_output=True,
@@ -89,7 +86,7 @@ class TestMCPServerStartup:
         """测试 MCP Server --help 输出"""
         env = os.environ.copy()
         env["PYTHONPATH"] = PROJECT_ROOT + os.pathsep + env.get("PYTHONPATH", "")
-        
+
         result = subprocess.run(
             [sys.executable, "-m", "hosforge.mcp_server.server", "--help"],
             capture_output=True,
@@ -106,7 +103,7 @@ class TestMCPServerStartup:
         """测试 MCP Server --verify 模式"""
         env = os.environ.copy()
         env["PYTHONPATH"] = PROJECT_ROOT + os.pathsep + env.get("PYTHONPATH", "")
-        
+
         result = subprocess.run(
             [sys.executable, "-m", "hosforge.mcp_server.server", "--verify"],
             capture_output=True,

@@ -1,7 +1,6 @@
 """Claude Code adapter unit tests."""
 
 import pytest
-from typing import Any
 
 from hosforge.adapters import AdapterConfig
 from hosforge.adapters.claude_code_adapter import ClaudeCodeAdapter
@@ -20,11 +19,7 @@ class TestClaudeCodeAdapter:
 
     def test_adapter_initialization_with_custom_config(self):
         """Test adapter instantiation with custom config."""
-        config = AdapterConfig(
-            adapter_name="claude_code",
-            version="2.0.0",
-            config={"key": "value"}
-        )
+        config = AdapterConfig(adapter_name="claude_code", version="2.0.0", config={"key": "value"})
         adapter = ClaudeCodeAdapter(config)
 
         assert adapter.name == "claude_code"
@@ -59,10 +54,7 @@ class TestClaudeCodeAdapter:
         """Test input formatting for /hos-nuclei command."""
         adapter = ClaudeCodeAdapter()
 
-        result = adapter.format_input(
-            "/hos-nuclei",
-            {"target": "example.com", "severity": "high"}
-        )
+        result = adapter.format_input("/hos-nuclei", {"target": "example.com", "severity": "high"})
 
         assert result["command"] == "nuclei"
         assert result["args"] == {"target": "example.com", "severity": "high"}
@@ -71,10 +63,7 @@ class TestClaudeCodeAdapter:
         """Test input formatting for /hos-semgrep command."""
         adapter = ClaudeCodeAdapter()
 
-        result = adapter.format_input(
-            "/hos-semgrep",
-            {"path": "/src", "language": "python"}
-        )
+        result = adapter.format_input("/hos-semgrep", {"path": "/src", "language": "python"})
 
         assert result["command"] == "semgrep"
         assert result["args"] == {"path": "/src", "language": "python"}
@@ -108,12 +97,14 @@ class TestClaudeCodeAdapter:
         """Test output formatting for successful result."""
         adapter = ClaudeCodeAdapter()
 
-        result = adapter.format_output({
-            "status": "success",
-            "message": "Scan completed",
-            "data": {"findings": 5},
-            "tool_results": [{"tool": "nuclei", "result": "ok"}]
-        })
+        result = adapter.format_output(
+            {
+                "status": "success",
+                "message": "Scan completed",
+                "data": {"findings": 5},
+                "tool_results": [{"tool": "nuclei", "result": "ok"}],
+            }
+        )
 
         assert result["response"] == "Scan completed"
         assert result["data"] == {"findings": 5}
@@ -123,12 +114,7 @@ class TestClaudeCodeAdapter:
         """Test output formatting for error result."""
         adapter = ClaudeCodeAdapter()
 
-        result = adapter.format_output({
-            "status": "error",
-            "message": "Scan failed",
-            "data": None,
-            "tool_results": []
-        })
+        result = adapter.format_output({"status": "error", "message": "Scan failed", "data": None, "tool_results": []})
 
         assert result["response"] == "[error] Scan failed"
         assert result["data"] is None

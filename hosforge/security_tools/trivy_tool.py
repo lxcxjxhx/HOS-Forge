@@ -13,6 +13,7 @@ from typing import Any
 
 from hosforge.exceptions import ToolExecutionError, ToolNotFoundError, ToolTimeoutError
 from hosforge.logging_config import get_logger
+
 from hosforge.security_tools.base import BaseSecurityTool, SecurityToolResult
 
 logger = get_logger(__name__)
@@ -183,9 +184,7 @@ class TrivyTool(BaseSecurityTool):
                     logger.warning("Failed to parse Trivy JSON output")
 
             # Trivy 返回码: 0=成功, 1=有漏洞(当exit_code=1时)
-            success = process.returncode == 0 or (
-                process.returncode == 1 and exit_code == 1
-            )
+            success = process.returncode == 0 or (process.returncode == 1 and exit_code == 1)
             error_msg = ""
             if process.returncode not in (0, 1):
                 error_msg = stderr_text or "Trivy encountered an error"

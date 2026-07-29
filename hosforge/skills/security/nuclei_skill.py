@@ -4,7 +4,7 @@ import json
 import subprocess
 from typing import Any, Dict, List, Optional
 
-from hosforge.skills.base_skill import Skill, SkillResult
+from hosforge.skills.base_skill import Skill
 
 
 class NucleiScanSkill(Skill):
@@ -74,14 +74,10 @@ class NucleiScanSkill(Skill):
                 check=False,
             )
         except FileNotFoundError as exc:
-            raise FileNotFoundError(
-                "nuclei 命令未找到，请确认已安装 nuclei 并加入 PATH"
-            ) from exc
+            raise FileNotFoundError("nuclei 命令未找到，请确认已安装 nuclei 并加入 PATH") from exc
 
         if proc.returncode not in (0, 1):
-            raise subprocess.CalledProcessError(
-                proc.returncode, cmd, proc.stdout, proc.stderr
-            )
+            raise subprocess.CalledProcessError(proc.returncode, cmd, proc.stdout, proc.stderr)
 
         findings: List[Dict[str, Any]] = []
         for line in proc.stdout.splitlines():

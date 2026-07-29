@@ -4,7 +4,7 @@ import json
 import subprocess
 from typing import Any, Dict, List, Optional
 
-from hosforge.skills.base_skill import Skill, SkillResult
+from hosforge.skills.base_skill import Skill
 
 
 class GitHubIntegrationSkill(Skill):
@@ -84,9 +84,7 @@ class GitHubIntegrationSkill(Skill):
         repo: str = kwargs["repo"]
 
         if action not in self.VALID_ACTIONS:
-            raise ValueError(
-                f"无效的 action '{action}'，可选值: {self.VALID_ACTIONS}"
-            )
+            raise ValueError(f"无效的 action '{action}'，可选值: {self.VALID_ACTIONS}")
 
         handler = {
             "create_issue": self._create_issue,
@@ -106,10 +104,15 @@ class GitHubIntegrationSkill(Skill):
             raise ValueError("创建 Issue 需要提供 title 参数")
 
         cmd: List[str] = [
-            "gh", "issue", "create",
-            "--repo", repo,
-            "--title", title,
-            "--body", body,
+            "gh",
+            "issue",
+            "create",
+            "--repo",
+            repo,
+            "--title",
+            title,
+            "--body",
+            body,
         ]
 
         if labels:
@@ -132,11 +135,17 @@ class GitHubIntegrationSkill(Skill):
             raise ValueError("创建 PR 需要提供 head 参数")
 
         cmd: List[str] = [
-            "gh", "pr", "create",
-            "--repo", repo,
-            "--title", title,
-            "--body", body,
-            "--head", head,
+            "gh",
+            "pr",
+            "create",
+            "--repo",
+            repo,
+            "--title",
+            title,
+            "--body",
+            body,
+            "--head",
+            head,
         ]
 
         if base:
@@ -151,11 +160,17 @@ class GitHubIntegrationSkill(Skill):
         limit: int = kwargs.get("limit", 30)
 
         cmd: List[str] = [
-            "gh", "issue", "list",
-            "--repo", repo,
-            "--state", state,
-            "--limit", str(limit),
-            "--json", "number,title,state,labels,createdAt",
+            "gh",
+            "issue",
+            "list",
+            "--repo",
+            repo,
+            "--state",
+            state,
+            "--limit",
+            str(limit),
+            "--json",
+            "number,title,state,labels,createdAt",
         ]
 
         result = self._run_gh(cmd)
@@ -194,13 +209,9 @@ class GitHubIntegrationSkill(Skill):
                 check=False,
             )
         except FileNotFoundError as exc:
-            raise FileNotFoundError(
-                "gh 命令未找到，请确认已安装 GitHub CLI 并加入 PATH"
-            ) from exc
+            raise FileNotFoundError("gh 命令未找到，请确认已安装 GitHub CLI 并加入 PATH") from exc
 
         if proc.returncode != 0:
-            raise subprocess.CalledProcessError(
-                proc.returncode, cmd, proc.stdout, proc.stderr
-            )
+            raise subprocess.CalledProcessError(proc.returncode, cmd, proc.stdout, proc.stderr)
 
         return proc.stdout.strip()

@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 class InstallStatus(Enum):
     """Skill 安装状态枚举。"""
-    
+
     NOT_INSTALLED = "not_installed"
     INSTALLED = "installed"
     UPDATE_AVAILABLE = "update_available"
@@ -19,23 +19,23 @@ class InstallStatus(Enum):
 @dataclass
 class SkillVersion:
     """Skill 版本信息。
-    
+
     Attributes:
         version: 版本号字符串（如 "1.0.0"）
         release_date: 发布日期
         changelog: 变更日志
         min_hos_version: 最低 HOS-Forge 版本要求
     """
-    
+
     version: str
     release_date: Optional[str] = None
     changelog: Optional[str] = None
     min_hos_version: Optional[str] = None
-    
+
     def __str__(self) -> str:
         """返回版本号的字符串表示。"""
         return self.version
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式。"""
         return {
@@ -44,7 +44,7 @@ class SkillVersion:
             "changelog": self.changelog,
             "min_hos_version": self.min_hos_version,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "SkillVersion":
         """从字典创建实例。"""
@@ -59,7 +59,7 @@ class SkillVersion:
 @dataclass
 class RemoteSkill:
     """远程 Skill 信息。
-    
+
     Attributes:
         name: Skill 名称
         description: Skill 描述
@@ -73,7 +73,7 @@ class RemoteSkill:
         download_count: 下载次数
         rating: 评分
     """
-    
+
     name: str
     description: str
     author: str = ""
@@ -85,7 +85,7 @@ class RemoteSkill:
     installed_version: Optional[str] = None
     download_count: int = 0
     rating: Optional[float] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式。"""
         return {
@@ -101,26 +101,26 @@ class RemoteSkill:
             "download_count": self.download_count,
             "rating": self.rating,
         }
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "RemoteSkill":
         """从字典创建实例。"""
         versions_data = data.get("versions", [])
         versions = [SkillVersion.from_dict(v) for v in versions_data]
-        
+
         latest_version = None
         if data.get("latest_version"):
             latest_version = SkillVersion.from_dict(data["latest_version"])
         elif versions:
             latest_version = versions[0]
-        
+
         install_status = InstallStatus.NOT_INSTALLED
         if data.get("install_status"):
             try:
                 install_status = InstallStatus(data["install_status"])
             except ValueError:
                 pass
-        
+
         return cls(
             name=data.get("name", ""),
             description=data.get("description", ""),
@@ -134,7 +134,7 @@ class RemoteSkill:
             download_count=data.get("download_count", 0),
             rating=data.get("rating"),
         )
-    
+
     def has_update(self) -> bool:
         """检查是否有可用更新。"""
         if self.install_status != InstallStatus.INSTALLED:
@@ -142,7 +142,7 @@ class RemoteSkill:
         if not self.installed_version or not self.latest_version:
             return False
         return self.installed_version != self.latest_version.version
-    
+
     def matches_query(self, query: str) -> bool:
         """检查 Skill 是否匹配搜索查询。"""
         query_lower = query.lower()

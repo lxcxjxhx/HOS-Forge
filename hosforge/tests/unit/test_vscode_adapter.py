@@ -1,10 +1,9 @@
 """VSCode adapter unit tests."""
 
 import pytest
-from typing import Any
 
-from hosforge.adapters.vscode_adapter import VSCodeAdapter
 from hosforge.adapters.base_adapter import AdapterConfig
+from hosforge.adapters.vscode_adapter import VSCodeAdapter
 
 
 class TestVSCodeAdapter:

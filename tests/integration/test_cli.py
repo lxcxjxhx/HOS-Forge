@@ -3,20 +3,21 @@
 测试命令行界面的参数解析、命令执行和输出格式。
 """
 
-import pytest
-from unittest.mock import Mock, patch
 import argparse
+from unittest.mock import Mock, patch
+
+import pytest
 
 from hosforge.cli.main import (
-    create_parser,
-    parse_skill_args,
-    format_skill_list_table,
-    format_skill_list_json,
-    format_skill_info_table,
-    format_skill_info_json,
-    cmd_skill_list,
     cmd_skill_info,
+    cmd_skill_list,
     cmd_skill_run,
+    create_parser,
+    format_skill_info_json,
+    format_skill_info_table,
+    format_skill_list_json,
+    format_skill_list_table,
+    parse_skill_args,
 )
 from hosforge.skills.base_skill import Skill
 
@@ -34,7 +35,7 @@ class TestCLIParser:
         """测试解析 skill list 命令。"""
         parser = create_parser()
         args = parser.parse_args(["skill", "list"])
-        
+
         assert args.command == "skill"
         assert args.skill_command == "list"
         assert args.format == "table"
@@ -43,7 +44,7 @@ class TestCLIParser:
         """测试解析带 JSON 格式的 skill list 命令。"""
         parser = create_parser()
         args = parser.parse_args(["skill", "list", "--format", "json"])
-        
+
         assert args.command == "skill"
         assert args.skill_command == "list"
         assert args.format == "json"
@@ -52,7 +53,7 @@ class TestCLIParser:
         """测试解析 skill info 命令。"""
         parser = create_parser()
         args = parser.parse_args(["skill", "info", "github_integration"])
-        
+
         assert args.command == "skill"
         assert args.skill_command == "info"
         assert args.skill_name == "github_integration"
@@ -60,12 +61,16 @@ class TestCLIParser:
     def test_parse_skill_run_command(self):
         """测试解析 skill run 命令。"""
         parser = create_parser()
-        args = parser.parse_args([
-            "skill", "run", "nuclei_scan",
-            "target=https://example.com",
-            "severity=high",
-        ])
-        
+        args = parser.parse_args(
+            [
+                "skill",
+                "run",
+                "nuclei_scan",
+                "target=https://example.com",
+                "severity=high",
+            ]
+        )
+
         assert args.command == "skill"
         assert args.skill_command == "run"
         assert args.skill_name == "nuclei_scan"
@@ -87,12 +92,14 @@ class TestParseSkillArgs:
 
     def test_parse_multiple_args(self):
         """测试解析多个参数。"""
-        result = parse_skill_args([
-            "target=https://example.com",
-            "severity=high",
-            "timeout=600",
-        ])
-        
+        result = parse_skill_args(
+            [
+                "target=https://example.com",
+                "severity=high",
+                "timeout=600",
+            ]
+        )
+
         assert result["target"] == "https://example.com"
         assert result["severity"] == "high"
         assert result["timeout"] == 600  # JSON 解析会将数字转换为 int
@@ -104,7 +111,7 @@ class TestParseSkillArgs:
 
     def test_parse_json_array(self):
         """测试解析 JSON 数组。"""
-        result = parse_skill_args(['items=[1, 2, 3]'])
+        result = parse_skill_args(["items=[1, 2, 3]"])
         assert result["items"] == [1, 2, 3]
 
     def test_parse_invalid_format(self):
@@ -137,7 +144,7 @@ class TestFormatSkillList:
                 "param1": {"type": "string"},
             },
         }
-        
+
         result = format_skill_list_table([skill])
         assert "test_skill" in result
         assert "Test description" in result
@@ -148,7 +155,7 @@ class TestFormatSkillList:
         skill.name = "test_skill"
         skill.description = "Test description"
         skill.parameters = {"type": "object", "properties": {}}
-        
+
         result = format_skill_list_json([skill])
         assert '"name": "test_skill"' in result
         assert '"description": "Test description"' in result
@@ -172,7 +179,7 @@ class TestFormatSkillInfo:
             },
             "required": ["param1"],
         }
-        
+
         result = format_skill_info_table(skill)
         assert "test_skill" in result
         assert "Test description" in result
@@ -184,7 +191,7 @@ class TestFormatSkillInfo:
         skill.name = "test_skill"
         skill.description = "Test description"
         skill.parameters = {"type": "object", "properties": {}}
-        
+
         result = format_skill_info_json(skill)
         assert '"name": "test_skill"' in result
         assert '"description": "Test description"' in result
@@ -203,10 +210,10 @@ class TestCLICommands:
         mock_skill.parameters = {"type": "object", "properties": {}}
         mock_registry.list_skills.return_value = [mock_skill]
         mock_create_registry.return_value = mock_registry
-        
+
         args = argparse.Namespace(format="table")
         result = cmd_skill_list(args)
-        
+
         assert result == 0
         captured = capsys.readouterr()
         assert "test_skill" in captured.out
@@ -221,10 +228,10 @@ class TestCLICommands:
         mock_skill.parameters = {"type": "object", "properties": {}}
         mock_registry.list_skills.return_value = [mock_skill]
         mock_create_registry.return_value = mock_registry
-        
+
         args = argparse.Namespace(format="json")
         result = cmd_skill_list(args)
-        
+
         assert result == 0
         captured = capsys.readouterr()
         assert '"name": "test_skill"' in captured.out
@@ -239,10 +246,10 @@ class TestCLICommands:
         mock_skill.parameters = {"type": "object", "properties": {}}
         mock_registry.get.return_value = mock_skill
         mock_create_registry.return_value = mock_registry
-        
+
         args = argparse.Namespace(skill_name="test_skill", format="table")
         result = cmd_skill_info(args)
-        
+
         assert result == 0
 
     @patch("hosforge.cli.main.create_default_registry")
@@ -251,10 +258,10 @@ class TestCLICommands:
         mock_registry = Mock()
         mock_registry.get.return_value = None
         mock_create_registry.return_value = mock_registry
-        
+
         args = argparse.Namespace(skill_name="nonexistent", format="table")
         result = cmd_skill_info(args)
-        
+
         assert result == 1
         captured = capsys.readouterr()
         assert "not found" in captured.err.lower()
@@ -263,20 +270,20 @@ class TestCLICommands:
     def test_cmd_skill_run_success(self, mock_create_registry, capsys):
         """测试 skill run 命令成功。"""
         from hosforge.skills.base_skill import SkillResult
-        
+
         mock_registry = Mock()
         mock_registry.execute_skill.return_value = SkillResult(
             success=True,
             data={"result": "success"},
         )
         mock_create_registry.return_value = mock_registry
-        
+
         args = argparse.Namespace(
             skill_name="test_skill",
             args=["param1=value1"],
         )
         result = cmd_skill_run(args)
-        
+
         assert result == 0
         captured = capsys.readouterr()
         assert "Success" in captured.out
@@ -285,20 +292,20 @@ class TestCLICommands:
     def test_cmd_skill_run_failure(self, mock_create_registry, capsys):
         """测试 skill run 命令失败。"""
         from hosforge.skills.base_skill import SkillResult
-        
+
         mock_registry = Mock()
         mock_registry.execute_skill.return_value = SkillResult(
             success=False,
             error="Execution failed",
         )
         mock_create_registry.return_value = mock_registry
-        
+
         args = argparse.Namespace(
             skill_name="test_skill",
             args=[],
         )
         result = cmd_skill_run(args)
-        
+
         assert result == 1
         captured = capsys.readouterr()
         assert "Execution failed" in captured.err

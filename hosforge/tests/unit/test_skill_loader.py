@@ -1,7 +1,8 @@
 """Skill 加载器和元数据提取器单元测试。"""
 
-import pytest
 from typing import Any, Dict
+
+import pytest
 
 from hosforge.skills import Skill
 from hosforge.skills.loader import SkillLoader

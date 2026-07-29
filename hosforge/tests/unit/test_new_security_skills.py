@@ -1,13 +1,12 @@
 """Trivy 和 CodeQL 安全 Skill 单元测试。"""
 
 import json
-import subprocess
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from hosforge.skills.security.trivy_skill import TrivyScanSkill
 from hosforge.skills.security.codeql_skill import CodeQLScanSkill
+from hosforge.skills.security.trivy_skill import TrivyScanSkill
 
 
 class TestTrivyScanSkill:

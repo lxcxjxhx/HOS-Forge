@@ -65,10 +65,7 @@ class ClaudeCodeAdapter(IDEAdapter):
             ValueError: If *command* is not a recognised slash command.
         """
         if command not in self._supported_commands:
-            raise ValueError(
-                f"Unsupported command '{command}'. "
-                f"Supported: {self._supported_commands}"
-            )
+            raise ValueError(f"Unsupported command '{command}'. " f"Supported: {self._supported_commands}")
         internal_name = _COMMAND_MAP[command]
         return {"command": internal_name, "args": args}
 

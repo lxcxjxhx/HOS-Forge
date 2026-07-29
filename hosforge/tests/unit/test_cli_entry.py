@@ -1,4 +1,5 @@
 """Unit tests for CLI entry point."""
+
 import sys
 from unittest.mock import MagicMock, patch
 
@@ -60,8 +61,6 @@ class TestTaskflowCommand:
     @patch("hosforge.cli.taskflow_cmd.WorkflowParser")
     def test_taskflow_list_with_workflows(self, mock_parser, capsys):
         """Test taskflow list with mock workflows."""
-        from pathlib import Path
-
         # Create a temporary workflow directory structure
         with patch("hosforge.cli.taskflow_cmd.Path") as mock_path:
             mock_builtin_dir = MagicMock()

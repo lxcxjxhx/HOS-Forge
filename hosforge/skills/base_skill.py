@@ -108,9 +108,9 @@ class Skill(ABC):
             "array": list,
             "object": dict,
         }
-        
+
         expected = type_map.get(expected_type)
         if expected is None:
             return True
-        
+
         return isinstance(value, expected)

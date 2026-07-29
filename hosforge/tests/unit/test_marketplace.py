@@ -1,16 +1,15 @@
 """Skill 市场功能单元测试。"""
 
-import pytest
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
 
 from hosforge.skills.marketplace import (
-    MarketplaceClient,
-    RemoteSkillRegistry,
-    RemoteSkill,
-    SkillVersion,
     InstallStatus,
+    MarketplaceClient,
+    RemoteSkill,
+    RemoteSkillRegistry,
+    SkillVersion,
 )
 
 
@@ -20,10 +19,7 @@ class TestSkillVersion:
     def test_skill_version_creation(self):
         """测试 SkillVersion 实例化。"""
         version = SkillVersion(
-            version="1.0.0",
-            release_date="2024-01-15",
-            changelog="Initial release",
-            min_hos_version="0.1.0"
+            version="1.0.0", release_date="2024-01-15", changelog="Initial release", min_hos_version="0.1.0"
         )
         assert version.version == "1.0.0"
         assert version.release_date == "2024-01-15"
@@ -38,11 +34,7 @@ class TestSkillVersion:
 
     def test_skill_version_from_dict(self):
         """测试从字典创建 SkillVersion。"""
-        data = {
-            "version": "2.0.0",
-            "release_date": "2024-02-01",
-            "changelog": "Major update"
-        }
+        data = {"version": "2.0.0", "release_date": "2024-02-01", "changelog": "Major update"}
         version = SkillVersion.from_dict(data)
         assert version.version == "2.0.0"
         assert version.release_date == "2024-02-01"
@@ -53,12 +45,7 @@ class TestRemoteSkill:
 
     def test_remote_skill_creation(self):
         """测试 RemoteSkill 实例化。"""
-        skill = RemoteSkill(
-            name="test-skill",
-            description="A test skill",
-            author="Test Author",
-            tags=["test", "demo"]
-        )
+        skill = RemoteSkill(name="test-skill", description="A test skill", author="Test Author", tags=["test", "demo"])
         assert skill.name == "test-skill"
         assert skill.description == "A test skill"
         assert skill.author == "Test Author"
@@ -67,11 +54,7 @@ class TestRemoteSkill:
 
     def test_remote_skill_to_dict(self):
         """测试 RemoteSkill 转换为字典。"""
-        skill = RemoteSkill(
-            name="test-skill",
-            description="Test",
-            latest_version=SkillVersion(version="1.0.0")
-        )
+        skill = RemoteSkill(name="test-skill", description="Test", latest_version=SkillVersion(version="1.0.0"))
         data = skill.to_dict()
         assert data["name"] == "test-skill"
         assert data["latest_version"]["version"] == "1.0.0"
@@ -84,7 +67,7 @@ class TestRemoteSkill:
             "author": "Author",
             "versions": [{"version": "1.0.0"}],
             "tags": ["test"],
-            "download_count": 100
+            "download_count": 100,
         }
         skill = RemoteSkill.from_dict(data)
         assert skill.name == "test-skill"
@@ -95,10 +78,7 @@ class TestRemoteSkill:
     def test_remote_skill_matches_query(self):
         """测试 RemoteSkill 搜索匹配。"""
         skill = RemoteSkill(
-            name="code-review",
-            description="Automated code review",
-            author="HOS Team",
-            tags=["python", "quality"]
+            name="code-review", description="Automated code review", author="HOS Team", tags=["python", "quality"]
         )
         assert skill.matches_query("code") is True
         assert skill.matches_query("review") is True
@@ -112,7 +92,7 @@ class TestRemoteSkill:
             description="Test",
             install_status=InstallStatus.INSTALLED,
             installed_version="1.0.0",
-            latest_version=SkillVersion(version="1.1.0")
+            latest_version=SkillVersion(version="1.1.0"),
         )
         assert skill.has_update() is True
 
@@ -180,10 +160,7 @@ class TestMarketplaceClient:
         self.temp_dir = tempfile.mkdtemp()
         self.install_dir = Path(self.temp_dir) / "skills"
         self.cache_dir = Path(self.temp_dir) / "cache"
-        self.client = MarketplaceClient(
-            install_dir=self.install_dir,
-            cache_dir=self.cache_dir
-        )
+        self.client = MarketplaceClient(install_dir=self.install_dir, cache_dir=self.cache_dir)
 
     def teardown_method(self):
         """每个测试方法后的清理。"""
@@ -241,9 +218,10 @@ class TestMarketplaceClient:
         # 模拟旧版本
         metadata_file = self.install_dir / "code-review" / "metadata.json"
         import json
+
         with open(metadata_file, "w") as f:
             json.dump({"name": "code-review", "version": "1.0.0"}, f)
-        
+
         # 更新
         result = self.client.update_skill("code-review")
         assert result["success"] is True
@@ -265,10 +243,10 @@ class TestMarketplaceClient:
         # 初始为空
         installed = self.client.get_installed_skills()
         assert len(installed) == 0
-        
+
         # 安装一个 skill
         self.client.install_skill("code-review")
-        
+
         # 再次检查
         installed = self.client.get_installed_skills()
         assert len(installed) == 1

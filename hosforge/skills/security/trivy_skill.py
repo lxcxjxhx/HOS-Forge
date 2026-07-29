@@ -4,7 +4,7 @@ import json
 import subprocess
 from typing import Any, Dict, List, Optional
 
-from hosforge.skills.base_skill import Skill, SkillResult
+from hosforge.skills.base_skill import Skill
 
 
 class TrivyScanSkill(Skill):
@@ -70,14 +70,10 @@ class TrivyScanSkill(Skill):
                 check=False,
             )
         except FileNotFoundError as exc:
-            raise FileNotFoundError(
-                "trivy 命令未找到，请确认已安装 trivy 并加入 PATH"
-            ) from exc
+            raise FileNotFoundError("trivy 命令未找到，请确认已安装 trivy 并加入 PATH") from exc
 
         if proc.returncode not in (0, 1):
-            raise subprocess.CalledProcessError(
-                proc.returncode, cmd, proc.stdout, proc.stderr
-            )
+            raise subprocess.CalledProcessError(proc.returncode, cmd, proc.stdout, proc.stderr)
 
         try:
             output = json.loads(proc.stdout)

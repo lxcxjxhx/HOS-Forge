@@ -1,23 +1,23 @@
 """CLI skills 命令单元测试。"""
 
 import json
-import pytest
 from typing import Any, Dict
-from unittest.mock import patch, MagicMock
-from io import StringIO
+from unittest.mock import patch
+
+import pytest
 
 from hosforge.cli.main import (
-    main,
-    create_parser,
-    parse_skill_args,
-    format_skill_list_table,
-    format_skill_list_json,
-    format_skill_info_table,
-    format_skill_info_json,
     _generate_skill_examples,
     create_default_registry,
+    create_parser,
+    format_skill_info_json,
+    format_skill_info_table,
+    format_skill_list_json,
+    format_skill_list_table,
+    main,
+    parse_skill_args,
 )
-from hosforge.skills import Skill, SkillResult, SkillRegistry
+from hosforge.skills import Skill, SkillRegistry, SkillResult
 
 
 class ConcreteSkill(Skill):
@@ -314,12 +314,15 @@ class TestCLICommands:
                 metadata={"skill_name": "github_integration"},
             )
 
-            exit_code = main([
-                "skill", "run",
-                "github_integration",
-                "action=list_issues",
-                "repo=test/repo",
-            ])
+            exit_code = main(
+                [
+                    "skill",
+                    "run",
+                    "github_integration",
+                    "action=list_issues",
+                    "repo=test/repo",
+                ]
+            )
 
             assert exit_code == 0
             captured = capsys.readouterr()
@@ -334,10 +337,13 @@ class TestCLICommands:
                 error="Mocked error",
             )
 
-            exit_code = main([
-                "skill", "run",
-                "nonexistent_skill",
-            ])
+            exit_code = main(
+                [
+                    "skill",
+                    "run",
+                    "nonexistent_skill",
+                ]
+            )
 
             assert exit_code == 1
             captured = capsys.readouterr()
@@ -345,11 +351,14 @@ class TestCLICommands:
 
     def test_skill_run_command_invalid_args(self, capsys):
         """测试 skill run 命令（无效参数格式）。"""
-        exit_code = main([
-            "skill", "run",
-            "github_integration",
-            "invalid_arg_format",
-        ])
+        exit_code = main(
+            [
+                "skill",
+                "run",
+                "github_integration",
+                "invalid_arg_format",
+            ]
+        )
 
         assert exit_code == 1
         captured = capsys.readouterr()
@@ -412,12 +421,15 @@ class TestCreateParser:
     def test_parser_skill_run(self):
         """测试解析 skill run 命令。"""
         parser = create_parser()
-        args = parser.parse_args([
-            "skill", "run",
-            "test_skill",
-            "key1=value1",
-            "key2=value2",
-        ])
+        args = parser.parse_args(
+            [
+                "skill",
+                "run",
+                "test_skill",
+                "key1=value1",
+                "key2=value2",
+            ]
+        )
 
         assert args.command == "skill"
         assert args.skill_command == "run"

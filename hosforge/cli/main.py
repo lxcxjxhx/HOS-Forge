@@ -71,11 +71,13 @@ def format_skill_list_json(skills: List[Any]) -> str:
     """
     data = []
     for skill in skills:
-        data.append({
-            "name": skill.name,
-            "description": skill.description,
-            "parameters": skill.parameters,
-        })
+        data.append(
+            {
+                "name": skill.name,
+                "description": skill.description,
+                "parameters": skill.parameters,
+            }
+        )
     return json.dumps(data, indent=2, ensure_ascii=False)
 
 

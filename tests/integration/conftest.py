@@ -4,26 +4,27 @@ This module provides pytest fixtures for end-to-end integration testing,
 including skill instances, registry setup, and test environment configuration.
 """
 
-import pytest
-from typing import Dict, Any
+from typing import Any, Dict
 from unittest.mock import MagicMock
 
+import pytest
+
+from hosforge.adapters.adapter_mcp_bridge import AdapterMCPBridge
+from hosforge.adapters.adapter_registry import AdapterRegistry
+from hosforge.adapters.claude_code_adapter import ClaudeCodeAdapter
+from hosforge.adapters.cursor_adapter import CursorAdapter
+from hosforge.adapters.mcp_client import MCPClient
+from hosforge.adapters.vscode_adapter import VSCodeAdapter
+from hosforge.mcp_server.server import create_app
+from hosforge.mcp_server.skill_bridge import MCPToolExecutor, SkillToMCPTool
 from hosforge.skills.base_skill import Skill, SkillResult
-from hosforge.skills.registry import SkillRegistry
 from hosforge.skills.loader import SkillLoader
+from hosforge.skills.registry import SkillRegistry
 from hosforge.skills.security import (
     GitHubIntegrationSkill,
     NucleiScanSkill,
     SemgrepScanSkill,
 )
-from hosforge.mcp_server.server import create_app
-from hosforge.mcp_server.skill_bridge import SkillToMCPTool, MCPToolExecutor
-from hosforge.adapters.vscode_adapter import VSCodeAdapter
-from hosforge.adapters.cursor_adapter import CursorAdapter
-from hosforge.adapters.claude_code_adapter import ClaudeCodeAdapter
-from hosforge.adapters.adapter_registry import AdapterRegistry
-from hosforge.adapters.adapter_mcp_bridge import AdapterMCPBridge
-from hosforge.adapters.mcp_client import MCPClient
 
 
 class MockSkill(Skill):
@@ -38,11 +39,10 @@ class MockSkill(Skill):
         super().__init__(
             name=name,
             description=description,
-            parameters=parameters or {
+            parameters=parameters
+            or {
                 "type": "object",
-                "properties": {
-                    "input": {"type": "string", "description": "Test input"}
-                },
+                "properties": {"input": {"type": "string", "description": "Test input"}},
                 "required": ["input"],
             },
         )
@@ -81,6 +81,7 @@ class ErrorSkill(Skill):
             raise RuntimeError("Test runtime error")
         elif error_type == "timeout":
             import time
+
             time.sleep(10)  # Will timeout
         return {"result": "should not reach here"}
 
@@ -199,6 +200,7 @@ def adapter_mcp_bridge(mock_mcp_client):
 def test_data_dir():
     """Provide path to test data directory."""
     from pathlib import Path
+
     return Path(__file__).parent / "test_data"
 
 

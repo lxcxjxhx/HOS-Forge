@@ -1,8 +1,8 @@
 """MCP Server 与 Skill 桥接层单元测试。"""
 
-import pytest
 from typing import Any, Dict
 
+import pytest
 from fastapi.testclient import TestClient
 
 from hosforge.mcp_server.server import create_app
@@ -204,9 +204,7 @@ class TestToolsEndpoint:
 
     def test_execute_tool_success(self, client: TestClient):
         """测试成功执行 tool。"""
-        response = client.post(
-            "/tools/dummy/execute", json={"arguments": {"value": "hello"}}
-        )
+        response = client.post("/tools/dummy/execute", json={"arguments": {"value": "hello"}})
         assert response.status_code == 200
 
         data = response.json()

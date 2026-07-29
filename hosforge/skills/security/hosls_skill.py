@@ -4,7 +4,7 @@ import json
 import subprocess
 from typing import Any, Dict, List, Optional
 
-from hosforge.skills.base_skill import Skill, SkillResult
+from hosforge.skills.base_skill import Skill
 
 
 class HOSLSScanSkill(Skill):
@@ -63,10 +63,14 @@ class HOSLSScanSkill(Skill):
         output_format: str = kwargs.get("output_format", "json")
 
         cmd: List[str] = [
-            "hos-ls", "scan",
-            "--target", target,
-            "--type", scan_type,
-            "--format", output_format,
+            "hos-ls",
+            "scan",
+            "--target",
+            target,
+            "--type",
+            scan_type,
+            "--format",
+            output_format,
         ]
 
         if severity:
@@ -81,14 +85,10 @@ class HOSLSScanSkill(Skill):
                 check=False,
             )
         except FileNotFoundError as exc:
-            raise FileNotFoundError(
-                "hos-ls 命令未找到，请确认已安装 HOS-LS 并加入 PATH"
-            ) from exc
+            raise FileNotFoundError("hos-ls 命令未找到，请确认已安装 HOS-LS 并加入 PATH") from exc
 
         if proc.returncode not in (0, 1):
-            raise subprocess.CalledProcessError(
-                proc.returncode, cmd, proc.stdout, proc.stderr
-            )
+            raise subprocess.CalledProcessError(proc.returncode, cmd, proc.stdout, proc.stderr)
 
         try:
             results = json.loads(proc.stdout)

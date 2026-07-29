@@ -29,10 +29,14 @@ class SkillToMCPTool:
         Returns:
             符合 MCP tool 规范的字典，包含 name、description、inputSchema
         """
-        input_schema = skill.parameters if skill.parameters else {
-            "type": "object",
-            "properties": {},
-        }
+        input_schema = (
+            skill.parameters
+            if skill.parameters
+            else {
+                "type": "object",
+                "properties": {},
+            }
+        )
 
         return {
             "name": skill.name,
@@ -73,9 +77,7 @@ class MCPToolExecutor:
         """获取底层的 SkillRegistry。"""
         return self._registry
 
-    def execute(
-        self, tool_name: str, arguments: Dict[str, Any] | None = None
-    ) -> Dict[str, Any]:
+    def execute(self, tool_name: str, arguments: Dict[str, Any] | None = None) -> Dict[str, Any]:
         """执行指定 tool 的调用。
 
         Args:
@@ -101,11 +103,7 @@ class MCPToolExecutor:
         """
         if result.success:
             payload = result.data if result.data is not None else {}
-            text = (
-                json.dumps(payload, ensure_ascii=False, default=str)
-                if not isinstance(payload, str)
-                else payload
-            )
+            text = json.dumps(payload, ensure_ascii=False, default=str) if not isinstance(payload, str) else payload
             return {"content": [{"type": "text", "text": text}], "isError": False}
 
         error_text = result.error or "Unknown error"
