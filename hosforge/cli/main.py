@@ -13,6 +13,7 @@ from hosforge.skills.security import (
     NucleiScanSkill,
     SemgrepScanSkill,
 )
+from hosforge.cli.skill_init import cmd_skill_init
 
 
 def create_default_registry() -> SkillRegistry:
@@ -470,6 +471,14 @@ def create_parser() -> argparse.ArgumentParser:
         help="Skill 参数，格式: key=value",
     )
 
+    # skill init
+    init_parser = skill_subparsers.add_parser("init", help="初始化新的 skill 项目")
+    init_parser.add_argument("name", help="Skill 名称（snake_case）")
+    init_parser.add_argument("--description", "-d", default="A custom HOS-Forge skill", help="Skill 描述")
+    init_parser.add_argument("--output", "-o", help="输出目录（默认当前目录）")
+    init_parser.add_argument("--no-tests", dest="with_tests", action="store_false", help="不生成测试文件")
+    init_parser.add_argument("--no-readme", dest="with_readme", action="store_false", help="不生成 README 文件")
+
     # skill market 子命令组
     market_parser = skill_subparsers.add_parser("market", help="Skill 市场管理命令")
     market_subparsers = market_parser.add_subparsers(dest="market_command", help="Skill 市场子命令")
@@ -540,6 +549,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             return cmd_skill_info(args)
         elif args.skill_command == "run":
             return cmd_skill_run(args)
+        elif args.skill_command == "init":
+            return cmd_skill_init(args)
         elif args.skill_command == "market":
             if getattr(args, "market_command", None) is None:
                 parser.parse_args(["skill", "market", "--help"])
