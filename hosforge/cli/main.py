@@ -421,6 +421,94 @@ def cmd_skill_market_search(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_skill_market_lock(args: argparse.Namespace) -> int:
+    """执行 skill market lock 命令。
+
+    Args:
+        args: 解析后的命令行参数
+
+    Returns:
+        退出码
+    """
+    client = MarketplaceClient()
+    version = getattr(args, "version", None)
+
+    # 如果未指定版本，使用当前安装版本或最新版本
+    if version is None:
+        installed_version = client._get_installed_version(args.name)
+        if installed_version:
+            version = installed_version
+        else:
+            # 获取最新版本
+            skill = client.registry.get_skill(args.name)
+            if skill and skill.latest_version:
+                version = skill.latest_version.version
+            else:
+                print(f"Error: Cannot determine version for '{args.name}'. Specify --version.", file=sys.stderr)
+                return 1
+
+    client.lockfile_manager.lock_skill(args.name, version)
+    print(f"Locked {args.name} to version {version}")
+    return 0
+
+
+def cmd_skill_market_unlock(args: argparse.Namespace) -> int:
+    """执行 skill market unlock 命令。
+
+    Args:
+        args: 解析后的命令行参数
+
+    Returns:
+        退出码
+    """
+    client = MarketplaceClient()
+    result = client.lockfile_manager.unlock_skill(args.name)
+
+    if result:
+        print(f"Unlocked {args.name}")
+        return 0
+    else:
+        print(f"Error: {args.name} is not locked", file=sys.stderr)
+        return 1
+
+
+def cmd_skill_market_list_locked(args: argparse.Namespace) -> int:
+    """执行 skill market list-locked 命令。
+
+    Args:
+        args: 解析后的命令行参数
+
+    Returns:
+        退出码
+    """
+    client = MarketplaceClient()
+    locked = client.lockfile_manager.list_locked()
+
+    if args.format == "json":
+        print(json.dumps([e.to_dict() for e in locked], indent=2, ensure_ascii=False))
+    else:
+        if not locked:
+            print("No skills are locked.")
+            return 0
+
+        name_width = max(len(e.name) for e in locked)
+        name_width = max(name_width, 4)
+        version_width = max(len(e.version) for e in locked)
+        version_width = max(version_width, 7)
+
+        lines = []
+        header = f"{'Name':<{name_width}}  {'Version':<{version_width}}  Locked At"
+        lines.append(header)
+        lines.append("-" * len(header))
+
+        for entry in locked:
+            lines.append(f"{entry.name:<{name_width}}  {entry.version:<{version_width}}  {entry.locked_at}")
+
+        print("\n".join(lines))
+
+    return 0
+
+
 def create_parser() -> argparse.ArgumentParser:
     """创建命令行参数解析器。
 
@@ -511,6 +599,24 @@ def create_parser() -> argparse.ArgumentParser:
         help="输出格式 (默认: table)",
     )
 
+    # skill market lock
+    market_lock_parser = market_subparsers.add_parser("lock", help="锁定 skill 版本")
+    market_lock_parser.add_argument("name", help="Skill 名称")
+    market_lock_parser.add_argument("--version", help="锁定版本（可选，默认使用已安装版本或最新版本）")
+
+    # skill market unlock
+    market_unlock_parser = market_subparsers.add_parser("unlock", help="解锁 skill 版本")
+    market_unlock_parser.add_argument("name", help="Skill 名称")
+
+    # skill market list-locked
+    market_list_locked_parser = market_subparsers.add_parser("list-locked", help="列出已锁定的 skills")
+    market_list_locked_parser.add_argument(
+        "--format",
+        choices=["table", "json"],
+        default="table",
+        help="输出格式 (默认: table)",
+    )
+
     # taskflow 命令（保留兼容性）
     taskflow_parser = subparsers.add_parser("taskflow", help="任务流管理")
     taskflow_parser.add_argument("taskflow_args", nargs="*", help="任务流参数")
@@ -563,6 +669,12 @@ def main(argv: Optional[List[str]] = None) -> int:
                 return cmd_skill_market_uninstall(args)
             elif args.market_command == "search":
                 return cmd_skill_market_search(args)
+            elif args.market_command == "lock":
+                return cmd_skill_market_lock(args)
+            elif args.market_command == "unlock":
+                return cmd_skill_market_unlock(args)
+            elif args.market_command == "list-locked":
+                return cmd_skill_market_list_locked(args)
 
     elif args.command == "taskflow":
         return cmd_taskflow(args)
