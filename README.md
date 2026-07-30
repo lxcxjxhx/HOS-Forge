@@ -12,6 +12,8 @@ HOS-Forge 是一个模块化的安全工具集成平台，通过 **Skill 系统*
 ### 核心特性
 
 - 🔧 **Skill 系统**: 模块化封装安全工具，支持动态加载和自动注册
+- 🛒 **Skill 市场**: 远程 skill 发现、安装、更新和版本锁定
+- 🔗 **Skill 管线**: 多 skill 编排执行，支持条件分支、错误处理和重试策略
 - 🔌 **IDE 适配器**: 统一接口适配多种 IDE，提供一致的用户体验
 - 🌐 **MCP Server**: 基于 HTTP 的 Model Context Protocol 服务，支持远程调用
 - ⚡ **CLI 工具**: 命令行界面快速执行安全扫描
@@ -297,6 +299,79 @@ class MyCustomSkill(Skill):
 
 详细开发指南请参考 [Skill 开发文档](docs/skills/README.md)。
 
+## 🛒 Skill 市场
+
+### 搜索和安装 Skill
+
+```bash
+# 搜索可用的 skills
+hos skill market search nuclei
+
+# 安装 skill
+hos skill market install nuclei-scanner
+
+# 更新 skill
+hos skill market update nuclei-scanner
+
+# 卸载 skill
+hos skill market uninstall nuclei-scanner
+```
+
+### 版本锁定
+
+锁定 skill 版本以防止意外更新：
+
+```bash
+# 锁定当前版本
+hos skill market lock nuclei-scanner
+
+# 锁定特定版本
+hos skill market lock nuclei-scanner --version 1.2.0
+
+# 解锁 skill
+hos skill market unlock nuclei-scanner
+
+# 查看已锁定的 skills
+hos skill market list-locked
+```
+
+## 🔗 Skill 管线编排
+
+将多个 skill 串联为管线执行，支持条件分支和错误处理：
+
+```python
+from hosforge.skills import SkillRegistry
+from hosforge.skills.pipeline import SkillPipeline, ErrorStrategy, RetryConfig
+
+# 创建管线
+pipeline = SkillPipeline("security_scan", "综合安全扫描")
+
+# 添加步骤
+pipeline.add_step(semgrep_skill)
+pipeline.add_step(nuclei_skill, condition=lambda ctx: "url" in ctx)
+pipeline.add_step(report_skill, error_strategy=ErrorStrategy.SKIP)
+
+# 注册并执行
+registry = SkillRegistry()
+registry.register_pipeline(pipeline)
+result = registry.execute_pipeline("security_scan", {"url": "https://example.com"})
+```
+
+### 错误处理策略
+
+- **STOP**: 遇到错误立即停止（默认）
+- **RETRY**: 重试失败步骤，支持指数退避
+- **SKIP**: 跳过失败步骤继续执行
+
+```python
+# 配置重试策略
+pipeline.add_step(
+    flaky_skill,
+    error_strategy=ErrorStrategy.RETRY,
+    retry_config=RetryConfig(max_attempts=3, delay_seconds=1.0, backoff_multiplier=2.0)
+)
+```
+
 ## 📁 项目结构
 
 ```
@@ -309,14 +384,22 @@ hos-forge/
 │   │   ├── claude_code_adapter.py
 │   │   └── templates/      # 适配器配置模板
 │   ├── cli/                # 命令行界面
-│   │   └── main.py
+│   │   ├── main.py
+│   │   └── skill_init.py   # skill 脚手架命令
 │   ├── mcp_server/         # MCP Server
 │   │   ├── server.py
 │   │   └── skill_bridge.py
 │   ├── skills/             # Skill 系统
-│   │   ├── base_skill.py
-│   │   ├── registry.py
-│   │   ├── loader.py
+│   │   ├── base_skill.py   # Skill 基类
+│   │   ├── registry.py     # Skill 注册表（含管线集成）
+│   │   ├── loader.py       # 动态加载器
+│   │   ├── pipeline.py     # Skill 编排管线
+│   │   ├── sandbox.py      # 沙箱执行环境
+│   │   ├── marketplace/    # Skill 市场
+│   │   │   ├── client.py   # 市场客户端
+│   │   │   ├── registry.py # 远程注册表
+│   │   │   ├── models.py   # 数据模型
+│   │   │   └── lockfile.py # 版本锁定
 │   │   └── security/       # 安全相关 skills
 │   │       ├── nuclei_skill.py
 │   │       ├── semgrep_skill.py

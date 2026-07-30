@@ -57,6 +57,11 @@ HOS-Forge 最初基于 OpenHands 二次开发，存在以下问题：
 - ✅ 标准化 MCP Server 实现
 - ✅ Skill 自动注册和元数据提取
 - ✅ CLI skill 管理命令
+- ✅ Skill 市场（`marketplace/`）：远程 skill 发现、安装、更新、卸载
+- ✅ 版本锁定机制（`lockfile.py`）：锁定 skill 版本防止意外更新
+- ✅ Skill 管线编排（`pipeline.py`）：多 skill 串联执行，支持条件分支和错误策略
+- ✅ 沙箱执行环境（`sandbox.py`）：进程级资源限制（CPU/内存）
+- ✅ Skill 脚手架命令（`hos skill init`）：快速创建 skill 模板
 
 ### 迁移的功能
 
